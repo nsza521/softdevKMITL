@@ -1,5 +1,4 @@
 "use client";
-
 import { Noto_Sans_Thai } from "next/font/google";
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
@@ -37,9 +36,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           children
         ) : (
           <>
-            <Navbar />
+            {/* <Navbar /> */}
             <main style={{ flex: 1 }}>{children}</main>
-            <Footer />
+            {/* <Footer /> */}
           </>
         )}
       </body>
