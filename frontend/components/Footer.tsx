@@ -1,16 +1,17 @@
 "use client";
 import styles from "../styles/Footer.module.css";
+import Image from "next/image";
 
 export default function Footer() {
   return (
     <footer className={styles.footer}>
         <div className={styles.footercontent}>
-            <button className={styles.flogo}><span className="material-symbols-outlined">home</span><p>หน้าหลัก</p></button>
-            <button className={styles.flogo}><span className="material-symbols-outlined">apps</span><p>บริการ</p></button>
-            <button className={styles.flogo}><span className="material-symbols-outlined">chat</span><p>กล่องข้อความ</p></button>
-            <button className={styles.flogo}><span className="material-symbols-outlined">settings</span><p>การตั้งค่า</p></button>
+            <button className={styles.flogo}><Image src="/home.svg" alt="Home" width={80} height={56} /></button>
+            <button className={styles.flogo}><Image src="/table.svg" alt="Home" width={80} height={56} /></button>
+            <button className={styles.flogo}><Image src="/history.svg" alt="Home" width={80} height={56} /></button>
+            <button className={styles.flogo}><Image src="/bell.svg" alt="Home" width={80} height={56} /></button>
+            <button className={styles.flogo}><Image src="/user.svg" alt="Home" width={80} height={56} /></button>
         </div>
-        <div className={styles.footerdec}></div>
     </footer>
   );
 }
