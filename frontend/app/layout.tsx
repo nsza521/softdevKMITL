@@ -14,7 +14,10 @@ const notoThai = Noto_Sans_Thai({
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login"; // เช็คว่าหน้านี้เป็น login มั้ย
+
+  // กำหนด path ที่ไม่ต้องการ Navbar + Footer
+  const hiddenLayoutRoutes = ["/login", "/signup", "/restaurant"];
+  const isHiddenLayout = hiddenLayoutRoutes.includes(pathname);
 
   return (
     <html lang="th" className={notoThai.variable}>
@@ -32,13 +35,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           minHeight: "100vh",
         }}
       >
-        {isAuthPage ? (
+        {isHiddenLayout ? (
           children
         ) : (
           <>
             {/* <Navbar /> */}
             <main style={{ flex: 1 }}>{children}</main>
-            {/* <Footer /> */}
+            <Footer />
           </>
         )}
       </body>

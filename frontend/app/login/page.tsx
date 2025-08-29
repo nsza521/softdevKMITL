@@ -22,7 +22,9 @@ export default function LoginPage() {
                     <p>Password</p>
                     <input type="password" name="" id=""  placeholder="Password"/>
                 </div>
-                <input type="submit" className={styles.submitbtn} />
+                <button type="submit" className={styles.submitbtn}>
+                     <span>Log In</span> <span className="material-symbols-outlined">arrow_forward</span>
+                </button>
                 <div className={styles.doyouhaveacc}>   
                     <div> <span>Do you have any account yet ?  <a href="">&nbsp;Sign up here</a></span></div>
                     <div> <span>or</span></div>
