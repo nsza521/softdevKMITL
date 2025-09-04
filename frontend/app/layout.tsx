@@ -12,7 +12,7 @@ const notoThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
 });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children, metadata }: any) {
   const pathname = usePathname();
 
   // กำหนด path ที่ไม่ต้องการ Navbar + Footer
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           children
         ) : (
           <>
-            {/* <Navbar /> */}
+            <Navbar title={metadata?.title || "หน้าเริ่มต้น"} />
             <main style={{ flex: 1 }}>{children}</main>
             <Footer />
           </>

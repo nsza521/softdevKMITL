@@ -1,11 +1,11 @@
-"use client";
+// /components/Navbar.tsx
+import styles from "../styles/Nav.module.css";
 
-export default function Navbar() {
+export default function Navbar({ title }: { title: string }) {
   return (
-    <nav style={{ padding: 12, background: "#0070f3", color: "white" }}>
-      <span>MyApp</span>
-      <a href="/" style={{ marginLeft: 20 }}>Home</a>
-      <a href="/about" style={{ marginLeft: 10 }}>About</a>
-    </nav>
+    <div className={styles.nav}>
+      <span className="material-symbols-outlined">arrow_back_ios</span>
+      <span>{title}</span>
+    </div>
   );
 }
