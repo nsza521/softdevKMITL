@@ -26,8 +26,8 @@ export default function LoginPage() {
                      <span>Log In</span> <span className="material-symbols-outlined">arrow_forward</span>
                 </button>
                 <div className={styles.doyouhaveacc}>   
-                    <div> <span>Do you have any account yet ?  <a href="">&nbsp;Sign up here</a></span></div>
-                    <div> <span>or</span></div>
+                    {/* <div> <span>Do you have any account yet ?  <a href="">&nbsp;Sign up here</a></span></div>
+                    <div> <span>or</span></div> */}
                     <div> <span> <a href="">Forget Password ?</a></span></div>
                 </div>
             </form>
