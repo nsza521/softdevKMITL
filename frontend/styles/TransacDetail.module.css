@@ -1,0 +1,26 @@
+.container {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr 1fr;
+    height: 92px;
+    border-bottom: solid 1px;
+    margin-bottom: 3px;
+    
+    
+}
+
+.left_content {
+    padding: 0;
+    justify-self: center;
+    align-self: center;
+}
+
+.middle_content {
+    align-self: center;
+    padding-left: 20px;
+}
+
+.right_content {
+    margin-top: 15px;
+    justify-self: center;
+    /* align-self: center; */
+}
