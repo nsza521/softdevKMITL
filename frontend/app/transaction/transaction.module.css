@@ -1,0 +1,34 @@
+.content {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: "Noto Looped Thai UI";
+}
+
+.nav {
+    display: block;
+    /* margin-top: 0; */
+}
+
+.catagories {
+    display: flex;
+    margin: 73px 0px 10px 38px;
+    gap: 10px;
+    button{
+        font-family: "Noto Looped Thai UI";
+        font-size: 16px;
+        padding: 10px;
+        border-radius: 15px;
+    }
+}
+
+.detail_container {
+    height: 81vh;
+    overflow:scroll;
+}
+
+.active {
+    background-color: #6D6D6D;
+    color: #ffffff;
+}
