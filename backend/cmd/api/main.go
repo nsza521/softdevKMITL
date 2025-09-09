@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -16,6 +17,8 @@ import (
 )
 
 func main() {
+	// โหลด .env แค่ครั้งเดียว
+	_ = godotenv.Load()
 
 	db, err := initMySQL()
 	if err != nil {
@@ -27,19 +30,13 @@ func main() {
 		log.Fatalf("Error initializing MinIO: %v", err)
 	}
 
-	app := app.NewApp(db, minioClient)
-	if err := app.Run(); err != nil {
+	application := app.NewApp(db, minioClient)
+	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
 	}
 }
 
 func initMySQL() (*gorm.DB, error) {
-
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
-	}
-
 	host := os.Getenv("MYSQL_HOST")
 	port := os.Getenv("MYSQL_PORT")
 	user := os.Getenv("MYSQL_USER")
@@ -54,7 +51,7 @@ func initMySQL() (*gorm.DB, error) {
 		return nil, fmt.Errorf("error connecting to database: %v", err)
 	}
 
-	// Migrate the database schema
+	// AutoMigrate
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Restaurant{},
@@ -70,16 +67,11 @@ func initMySQL() (*gorm.DB, error) {
 	); err != nil {
 		return nil, fmt.Errorf("error migrating database: %v", err)
 	}
-
+	log.Println("Database migrated successfully")
 	return db, nil
 }
 
 func initMinIO() (*minio.Client, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
-	}
-
 	endpoint := os.Getenv("MINIO_ENDPOINT")
 	if endpoint == "" {
 		endpoint = "minio:9000" // default for docker compose
@@ -87,8 +79,8 @@ func initMinIO() (*minio.Client, error) {
 	accessKey := os.Getenv("MINIO_ACCESS_KEY")
 	secretKey := os.Getenv("MINIO_SECRET_KEY")
 
-	// prevent path url
-	if endpoint[len(endpoint)-1] == '/' {
+	// prevent trailing slash
+	if len(endpoint) > 0 && endpoint[len(endpoint)-1] == '/' {
 		endpoint = endpoint[:len(endpoint)-1]
 	}
 
@@ -96,7 +88,6 @@ func initMinIO() (*minio.Client, error) {
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: false,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}
