@@ -1,6 +1,7 @@
 "use client";
 import styles from "./reserveSelectTable.module.css";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type Table = {
     row: string;
@@ -12,23 +13,32 @@ type Table = {
 
 const tables: Table[] = [
   { row: "A", col: 1, occupied: 0, capacity: 6, available: true },
-  { row: "A", col: 2, occupied: 0, capacity: 6, available: true },
+  { row: "A", col: 2, occupied: 4, capacity: 6, available: false },
   { row: "A", col: 3, occupied: 0, capacity: 6, available: true },
   { row: "B", col: 1, occupied: 0, capacity: 6, available: true },
   { row: "B", col: 2, occupied: 4, capacity: 6, available: false }, 
   { row: "B", col: 3, occupied: 0, capacity: 6, available: true },
+  { row: "C", col: 1, occupied: 0, capacity: 6, available: true },
+  { row: "C", col: 2, occupied: 0, capacity: 6, available: true }, 
+  { row: "C", col: 3, occupied: 4, capacity: 6, available: false },
 ];
 
 export default function ReserveSelectTablePage() {
     const searchParam = useSearchParams();
     const time = searchParam.get("time");
+    const router = useRouter();
 
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>เลือกโต๊ะที่ต้องการจอง</h1>
             <TableLayout />
             <p className={styles.txt}>หรือ</p>
-            <button className={styles.soloBt}>Join with Anyone</button>
+            <button 
+                className={styles.soloBt}
+                onClick={() => router.push("/reserveFillUsr")}
+            >
+                Join with Anyone
+            </button>
         </div>
     );
 }
@@ -40,8 +50,9 @@ function TableLayout() {
     return (
         <div className={styles.layoutContainer}>
             <div className={styles.tableContainer}>
-                {rows.map((c) => (
-                <span key={c} className={styles.rowLabel}>{c}</span>
+                <span></span>
+                {cols.map((c) => (
+                <span key={c}>{c}</span>
                 ))}
             </div>
 
@@ -58,21 +69,30 @@ function TableLayout() {
                     })}
                 </div>
             ))}
+
+            <div className={styles.compassCon}>
+                <img src="./compass.svg"/>
+                <p>W</p>
+            </div>
         </div>
     );
 }
 
 function TableIcon({ table }: { table: Table }) {
     const { occupied, capacity, available } = table;
+    const router = useRouter();
+
     return (
-        <div
-            className={`${styles.tableIcon} ${available ? styles.tableAvailable : styles.tableUnavailable}`}>
+        <button
+            className={`${styles.tableIcon} ${available ? styles.tableAvailable : styles.tableUnavailable}`}
+            onClick={() => router.push("/reserveFillUsr")}
+        >
             <img
                 src={
                 available
                     ? "./table_layout_aval.svg"
                     : "./table_layout_notaval.svg" }/>
             <p>{occupied}/{capacity}</p>
-        </div>
-  );
+        </button>
+    );
 }

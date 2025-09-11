@@ -1,4 +1,3 @@
-
 .container{
     background-color: var(--color5);
     color: var(--color1);
@@ -47,6 +46,8 @@
     border-radius: 5px;
     outline: 1px var(--color3) solid; 
     outline-offset: -1px;
+    width: 70px;
+    cursor: pointer;
 }
 .timeBtAvl{
     background-color: var(--color3);

@@ -8,6 +8,7 @@
     justify-content: flex-start; /* ลูกตัวแรกจะอยู่ซ้าย */
     color: #FFFFFF;
     position: fixed;
+    z-index: 1000;
 }
 .nav span:nth-child(1) {
     margin-left: 12px;

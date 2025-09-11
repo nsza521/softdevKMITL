@@ -1,5 +1,6 @@
 /* Reset ทุก element */
 * {
+  font-family: "Noto Sans Thai", sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
