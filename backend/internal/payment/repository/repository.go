@@ -4,12 +4,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CustomerRepository struct {
+type PaymentRepository struct {
 	db *gorm.DB
 }
 
-func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
-	return &CustomerRepository{
+func NewPaymentRepository(db *gorm.DB) *PaymentRepository {
+	return &PaymentRepository{
 		db: db,
 	}
 }

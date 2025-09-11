@@ -8,5 +8,5 @@ type Customer struct {
 	FirstName   	string 		`gorm:"not null"`
 	LastName    	string 		`gorm:"not null"`
 	WalletBalance	float32 	`gorm:"default:0"`
-	ProfilePic  	*string 	`gorm:"not null"`
+	ProfilePic  	*string 	`gorm:"type:text"`
 }

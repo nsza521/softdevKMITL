@@ -2,23 +2,16 @@ package usecase
 
 import (
 
-	"backend/internal/customer/interfaces"
+	"backend/internal/payment/interfaces"
 )
 
-type CustomerUsecase struct {
-	customerRepository interfaces.CustomerRepository
+type PaymentUsecase struct {
+	paymentRepository interfaces.PaymentRepository
 }
 
-func NewCustomerUsecase(customerRepository interfaces.CustomerRepository) interfaces.CustomerUsecase {
-	return &CustomerUsecase{
-		customerRepository: customerRepository,
+func NewPaymentUsecase(paymentRepository interfaces.PaymentRepository) interfaces.PaymentUsecase {
+	return &PaymentUsecase{
+		paymentRepository: paymentRepository,
 	}
 }
 
-func (u *CustomerUsecase) Register(username string) error {
-	return nil
-}
-
-func (u *CustomerUsecase) Login(username string, password string) (string, error) {
-	return "", nil
-}

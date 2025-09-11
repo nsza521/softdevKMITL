@@ -3,10 +3,8 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 
-	"backend/internal/customer/interfaces"
+	"backend/internal/reservation/interfaces"
 )
 
-func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interfaces.CustomerHandler) {
-
-	customerGroup.POST("/login", customerHandler.Login())
+func MapTableReservationRoutes(tableReservationGroup *gin.RouterGroup, tableReservationHandler interfaces.TableReservationHandler) {
 }

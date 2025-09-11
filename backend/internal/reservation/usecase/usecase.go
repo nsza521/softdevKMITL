@@ -2,23 +2,16 @@ package usecase
 
 import (
 
-	"backend/internal/customer/interfaces"
+	"backend/internal/reservation/interfaces"
 )
 
-type CustomerUsecase struct {
-	customerRepository interfaces.CustomerRepository
+type TableReservationUsecase struct {
+	tableReservationRepository interfaces.TableReservationRepository
 }
 
-func NewCustomerUsecase(customerRepository interfaces.CustomerRepository) interfaces.CustomerUsecase {
-	return &CustomerUsecase{
-		customerRepository: customerRepository,
+func NewTableReservationUsecase(tableReservationRepository interfaces.TableReservationRepository) interfaces.TableReservationUsecase {
+	return &TableReservationUsecase{
+		tableReservationRepository: tableReservationRepository,
 	}
 }
 
-func (u *CustomerUsecase) Register(username string) error {
-	return nil
-}
-
-func (u *CustomerUsecase) Login(username string, password string) (string, error) {
-	return "", nil
-}

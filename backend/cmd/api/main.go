@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -11,12 +12,19 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	models "backend/internal/db_model"
 	"backend/internal/app"
+	"backend/internal/db_model"
+	"backend/internal/utils"
 )
 
 func main() {
 
+	utils.BlacklistCleanup(5 * time.Minute)
+
+	if err := godotenv.Load(); err != nil {
+        log.Println("Warning: .env file not found, using system environment variables")
+    }
+	
 	db, err := initMySQL()
 	if err != nil {
 		log.Fatalf("Error initializing MySQL: %v", err)
@@ -34,11 +42,6 @@ func main() {
 }
 
 func initMySQL() (*gorm.DB, error) {
-
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
-	}
 
 	host := os.Getenv("MYSQL_HOST")
 	port := os.Getenv("MYSQL_PORT")
@@ -58,11 +61,15 @@ func initMySQL() (*gorm.DB, error) {
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Restaurant{},
+		&models.BankAccount{},
 		&models.Table{},
+		&models.TimeSlot{},
+		&models.TableTimeSlot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
-		&models.Menu{},
+		&models.MenuType{},
 		&models.MenuItem{},
+		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
 		&models.Payment{},
@@ -75,10 +82,6 @@ func initMySQL() (*gorm.DB, error) {
 }
 
 func initMinIO() (*minio.Client, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
-	}
 
 	endpoint := os.Getenv("MINIO_ENDPOINT")
 	if endpoint == "" {

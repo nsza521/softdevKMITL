@@ -27,3 +27,9 @@ go mod download
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
 ```
+
+# Stop and remove containers, networks, and volumes
+Use this command when you want to completely reset all services including databases.
+```bash
+docker-compose -f docker-compose.dev.yml down -v
+```

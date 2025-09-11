@@ -4,12 +4,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CustomerRepository struct {
+type TableReservationRepository struct {
 	db *gorm.DB
 }
 
-func NewCustomerRepository(db *gorm.DB) *CustomerRepository {
-	return &CustomerRepository{
+func NewTableReservationRepository(db *gorm.DB) *TableReservationRepository {
+	return &TableReservationRepository{
 		db: db,
 	}
 }
