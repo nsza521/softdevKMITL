@@ -1,11 +1,3 @@
-:root{
-    --color1: #393E46;
-    --color2: #D77948;
-    --color3: #E4CE8E;
-    --color4: #E7D5B3;
-    --color5: #FFFAE3;
-    --color6: #FCF9F4;
-}
 
 .container{
     background-color: var(--color5);
@@ -36,17 +28,17 @@
 }
 
 .timeContainerBase{
-  border-bottom: 2px var(--color3) solid;
-  padding: 10px 5px 15px 5px;
+    border-bottom: 2px var(--color3) solid;
+    padding: 10px 5px 15px 5px;
 }
 .timeContainer1{
-  border-top: 2px var(--color3) solid;
+    border-top: 2px var(--color3) solid;
 }
 .timeContainer1 p,
 .timeContainer2 p{
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
 .timeBtBase{

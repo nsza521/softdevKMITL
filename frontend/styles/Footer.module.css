@@ -1,5 +1,6 @@
 .footer {
   width: 100%;
+  max-width: 440px; 
   height: 6%;
   background-color:#6D6D6D;
   border-top: 1px gray solid;
