@@ -1,0 +1,57 @@
+.container{
+    background-color: var(--color5);
+    color: var(--color1);
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.title{
+    font-size: 20px;
+}
+
+.txt{
+    color: var(--color2);
+    font-size: 14px;
+}
+
+.soloBt{
+    color: var(--color5);
+    background-color: var(--color1);
+    font-size: 16px;
+    padding: 15px 40px 15px 40px;
+    border-radius: 20px;
+}
+
+.layoutContainer{
+    justify-content: center;
+    border: 1px var(--color3) solid;
+    padding: 5px;
+}
+
+.rowLabel{
+    display: flex;
+    flex-direction: column;
+}
+
+.tableIcon{
+    position: relative;
+    display: inline-block;
+}
+.tableIcon img{
+    display: block;
+    width: 100px;
+    height: auto;
+}
+.tableIcon p{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-size: 14px;
+}
