@@ -24,11 +24,11 @@ export default function Footer() {
         </button>
 
         <button
-          className={`${styles.flogo} ${pathname === "/table" ? styles.active : ""}`}
-          onClick={() => router.push("/table")}
+          className={`${styles.flogo} ${pathname === "/reserveSelectTime" ? styles.active : ""}`}
+          onClick={() => router.push("/reserveSelectTime")}
         >
           <Image
-            src={pathname === "/table" ? "/table_2.svg" : "/table_1.svg"}
+            src={pathname === "/reserveSelectTime" ? "/table_2.svg" : "/table_1.svg"}
             alt="Table"
             width={30}
             height={30}
