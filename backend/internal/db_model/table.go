@@ -8,6 +8,8 @@ import (
 type Table struct {
 	Base
 	PeopleNum int `gorm:"not null"`
+	Row	  string `gorm:"not null"` // A B C ...
+	Col	  string `gorm:"not null"` // 1 2 3 ...
 }
 
 type TimeSlot struct {
