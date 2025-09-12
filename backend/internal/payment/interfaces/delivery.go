@@ -1,10 +1,8 @@
 package interfaces
 
 import (
-	"github.com/gin-gonic/gin"
+	// "github.com/gin-gonic/gin"
 )
 
-type CustomerHandler interface {
-	Register() gin.HandlerFunc
-	Login() gin.HandlerFunc
+type PaymentHandler interface {
 }

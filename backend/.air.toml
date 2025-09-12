@@ -15,7 +15,7 @@ tmp_dir = "tmp"
   level = "debug"
 
 [dev]
-  watch_dir = ["cmd/api", "internal"]
+  watch_dir = ["./cmd/api", "./internal"]
 
 [color]
   main = "yellow"

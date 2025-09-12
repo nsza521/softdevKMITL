@@ -4,7 +4,7 @@ import (
 	// "github.com/gin-gonic/gin"
 
 	"backend/internal/order/interfaces"
-	// "backend/internal/customer/dto"
+	// "backend/internal/order/dto"
 )
 
 type FoodOrderHandler struct {

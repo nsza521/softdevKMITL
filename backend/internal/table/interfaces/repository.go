@@ -4,6 +4,6 @@ import (
 
 )
 
-type CustomerRepository interface {
+type TableRepository interface {
 	
 }

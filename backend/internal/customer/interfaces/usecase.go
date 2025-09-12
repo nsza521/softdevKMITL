@@ -1,10 +1,13 @@
 package interfaces
 
 import (
-
+	// "backend/internal/db_model"
+	"backend/internal/customer/dto"
+	user "backend/internal/user/dto"
 )
 
 type CustomerUsecase interface {
-	Register(username string) error
-	Login(username string, password string) (string, error)
+	Register(request *dto.RegisterCustomerRequest) error
+	Login(request *user.LoginRequest) (string, error)
+	Logout() error
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-
+	"time"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -12,14 +12,19 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	models "backend/internal/db_model"
 	"backend/internal/app"
+	"backend/internal/db_model"
+	"backend/internal/utils"
 )
 
 func main() {
-	// โหลด .env แค่ครั้งเดียว
-	_ = godotenv.Load()
 
+	utils.BlacklistCleanup(5 * time.Minute)
+
+	if err := godotenv.Load(); err != nil {
+        log.Println("Warning: .env file not found, using system environment variables")
+    }
+	
 	db, err := initMySQL()
 	if err != nil {
 		log.Fatalf("Error initializing MySQL: %v", err)
@@ -37,6 +42,7 @@ func main() {
 }
 
 func initMySQL() (*gorm.DB, error) {
+
 	host := os.Getenv("MYSQL_HOST")
 	port := os.Getenv("MYSQL_PORT")
 	user := os.Getenv("MYSQL_USER")
@@ -55,11 +61,15 @@ func initMySQL() (*gorm.DB, error) {
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Restaurant{},
+		&models.BankAccount{},
 		&models.Table{},
+		&models.TimeSlot{},
+		&models.TableTimeSlot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
-		&models.Menu{},
+		&models.MenuType{},
 		&models.MenuItem{},
+		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
 		&models.Payment{},
@@ -67,11 +77,19 @@ func initMySQL() (*gorm.DB, error) {
 	); err != nil {
 		return nil, fmt.Errorf("error migrating database: %v", err)
 	}
-	log.Println("Database migrated successfully")
+	log.Println("Database connected and migrated successfully")
+
+	err = InitAllSeedData(db)
+	if err != nil {
+		return nil, fmt.Errorf("error seeding database: %v", err)
+	}
+	log.Println("Database seeding completed successfully")
+
 	return db, nil
 }
 
 func initMinIO() (*minio.Client, error) {
+
 	endpoint := os.Getenv("MINIO_ENDPOINT")
 	if endpoint == "" {
 		endpoint = "minio:9000" // default for docker compose

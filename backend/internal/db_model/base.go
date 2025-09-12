@@ -8,8 +8,7 @@ import (
 )
 
 type Base struct {
-    // ID        uuid.UUID      `gorm:"type:binary(16);primaryKey"`
-    ID        string         `gorm:"primaryKey;type:char(36)"`
+    ID        uuid.UUID      `gorm:"type:char(36);primaryKey"`
     CreatedAt time.Time
     UpdatedAt time.Time
     DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -17,7 +16,7 @@ type Base struct {
 
 func (base *Base) BeforeCreate(tx *gorm.DB) (err error) {
     if base.ID == "" {
-        base.ID = uuid.New().String() // UUID v4
+        base.ID = uuid.New()// UUID v4
     }
     return
 }

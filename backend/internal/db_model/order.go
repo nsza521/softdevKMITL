@@ -2,21 +2,22 @@ package models
 
 import (
 	"time"
-	// "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type FoodOrder struct {
 	Base
-	ReservationID 	string 			`gorm:"foreignKey:ReservationID;not null;type:char(36)"`
-	PaymentID     	string   		`gorm:"foreignKey:PaymentID;not null;type:char(36)"`
-	ExpectedTime  	time.Time   	`gorm:"not null"`
-	Status        	string      	`gorm:"not null"` // e.g., "pending", "completed", "cancelled"
-	// FoodOrderItems  []FoodOrderItem `gorm:"foreignKey:OrderID;not null"`
+	ReservationID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	ExpectedTime  time.Time `gorm:"not null"`
+	Status        string    `gorm:"not null;default:'pending'"` // e.g., "pending", "completed", "cancelled"
+
+	FoodOrderItems []FoodOrderItem `gorm:"foreignKey:FoodOrderID"` // one-to-many
 }
 
 type FoodOrderItem struct {
 	Base
-	FoodOrderID string `gorm:"foreignKey:OrderID;not null;type:char(36)"`
-	MenuItemID  string `gorm:"foreignKey:MenuItemID;not null;type:char(36)"`
-	Quantity    int    `gorm:"not null"`
+	FoodOrderID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	MenuItemID  uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Quantity    int       `gorm:"not null"`
 }
