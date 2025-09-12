@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 
 	"backend/internal/restaurant/interfaces"
 	"backend/internal/restaurant/dto"
@@ -56,16 +56,16 @@ func (h *RestaurantHandler) Login() gin.HandlerFunc {
 func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "User unauthorized"})
-			return
-		}
-		_, err := uuid.Parse(userID.(string))
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid user ID"})
-			return
-		}
+		// userID, exists := c.Get("user_id")
+		// if !exists {
+		// 	c.JSON(401, gin.H{"error": "User unauthorized"})
+		// 	return
+		// }
+		// _, err := uuid.Parse(userID.(string))
+		// if err != nil {
+		// 	c.JSON(401, gin.H{"error": "Invalid user ID"})
+		// 	return
+		// }
 
 		restaurants, err := h.restaurantUsecase.GetAll()
 		if err != nil {

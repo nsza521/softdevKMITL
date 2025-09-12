@@ -49,7 +49,7 @@ func initMySQL() (*gorm.DB, error) {
 	password := os.Getenv("MYSQL_PASSWORD")
 	dbName := os.Getenv("MYSQL_DATABASE")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FBangkok",
 		user, password, host, port, dbName)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -63,8 +63,8 @@ func initMySQL() (*gorm.DB, error) {
 		&models.Restaurant{},
 		&models.BankAccount{},
 		&models.Table{},
-		&models.TimeSlot{},
-		&models.TableTimeSlot{},
+		&models.Timeslot{},
+		&models.TableTimeslot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
 		&models.MenuType{},
