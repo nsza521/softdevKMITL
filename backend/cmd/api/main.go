@@ -77,6 +77,13 @@ func initMySQL() (*gorm.DB, error) {
 	); err != nil {
 		return nil, fmt.Errorf("error migrating database: %v", err)
 	}
+	log.Println("Database connected and migrated successfully")
+
+	err = InitAllSeedData(db)
+	if err != nil {
+		return nil, fmt.Errorf("error seeding database: %v", err)
+	}
+	log.Println("Database seeding completed successfully")
 
 	return db, nil
 }
