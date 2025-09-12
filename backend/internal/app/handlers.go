@@ -25,9 +25,17 @@ import (
 	paymentUsecase "backend/internal/payment/usecase"
 	paymentRepository "backend/internal/payment/repository"
 
-	// foodOrderHttp "backend/internal/order/delivery/http"
-	// foodOrderUsecase "backend/internal/order/usecase"
-	// foodOrderRepository "backend/internal/order/repository"
+	foodOrderHttp "backend/internal/order/delivery/http"
+	foodOrderUsecase "backend/internal/order/usecase"
+	foodOrderRepository "backend/internal/order/repository"
+
+	menuHttp "backend/internal/menu/delivery/http"
+	menuUsecase "backend/internal/menu/usecase"
+	menuRepository "backend/internal/menu/repository"
+
+	notiHttp "backend/internal/notifications/delivery/http"
+	notiUsecase "backend/internal/notifications/usecase"
+	notiRepository "backend/internal/notifications/repository"
 )
 
 func (s *App) MapHandlers() error {
@@ -37,10 +45,10 @@ func (s *App) MapHandlers() error {
 	restaurantGroup := s.gin.Group("/user/restaurant")
 	tableGroup := s.gin.Group("/table")
 	tableReservationGroup := s.gin.Group("/table/reservation")
-	// foodOrderGroup := s.gin.Group("/food/order")
-	// notificationGroup := s.gin.Group("/notification")
+	menuGroup := s.gin.Group("/food/menu")
+	foodOrderGroup := s.gin.Group("/food/order")
+	notificationGroup := s.gin.Group("/notification")
 	paymentGroup := s.gin.Group("/payment")
-	// menuGroup := s.gin.Group("/food/menu")
 
 	// Customer Group
 	customerRepository := customerRepository.NewCustomerRepository(s.db)
@@ -78,11 +86,23 @@ func (s *App) MapHandlers() error {
 	paymentHandler := paymentHttp.NewPaymentHandler(paymentUsecase)
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
 
+	// Menu group
+	menuRepository := menuRepository.NewMenuRepository(s.db)
+	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
+	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
+	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
+
 	// Food Order Group
-	// foodOrderRepository := foodOrderRepository.NewFoodOrderRepository(s.db)
-	// foodOrderUsecase := foodOrderUsecase.NewFoodOrderUsecase(foodOrderRepository)
-	// foodOrderHandler := foodOrderHttp.NewFoodOrderHandler(foodOrderUsecase)
-	// foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
+	foodOrderRepository := foodOrderRepository.NewFoodOrderRepository(s.db)
+	foodOrderUsecase := foodOrderUsecase.NewFoodOrderUsecase(foodOrderRepository)
+	foodOrderHandler := foodOrderHttp.NewFoodOrderHandler(foodOrderUsecase)
+	foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
+
+	// Notification Group
+	notiRepository := notiRepository.NewNotiRepository(s.db)
+	notiUsecase := notiUsecase.NewNotiUsecase(notiRepository)
+	notificationHandler := notiHttp.NewNotiHandler(notiUsecase)
+	notiHttp.MapNotiRoutes(notificationGroup, notificationHandler)
 
 	return nil
 }
