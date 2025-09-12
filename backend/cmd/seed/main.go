@@ -4,55 +4,113 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
+	"time"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
-	models "backend/internal/db_model"
-	"backend/internal/seed"
+	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+
+	"backend/internal/app"
+	"backend/internal/db_model"
+	"backend/internal/utils"
 )
 
 func main() {
-	_ = godotenv.Load()
 
-	db, err := openMySQL()
+	utils.BlacklistCleanup(5 * time.Minute)
+
+	if err := godotenv.Load(); err != nil {
+        log.Println("Warning: .env file not found, using system environment variables")
+    }
+	
+	db, err := initMySQL()
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		log.Fatalf("Error initializing MySQL: %v", err)
 	}
 
-	// optional: ensure migration ก่อน
+	minioClient, err := initMinIO()
+	if err != nil {
+		log.Fatalf("Error initializing MinIO: %v", err)
+	}
+
+	app := app.NewApp(db, minioClient)
+	if err := app.Run(); err != nil {
+		log.Fatalf("Error starting app: %v", err)
+	}
+}
+
+func initMySQL() (*gorm.DB, error) {
+
+	host := os.Getenv("MYSQL_HOST")
+	port := os.Getenv("MYSQL_PORT")
+	user := os.Getenv("MYSQL_USER")
+	password := os.Getenv("MYSQL_PASSWORD")
+	dbName := os.Getenv("MYSQL_DATABASE")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, password, host, port, dbName)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to database: %v", err)
+	}
+
+	// Migrate the database schema
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Restaurant{},
+		&models.BankAccount{},
 		&models.Table{},
+		&models.TimeSlot{},
+		&models.TableTimeSlot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
-		&models.Menu{},
+		&models.MenuType{},
 		&models.MenuItem{},
+		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
 		&models.Payment{},
 		&models.Notifications{},
 	); err != nil {
-		log.Fatalf("migrate: %v", err)
+		return nil, fmt.Errorf("error migrating database: %v", err)
 	}
+	log.Println("Database connected and migrated successfully")
 
-	if err := seed.SeedDev(db); err != nil {
-		log.Fatalf("seed: %v", err)
+	err = utils.InitAllSeedData(db)
+	if err != nil {
+		return nil, fmt.Errorf("error seeding database: %v", err)
 	}
-	log.Println("✅ Seed completed")
+	log.Println("Database seeding completed successfully")
+
+	return db, nil
 }
 
-func openMySQL() (*gorm.DB, error) {
-	host := os.Getenv("MYSQL_HOST")
-	port := os.Getenv("MYSQL_PORT")
-	user := os.Getenv("MYSQL_USER")
-	pass := os.Getenv("MYSQL_PASSWORD")
-	dbName := os.Getenv("MYSQL_DATABASE")
+func initMinIO() (*minio.Client, error) {
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		user, pass, host, port, dbName)
+	endpoint := os.Getenv("MINIO_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "minio:9000" // default for docker compose
+	}
+	accessKey := os.Getenv("MINIO_ACCESS_KEY")
+	secretKey := os.Getenv("MINIO_SECRET_KEY")
 
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// prevent path url
+	if endpoint[len(endpoint)-1] == '/' {
+		endpoint = endpoint[:len(endpoint)-1]
+	}
+
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+		Secure: false,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
+	}
+	log.Println("MinIO client initialized successfully")
+
+	return minioClient, nil
 }
