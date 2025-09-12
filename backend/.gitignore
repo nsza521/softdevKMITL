@@ -1,0 +1,18 @@
+# Dependency directories (vendor/)
+vendor/
+
+# Environment files
+.env
+*.env
+
+# Logs
+*.log
+
+# IDE/editor directories and files
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary files
+*.tmp
+/tmp/*
