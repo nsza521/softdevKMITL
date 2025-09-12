@@ -33,7 +33,7 @@ func (h *CustomerHandler) Register() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, gin.H{"message": "registration successful"})
+		c.JSON(201, gin.H{"message": "registration successful"})
 	}
 }
 
