@@ -94,3 +94,22 @@ func (u *RestaurantUsecase) Login(request *user.LoginRequest) (string, error) {
 
 }
 
+func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
+	restaurants, err := u.restaurantRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var restaurantDetails []dto.RestaurantDetailResponse
+	for _, r := range restaurants {
+		detail := dto.RestaurantDetailResponse{
+			ID:        r.ID,
+			Username:  r.Username,
+			PictureURL: r.ProfilePic,
+			Email:     r.Email,
+		}
+		restaurantDetails = append(restaurantDetails, detail)
+	}
+
+	return restaurantDetails, nil
+}

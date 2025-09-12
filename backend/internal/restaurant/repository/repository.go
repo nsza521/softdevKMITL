@@ -3,6 +3,8 @@ package repository
 import (
 	"gorm.io/gorm"
 
+	"github.com/google/uuid"
+
 	"backend/internal/db_model"
 )
 
@@ -65,6 +67,28 @@ func (r *RestaurantRepository) GetByUsername(username string) (*models.Restauran
 		return nil, result.Error
 	}
 	return &restaurant, nil
+}
+
+func (r *RestaurantRepository) GetByID(id uuid.UUID) (*models.Restaurant, error) {
+
+	var restaurant models.Restaurant
+
+	result := r.db.First(&restaurant, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &restaurant, nil
+}
+
+func (r *RestaurantRepository) GetAll() ([]*models.Restaurant, error) {
+
+	var restaurants []*models.Restaurant
+
+	result := r.db.Find(&restaurants)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return restaurants, nil
 }
 
 func (r *RestaurantRepository) CreateBankAccount(bankAccount *models.BankAccount) error {

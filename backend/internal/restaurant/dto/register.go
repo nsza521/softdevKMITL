@@ -5,6 +5,6 @@ type RegisterRestaurantRequest struct {
 	Email       	string `json:"email" binding:"required,email"`
 	Password    	string `json:"password" binding:"required,min=8"`
 	BankName    	string `json:"bank_name" binding:"required"`
-	AccountNumber 	string `json:"account_number" binding:"required"`
+	AccountNumber 	string `json:"account_no" binding:"required"`
 	AccountName   	string `json:"account_name" binding:"required"`
 }

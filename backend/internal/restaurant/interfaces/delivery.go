@@ -7,4 +7,5 @@ import (
 type RestaurantHandler interface {
 	Register() gin.HandlerFunc
 	Login() gin.HandlerFunc
+	GetAll() gin.HandlerFunc
 }
