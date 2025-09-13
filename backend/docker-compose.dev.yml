@@ -79,5 +79,6 @@ services:
       - .:/app
     working_dir: /app
     command: ["air", "-c", ".air.toml"]
+    tty: true
     networks:
       - backend_network
