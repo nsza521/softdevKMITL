@@ -1,11 +1,14 @@
 package http
 
 import (
+	"net/http"
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 	// "github.com/google/uuid"
 
-	"backend/internal/restaurant/interfaces"
 	"backend/internal/restaurant/dto"
+	"backend/internal/restaurant/interfaces"
 	user "backend/internal/user/dto"
 )
 
@@ -74,4 +77,49 @@ func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 		}
 		c.JSON(200, gin.H{"restaurants": restaurants})
 	}
+}
+
+var emailRe = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+
+type EditHandler struct {
+	Uc interfaces.RestaurantUsecase
+}
+
+func NewEditHandler(uc interfaces.RestaurantUsecase) *EditHandler { return &EditHandler{Uc: uc} }
+
+func (h *EditHandler) EditRestaurant(c *gin.Context) {
+	id := c.Param("id")
+	userID := c.GetString("user_id")
+	role := c.GetString("role")
+
+	var req dto.EditRestaurantRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+		return
+	}
+
+	// at least it should had 1 field
+	if req.Username == nil && req.Email == nil && req.BankName == nil && req.AccountNumber == nil && req.AccountName == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
+		return
+	}
+
+	if req.Email != nil && !emailRe.MatchString(*req.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+		return
+	}
+
+	resp, err := h.Uc.EditRestaurant(c, id, userID, role, req)
+	if err != nil {
+		switch interfaces.AsHTTPStatus(err) {
+		case http.StatusForbidden:
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		case http.StatusNotFound:
+			c.JSON(http.StatusNotFound, gin.H{"error": "restaurant not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
