@@ -19,7 +19,7 @@ type MenuItemBrief struct {
 	MenuPic     *string        `json:"menu_pic"`
 	TimeTaken   int            `json:"time_taken"`
 	Description string         `json:"description"`
-	// MenuTypeIDs []uuid.UUID    `json:"menu_type_ids"`
+	MenuTypeIDs []uuid.UUID    `json:"menu_type_ids"`
 	Types       []MenuTypeBrief`json:"types"` // 👈 รายละเอียด tag ของร้านนั้น
 }
 
@@ -46,7 +46,7 @@ type MenuUsecase interface {
 	CheckRestaurantExists(ctx context.Context, restaurantID uuid.UUID) error
 
 	// สร้าง/แก้ไข/ลบ MenuItem (และผูก/แก้ไข/ลบ MenuType ผ่าน MenuTag)
-	CreateMenuItem(ctx context.Context, restaurantID uuid.UUID, req CreateMenuItemRequest) (*MenuItemBrief, error)
-	UpdateMenuItem(ctx context.Context, menuItemID uuid.UUID, req UpdateMenuItemRequest) (*MenuItemBrief, error)
+	CreateMenuItem(ctx context.Context, restaurantID uuid.UUID, in *CreateMenuItemRequest) (*MenuItemBrief, error)
+	UpdateMenuItem(ctx context.Context, menuItemID uuid.UUID, in *UpdateMenuItemRequest) (*MenuItemBrief, error)
 	DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) error
 }
