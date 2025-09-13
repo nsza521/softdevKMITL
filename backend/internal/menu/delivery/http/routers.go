@@ -2,9 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-
-	"backend/internal/menu/interfaces"
+	// "backend/internal/middleware"
 )
 
-func MapMenuRoutes(menuGroup *gin.RouterGroup, menuHandler interfaces.MenuHandler) {
+func MapMenuRoutes(g *gin.RouterGroup, h *MenuHandler) {
+	g.GET("/:restaurantID/items", h.ListByRestaurant)
 }

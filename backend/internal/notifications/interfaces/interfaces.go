@@ -6,3 +6,10 @@ import (
 
 type NotiHandler interface {
 }
+
+type NotiRepository interface {
+	
+}
+
+type NotiUsecase interface {
+}

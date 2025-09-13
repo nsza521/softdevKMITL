@@ -29,24 +29,24 @@ import (
 	foodOrderUsecase "backend/internal/order/usecase"
 	foodOrderRepository "backend/internal/order/repository"
 
-	menuHttp "backend/internal/menu/delivery/http"
-	menuUsecase "backend/internal/menu/usecase"
-	menuRepository "backend/internal/menu/repository"
-
 	notiHttp "backend/internal/notifications/delivery/http"
 	notiUsecase "backend/internal/notifications/usecase"
 	notiRepository "backend/internal/notifications/repository"
+
+	menuHttp "backend/internal/menu/delivery/http"
+	menuUsecase "backend/internal/menu/usecase"
+	menuRepository "backend/internal/menu/repository"
 )
 
 func (s *App) MapHandlers() error {
 
 	userGroup := s.gin.Group("/user")
-	customerGroup := s.gin.Group("/user/customer")
-	restaurantGroup := s.gin.Group("/user/restaurant")
+	customerGroup := s.gin.Group("/customer")
+	restaurantGroup := s.gin.Group("/restaurant")
+	menuGroup := s.gin.Group("/restaurant/menu")
 	tableGroup := s.gin.Group("/table")
 	tableReservationGroup := s.gin.Group("/table/reservation")
-	menuGroup := s.gin.Group("/food/menu")
-	foodOrderGroup := s.gin.Group("/food/order")
+	foodOrderGroup := s.gin.Group("/restaurant/order")
 	notificationGroup := s.gin.Group("/notification")
 	paymentGroup := s.gin.Group("/payment")
 
@@ -56,16 +56,25 @@ func (s *App) MapHandlers() error {
 	customerHandler := customerHttp.NewCustomerHandler(customerUsecase)
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
+	// Menu Group
+	menuRepository := menuRepository.NewMenuRepository(s.db)
+	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
+	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
+	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
+
 	// Restaurant Group
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
-	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository)
+	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository)
 	restaurantHandler := restaurantHttp.NewRestaurantHandler(restaurantUsecase)
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
 
+
+
 	// User Group
 	userRepository := userRepository.NewUserRepository(s.db)
-	userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
-	userHandler := userHttp.NewUserHandler(userUsecase)
+	// userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
+	userUsecase := userUsecase.NewUserUsecase(userRepository)
+	userHandler := userHttp.NewUserHandler(userUsecase, customerUsecase, restaurantUsecase)
 	userHttp.MapUserRoutes(userGroup, userHandler)
 
 	// Table Group
@@ -85,12 +94,6 @@ func (s *App) MapHandlers() error {
 	paymentUsecase := paymentUsecase.NewPaymentUsecase(paymentRepository)
 	paymentHandler := paymentHttp.NewPaymentHandler(paymentUsecase)
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
-
-	// Menu group
-	menuRepository := menuRepository.NewMenuRepository(s.db)
-	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
-	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
-	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
 
 	// Food Order Group
 	foodOrderRepository := foodOrderRepository.NewFoodOrderRepository(s.db)

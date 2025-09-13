@@ -8,15 +8,18 @@ import (
 	"backend/internal/utils"
 	"backend/internal/db_model"
 	user "backend/internal/user/dto"
+	menuInterfaces "backend/internal/menu/interfaces"
 )
 
 type RestaurantUsecase struct {
 	restaurantRepository interfaces.RestaurantRepository
+	menuRepository       menuInterfaces.MenuRepository
 }
 
-func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository) interfaces.RestaurantUsecase {
+func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository menuInterfaces.MenuRepository) interfaces.RestaurantUsecase {
 	return &RestaurantUsecase{
 		restaurantRepository: restaurantRepository,
+		menuRepository:       menuRepository,
 	}
 }
 
