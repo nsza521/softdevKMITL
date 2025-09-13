@@ -40,6 +40,7 @@ func main() {
 	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
 	}
+	
 }
 
 func initMySQL() (*gorm.DB, error) {
@@ -113,6 +114,7 @@ func initMinIO() (*minio.Client, error) {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}
 	log.Println("MinIO client initialized successfully")
+	
 
 	return minioClient, nil
 }

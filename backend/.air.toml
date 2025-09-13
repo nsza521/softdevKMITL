@@ -11,6 +11,7 @@ tmp_dir = "tmp"
   include_ext = ["go", "tpl", "tmpl", "html"]
   exclude_dir = ["assets", "tmp", "vendor"]
 
+  poll = true  
 [log]
   level = "debug"
 
