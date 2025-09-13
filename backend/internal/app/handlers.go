@@ -52,15 +52,17 @@ func (s *App) MapHandlers() error {
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
 	// Restaurant Group
+	menuRepository := restaurantRepository.NewMenuRepository(s.db)
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
-	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository)
+	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository)
 	restaurantHandler := restaurantHttp.NewRestaurantHandler(restaurantUsecase)
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
 
 	// User Group
 	userRepository := userRepository.NewUserRepository(s.db)
-	userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
-	userHandler := userHttp.NewUserHandler(userUsecase)
+	// userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
+	userUsecase := userUsecase.NewUserUsecase(userRepository)
+	userHandler := userHttp.NewUserHandler(userUsecase, customerUsecase, restaurantUsecase)
 	userHttp.MapUserRoutes(userGroup, userHandler)
 
 	// Table Group

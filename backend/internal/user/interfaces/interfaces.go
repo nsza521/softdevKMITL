@@ -3,7 +3,7 @@ package interfaces
 import (
 	"time"
 	"github.com/gin-gonic/gin"
-	"backend/internal/user/dto"
+	// "backend/internal/user/dto"
 )
 
 type UserHandler interface {
@@ -16,6 +16,6 @@ type UserRepository interface {
 }
 
 type UserUsecase interface {
-	Login(request *dto.LoginRequest) (string, error)
+	// Login(request *dto.LoginRequest) (string, error)
 	Logout(token string, expiry time.Time) error
 }

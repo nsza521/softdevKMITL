@@ -12,11 +12,13 @@ import (
 
 type RestaurantUsecase struct {
 	restaurantRepository interfaces.RestaurantRepository
+	menuRepository       interfaces.MenuRepository
 }
 
-func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository) interfaces.RestaurantUsecase {
+func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository interfaces.MenuRepository) interfaces.RestaurantUsecase {
 	return &RestaurantUsecase{
 		restaurantRepository: restaurantRepository,
+		menuRepository:       menuRepository,
 	}
 }
 
