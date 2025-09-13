@@ -3,6 +3,8 @@ package usecase
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"backend/internal/customer/dto"
 	"backend/internal/customer/interfaces"
 	"backend/internal/utils"
@@ -88,4 +90,44 @@ func (u *CustomerUsecase) Login(request *user.LoginRequest) (string, error) {
 func (u *CustomerUsecase) Logout() error {
 	// Implement logout logic if needed (e.g., token invalidation)
 	return nil
+}
+
+func (u *CustomerUsecase) GetProfile(customerID uuid.UUID) (*dto.ProfileResponse, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.ProfileResponse{
+		ID:        customer.ID,
+		Username:  customer.Username,
+		Email:     customer.Email,
+		FirstName: customer.FirstName,
+		LastName:  customer.LastName,
+	}
+	return response, nil
+}
+
+func (u *CustomerUsecase) EditProfile(customerID uuid.UUID, request *dto.EditProfileRequest) error {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return err
+	}
+
+	// Update fields
+	if request.FirstName != "" {
+		customer.FirstName = request.FirstName
+	}
+	if request.LastName != "" {
+		customer.LastName = request.LastName
+	}
+	// if request.Email != "" {
+	// 	// Validate email format
+	// 	if !utils.IsValidEmail(request.Email) {
+	// 		return fmt.Errorf("invalid email format")
+	// 	}
+	// 	customer.Email = request.Email
+	// }
+
+	return u.customerRepository.Update(customer)
 }
