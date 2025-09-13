@@ -40,6 +40,8 @@ func main() {
 	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
 	}
+
+	RDCAward
 	
 }
 
