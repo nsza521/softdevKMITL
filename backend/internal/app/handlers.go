@@ -32,6 +32,10 @@ import (
 	notiHttp "backend/internal/notifications/delivery/http"
 	notiUsecase "backend/internal/notifications/usecase"
 	notiRepository "backend/internal/notifications/repository"
+
+	menuHttp "backend/internal/menu/delivery/http"
+	menuUsecase "backend/internal/menu/usecase"
+	menuRepository "backend/internal/menu/repository"
 )
 
 func (s *App) MapHandlers() error {
@@ -39,9 +43,10 @@ func (s *App) MapHandlers() error {
 	userGroup := s.gin.Group("/user")
 	customerGroup := s.gin.Group("/customer")
 	restaurantGroup := s.gin.Group("/restaurant")
+	menuGroup := s.gin.Group("/restaurant/menu")
 	tableGroup := s.gin.Group("/table")
 	tableReservationGroup := s.gin.Group("/table/reservation")
-	foodOrderGroup := s.gin.Group("/food/order")
+	foodOrderGroup := s.gin.Group("/restaurant/order")
 	notificationGroup := s.gin.Group("/notification")
 	paymentGroup := s.gin.Group("/payment")
 
@@ -51,12 +56,19 @@ func (s *App) MapHandlers() error {
 	customerHandler := customerHttp.NewCustomerHandler(customerUsecase)
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
+	// Menu Group
+	menuRepository := menuRepository.NewMenuRepository(s.db)
+	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
+	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
+	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
+
 	// Restaurant Group
-	menuRepository := restaurantRepository.NewMenuRepository(s.db)
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
 	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository)
 	restaurantHandler := restaurantHttp.NewRestaurantHandler(restaurantUsecase)
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
+
+
 
 	// User Group
 	userRepository := userRepository.NewUserRepository(s.db)

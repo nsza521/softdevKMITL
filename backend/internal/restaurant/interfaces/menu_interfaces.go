@@ -2,6 +2,7 @@ package interfaces
 
 import (
     "context"
+    "github.com/google/uuid"
     "backend/internal/db_model"
 )
 
@@ -18,9 +19,16 @@ type MenuQuery struct {
 
 type MenuRepository interface {
     // ดึงอาหารทั้งหมดของร้านผ่านการ join: menus -> menu_items
+    ListMenuByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]models.MenuItem, error)
+	RestaurantExists(ctx context.Context, restaurantID uuid.UUID) error
     FindItemsByRestaurant(ctx context.Context, restaurantID string, q MenuQuery) (items []models.MenuItem, total int64, err error)
 }
 
 type MenuUsecase interface {
     GetRestaurantFoods(ctx context.Context, restaurantID string, q MenuQuery) (items []models.MenuItem, total int64, err error)
 }
+
+// type MenuRepository interface {
+// 	ListMenuByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]models.MenuItem, error)
+// 	RestaurantExists(ctx context.Context, restaurantID uuid.UUID) error
+// }
