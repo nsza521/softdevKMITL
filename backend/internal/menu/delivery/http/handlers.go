@@ -34,3 +34,46 @@ func (h *MenuHandler) ListByRestaurant(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, out)
 }
+
+
+func (h *MenuHandler) Create(c *gin.Context) {
+	rid, err := uuid.Parse(c.Param("restaurantID"))
+	if err != nil { c.JSON(http.StatusBadRequest, gin.H{"error":"invalid restaurant id"}); return }
+
+	var body menuuc.CreateMenuItemRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"invalid body"})
+		return
+	}
+	resp, err := h.uc.CreateMenuItem(c.Request.Context(), rid, &body)
+	if err != nil { c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()}); return }
+	c.JSON(http.StatusCreated, resp)
+}
+
+func (h *MenuHandler) Update(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("itemID"))
+	if err != nil { c.JSON(http.StatusBadRequest, gin.H{"error":"invalid id"}); return }
+
+	var body menuuc.UpdateMenuItemRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"invalid body"})
+		return
+	}
+	_, err = h.uc.UpdateMenuItem(c.Request.Context(), id, &body)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *MenuHandler) Delete(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("itemID"))
+	if err != nil { c.JSON(http.StatusBadRequest, gin.H{"error":"invalid id"}); return }
+	if err := h.uc.DeleteMenuItem(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+

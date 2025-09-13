@@ -19,7 +19,7 @@ type MenuItemBrief struct {
 	MenuPic     *string        `json:"menu_pic"`
 	TimeTaken   int            `json:"time_taken"`
 	Description string         `json:"description"`
-	MenuTypeIDs []uuid.UUID    `json:"menu_type_ids"`
+	// MenuTypeIDs []uuid.UUID    `json:"menu_type_ids"`
 	Types       []MenuTypeBrief`json:"types"` // 👈 รายละเอียด tag ของร้านนั้น
 }
 

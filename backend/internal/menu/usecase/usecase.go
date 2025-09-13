@@ -27,7 +27,8 @@ func (u *menuUsecase) ListByRestaurant(ctx context.Context, restaurantID uuid.UU
 		out = append(out, iface.MenuItemBrief{
 			ID: m.ID, Name: m.Name, Price: m.Price, MenuPic: m.MenuPic,
 			TimeTaken: m.TimeTaken, Description: m.Description,
-			MenuTypeIDs: typeIDs, Types: types,
+			// MenuTypeIDs: typeIDs, 
+			Types: types,
 		})
 	}
 	return out, nil
@@ -96,15 +97,16 @@ func (u *menuUsecase) DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) 
 }
 
 func toBrief(m *models.MenuItem) iface.MenuItemBrief {
-	typeIDs := make([]uuid.UUID, 0, len(m.MenuTypes))
+	// typeIDs := make([]uuid.UUID, 0, len(m.MenuTypes))
 	types := make([]iface.MenuTypeBrief, 0, len(m.MenuTypes))
 	for _, t := range m.MenuTypes {
-		typeIDs = append(typeIDs, t.ID)
+		// typeIDs = append(typeIDs, t.ID)
 		types = append(types, iface.MenuTypeBrief{ID: t.ID, Type: t.Type})
 	}
 	return iface.MenuItemBrief{
 		ID: m.ID, Name: m.Name, Price: m.Price, MenuPic: m.MenuPic,
 		TimeTaken: m.TimeTaken, Description: m.Description,
-		MenuTypeIDs: typeIDs, Types: types,
+		// MenuTypeIDs: typeIDs, 
+		Types: types,
 	}
 }

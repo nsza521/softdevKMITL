@@ -21,6 +21,18 @@ func seedFixedForNoodleShop(db *gorm.DB) error {
 		fmt.Println("created noodle shop:", rest.Username)
 	}
 
+	var cnt int64
+    if err := db.
+        Table("menu_tags").
+        Joins("JOIN menu_types mty ON mty.id = menu_tags.menu_type_id").
+        Where("mty.restaurant_id = ?", rest.ID).
+        Count(&cnt).Error; err != nil {
+        return err
+    }
+    if cnt > 0 {
+        return nil // มีของอยู่แล้ว ไม่ยุ่ง
+    }
+
 	// ล้างข้อมูลเมนูของร้านนี้ก่อน (กันซ้ำ/ข้อมูลเก่า)
 	if err := resetMenusForRestaurant(db, rest.ID); err != nil {
 		return err
