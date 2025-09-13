@@ -41,8 +41,8 @@ import (
 func (s *App) MapHandlers() error {
 
 	userGroup := s.gin.Group("/user")
-	customerGroup := s.gin.Group("/user/customer")
-	restaurantGroup := s.gin.Group("/user/restaurant")
+	customerGroup := s.gin.Group("/customer")
+	restaurantGroup := s.gin.Group("/restaurant")
 	tableGroup := s.gin.Group("/table")
 	tableReservationGroup := s.gin.Group("/table/reservation")
 	menuGroup := s.gin.Group("/food/menu")

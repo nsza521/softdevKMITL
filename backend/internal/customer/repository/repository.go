@@ -3,6 +3,7 @@ package repository
 import (
 	// "fmt"
 	"gorm.io/gorm"
+	"github.com/google/uuid"
 
 	"backend/internal/db_model"
 )
@@ -56,4 +57,19 @@ func (r *CustomerRepository) GetByUsername(username string) (*models.Customer, e
 		return nil, result.Error
 	}
 	return &customer, nil
+}
+
+func (r *CustomerRepository) GetByID(id uuid.UUID) (*models.Customer, error) {
+
+	var customer models.Customer
+	
+	if err := r.db.First(&customer, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	
+	return &customer, nil
+}
+
+func (r *CustomerRepository) Update(customer *models.Customer) error {
+	return r.db.Save(customer).Error
 }

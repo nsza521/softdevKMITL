@@ -1,4 +1,4 @@
-package main
+package seed
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 
 	// "log"
 	// "os"
-	models "backend/internal/db_model"
+	"backend/internal/db_model"
 	"backend/internal/utils"
 
 	"gorm.io/gorm"

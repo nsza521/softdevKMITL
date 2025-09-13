@@ -15,6 +15,7 @@ import (
 	"backend/internal/app"
 	"backend/internal/db_model"
 	"backend/internal/utils"
+	"backend/internal/seed"
 )
 
 func main() {
@@ -72,6 +73,8 @@ func initMySQL() (*gorm.DB, error) {
 		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
+		&models.FoodOrderHistory{},
+		&models.PaymentMethod{},
 		&models.Payment{},
 		&models.Notifications{},
 	); err != nil {
@@ -79,7 +82,7 @@ func initMySQL() (*gorm.DB, error) {
 	}
 	log.Println("Database connected and migrated successfully")
 
-	err = InitAllSeedData(db)
+	err = seed.InitAllSeedData(db)
 	if err != nil {
 		return nil, fmt.Errorf("error seeding database: %v", err)
 	}

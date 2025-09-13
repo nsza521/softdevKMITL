@@ -7,11 +7,10 @@ import (
 
 type FoodOrder struct {
 	Base
-	ReservationID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	ReservationID uuid.UUID `gorm:"type:char(36);constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	// PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	ExpectedTime  time.Time `gorm:"not null"`
 	Status        string    `gorm:"not null;default:'pending'"` // e.g., "pending", "completed", "cancelled"
-
 	FoodOrderItems []FoodOrderItem `gorm:"foreignKey:FoodOrderID"` // one-to-many
 }
 
@@ -19,5 +18,16 @@ type FoodOrderItem struct {
 	Base
 	FoodOrderID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	MenuItemID  uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	AddOnID    *uuid.UUID `gorm:"type:char(36);constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Quantity    int       `gorm:"not null"`
+}
+
+type FoodOrderHistory struct {
+	Base
+	CustomerID    uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	RestaurantID  uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	FoodOrderID   uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	TotalAmount   float32   `gorm:"not null"`
+	OrderDate     time.Time `gorm:"not null"`
 }
