@@ -15,6 +15,7 @@ import (
 	"backend/internal/app"
 	"backend/internal/db_model"
 	"backend/internal/utils"
+	"backend/internal/seed"
 )
 
 func main() {
@@ -35,8 +36,8 @@ func main() {
 		log.Fatalf("Error initializing MinIO: %v", err)
 	}
 
-	app := app.NewApp(db, minioClient)
-	if err := app.Run(); err != nil {
+	application := app.NewApp(db, minioClient)
+	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
 	}
 }
@@ -57,7 +58,7 @@ func initMySQL() (*gorm.DB, error) {
 		return nil, fmt.Errorf("error connecting to database: %v", err)
 	}
 
-	// Migrate the database schema
+	// AutoMigrate
 	if err := db.AutoMigrate(
 		&models.Customer{},
 		&models.Restaurant{},
@@ -72,6 +73,8 @@ func initMySQL() (*gorm.DB, error) {
 		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
+		&models.FoodOrderHistory{},
+		&models.PaymentMethod{},
 		&models.Payment{},
 		&models.Notifications{},
 	); err != nil {
@@ -79,7 +82,7 @@ func initMySQL() (*gorm.DB, error) {
 	}
 	log.Println("Database connected and migrated successfully")
 
-	err = InitAllSeedData(db)
+	err = seed.InitAllSeedData(db)
 	if err != nil {
 		return nil, fmt.Errorf("error seeding database: %v", err)
 	}
@@ -97,8 +100,8 @@ func initMinIO() (*minio.Client, error) {
 	accessKey := os.Getenv("MINIO_ACCESS_KEY")
 	secretKey := os.Getenv("MINIO_SECRET_KEY")
 
-	// prevent path url
-	if endpoint[len(endpoint)-1] == '/' {
+	// prevent trailing slash
+	if len(endpoint) > 0 && endpoint[len(endpoint)-1] == '/' {
 		endpoint = endpoint[:len(endpoint)-1]
 	}
 
@@ -106,7 +109,6 @@ func initMinIO() (*minio.Client, error) {
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: false,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}

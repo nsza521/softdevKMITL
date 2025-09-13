@@ -1,54 +1,46 @@
 .footer {
   width: 100%;
-  height: 80px;
-  background-color: white;
+  max-width: 440px; 
+  height: 6%;
+  background-color:#6D6D6D;
   border-top: 1px gray solid;
   text-align: center;
-  position: sticky; /* หรือ fixed */
+  position: fixed;
   bottom: 0;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 2px 2px 2px rgb(68, 68, 68); 
+  z-index: 1000;
 }
 :global(button) {
   border: none;
 }
 /* ถ้าอยากให้ footer อยู่ด้านล่าง viewport ตลอด */
 .footer-fixed {
-  background-color: white;
-  border-top: 2px gray solid;
-  
+  background-color:#6D6D6D;
 }
 
 .footercontent {
-  height: 80%;
+  height: 100%;
   display: flex;
-  justify-content: space-around;
-}
-.footercontent span{
-  color: rgb(82, 82, 82);
-  font-size: 26px;
+  justify-content: space-between; /* หรือ space-around */
+  align-items: center; /* ให้ icon + text กลางแนวตั้ง */
 }
 
-.footercontent p{
-  color: rgb(73, 73, 73);
-  padding-top: 4px;
-  font-size: 12px;
-}
-.footerdec{
-  height: 20%;
-}
+
 .flogo{
   font-family: var(--font-noto-thai);
-  flex:1;
-  background-color: white;
-  width: 100%;
+  flex: 1; /* ให้ปุ่มเท่า ๆ กัน */
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  background-color:#6D6D6D;
+  color:white;
+  font-size: 10px;
 }
+
 
 .material-symbols-outlined {
   font-variation-settings:
@@ -56,4 +48,7 @@
   'wght' 400,
   'GRAD' 0,
   'opsz' 24
+}
+.active{
+  color: black;
 }
