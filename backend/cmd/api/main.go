@@ -41,8 +41,6 @@ func main() {
 		log.Fatalf("Error starting app: %v", err)
 	}
 
-	RDCAward
-	
 }
 
 func initMySQL() (*gorm.DB, error) {
@@ -89,6 +87,7 @@ func initMySQL() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error seeding database: %v", err)
 	}
+	
 	log.Println("Database seeding completed successfully")
 
 	return db, nil

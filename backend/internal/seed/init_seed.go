@@ -34,6 +34,10 @@ func InitAllSeedData(db *gorm.DB)  error {
 		return fmt.Errorf("error seeding tables and time slots: %v", err)
 	}
 
+	if err := seedFixedForNoodleShop(db); err != nil {
+		return fmt.Errorf("seed noodle shop: %v", err)
+	}
+
 	return nil
 }
 
@@ -119,15 +123,11 @@ func seedMenuTypesAndItems(db *gorm.DB) error {
 	return nil
 }
 
+// seed ต่อ "ร้าน" หนึ่งร้าน
 func seedMenuForRestaurant(db *gorm.DB, restaurantID uuid.UUID) error {
-	// 1) เตรียม/หา MenuType ของร้าน ถ้ามีอยู่แล้วจะไม่สร้างซ้ำ
-	categoryNames := []string{
-		"อาหารจานเดียว",
-		"ของหวาน",
-		"เครื่องดื่ม",
-		"ท็อปปิ้ง",
-	}
-	typeIDMap := make(map[string]uuid.UUID)
+	// 1) สร้าง MenuType ของร้าน (ต่อร้านเท่านั้น)
+	categoryNames := []string{"อาหารจานเดียว", "ของหวาน", "เครื่องดื่ม", "ท็อปปิ้ง"}
+	typeIDMap := make(map[string]uuid.UUID, len(categoryNames))
 
 	for _, name := range categoryNames {
 		mt, err := getOrCreateMenuType(db, restaurantID, name)
@@ -137,13 +137,14 @@ func seedMenuForRestaurant(db *gorm.DB, restaurantID uuid.UUID) error {
 		typeIDMap[name] = mt.ID
 	}
 
-	// 2) สร้าง/หา MenuItem
+	// 2) สร้าง MenuItem "ใหม่ต่อร้าน" แล้วผูกกับ MenuType ของร้านนั้นเท่านั้น
+	//    (เลิกใช้ getOrCreateMenuItem แบบชื่ออย่างเดียว เพื่อกันแชร์ข้ามร้าน)
 	type itemSpec struct {
 		Name        string
 		Price       float64
 		TimeTaken   int
 		Description string
-		Types       []string // จะผูกกับชื่อ MenuType ด้านบน
+		TypeNames   []string // จะผูกกับชื่อ MenuType ด้านบน (ของร้านนี้เท่านั้น)
 	}
 
 	items := []itemSpec{
@@ -155,28 +156,21 @@ func seedMenuForRestaurant(db *gorm.DB, restaurantID uuid.UUID) error {
 	}
 
 	for _, it := range items {
-		menuItem, created, err := getOrCreateMenuItem(db, it.Name, it.Price, it.TimeTaken, it.Description)
+		mi, err := createMenuItemForRestaurant(db, it.Name, it.Price, it.TimeTaken, it.Description)
 		if err != nil {
 			return err
 		}
-
-		// 3) ผูกความสัมพันธ์ผ่าน MenuTag
-		//    - ถ้าพึ่งสร้างใหม่ → ใส่ tag ตาม spec
-		//    - ถ้าเคยมีอยู่แล้ว → ตรวจว่ามี tag ครบหรือยัง ขาดค่อยเติม
-		if created {
-			if err := attachTypes(db, menuItem.ID, it.Types, typeIDMap); err != nil {
-				return err
-			}
-		} else {
-			if err := ensureTypes(db, menuItem.ID, it.Types, typeIDMap); err != nil {
-				return err
-			}
+		if err := attachTypesStrictToRestaurant(db, mi.ID, it.TypeNames, typeIDMap); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
+// ---------- helpers ----------
+
+// ต่อร้าน: หา/สร้าง MenuType ให้ร้านนั้น ๆ
 func getOrCreateMenuType(db *gorm.DB, restaurantID uuid.UUID, typeName string) (*models.MenuType, error) {
 	var mt models.MenuType
 	if err := db.
@@ -184,7 +178,6 @@ func getOrCreateMenuType(db *gorm.DB, restaurantID uuid.UUID, typeName string) (
 		First(&mt).Error; err == nil {
 		return &mt, nil
 	}
-
 	mt = models.MenuType{
 		Type:         typeName,
 		RestaurantID: restaurantID,
@@ -195,26 +188,9 @@ func getOrCreateMenuType(db *gorm.DB, restaurantID uuid.UUID, typeName string) (
 	return &mt, nil
 }
 
-func getOrCreateMenuItem(db *gorm.DB, name string, price float64, timeTaken int, desc string) (*models.MenuItem, bool, error) {
-	var mi models.MenuItem
-	if err := db.Where("name = ?", name).First(&mi).Error; err == nil {
-		// อัปเดตราคา/desc เบา ๆ ให้ทันสมัย (ถ้าต้องการ)
-		mi.Price = price
-		mi.Description = desc
-		if timeTaken > 0 {
-			mi.TimeTaken = timeTaken
-		}
-		if err := db.Model(&models.MenuItem{Base: mi.Base}).Updates(map[string]any{
-			"price":       mi.Price,
-			"time_taken":  mi.TimeTaken,
-			"description": mi.Description,
-		}).Error; err != nil {
-			return nil, false, fmt.Errorf("update menuitem %q: %w", name, err)
-		}
-		return &mi, false, nil
-	}
-
-	mi = models.MenuItem{
+// สร้างเมนูใหม่เสมอ (ต่อร้าน) เพื่อกันแชร์ข้ามร้าน
+func createMenuItemForRestaurant(db *gorm.DB, name string, price float64, timeTaken int, desc string) (*models.MenuItem, error) {
+	mi := models.MenuItem{
 		Name:        name,
 		Price:       price,
 		TimeTaken:   timeTaken,
@@ -224,45 +200,20 @@ func getOrCreateMenuItem(db *gorm.DB, name string, price float64, timeTaken int,
 		mi.TimeTaken = 1
 	}
 	if err := db.Create(&mi).Error; err != nil {
-		return nil, false, fmt.Errorf("create menuitem %q: %w", name, err)
+		return nil, fmt.Errorf("create menuitem %q: %w", name, err)
 	}
-	return &mi, true, nil
+	return &mi, nil
 }
 
-func attachTypes(db *gorm.DB, menuItemID uuid.UUID, typeNames []string, typeIDMap map[string]uuid.UUID) error {
+// ผูก MenuItem ↔ MenuType โดย "ยอมรับเฉพาะ" MenuType ที่เป็นของร้านนี้ (จาก typeIDMap)
+// ถ้าชื่อไม่ตรง map → error ทันที (กันผูกหลุดไปยังร้านอื่น)
+func attachTypesStrictToRestaurant(db *gorm.DB, menuItemID uuid.UUID, typeNames []string, typeIDMap map[string]uuid.UUID) error {
 	for _, n := range typeNames {
-		mtid, ok := typeIDMap[n]
+		mtID, ok := typeIDMap[n]
 		if !ok {
-			return fmt.Errorf("type name %q not found in map", n)
+			return fmt.Errorf("type name %q not found for this restaurant", n)
 		}
-		tag := models.MenuTag{MenuItemID: menuItemID, MenuTypeID: mtid}
-		if err := db.Create(&tag).Error; err != nil {
-			return fmt.Errorf("create menutag: %w", err)
-		}
-	}
-	return nil
-}
-
-func ensureTypes(db *gorm.DB, menuItemID uuid.UUID, typeNames []string, typeIDMap map[string]uuid.UUID) error {
-	// ดึง tag ปัจจุบัน
-	var tags []models.MenuTag
-	if err := db.Where("menu_item_id = ?", menuItemID).Find(&tags).Error; err != nil {
-		return fmt.Errorf("list existing tags: %w", err)
-	}
-	exists := make(map[uuid.UUID]bool, len(tags))
-	for _, t := range tags {
-		exists[t.MenuTypeID] = true
-	}
-	// เติมเฉพาะที่ยังไม่มี
-	for _, n := range typeNames {
-		mtid, ok := typeIDMap[n]
-		if !ok {
-			return fmt.Errorf("type name %q not found in map", n)
-		}
-		if exists[mtid] {
-			continue
-		}
-		tag := models.MenuTag{MenuItemID: menuItemID, MenuTypeID: mtid}
+		tag := models.MenuTag{MenuItemID: menuItemID, MenuTypeID: mtID}
 		if err := db.Create(&tag).Error; err != nil {
 			return fmt.Errorf("create menutag: %w", err)
 		}

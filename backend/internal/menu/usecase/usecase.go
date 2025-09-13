@@ -21,16 +21,16 @@ func (u *menuUsecase) ListByRestaurant(ctx context.Context, restaurantID uuid.UU
 
 	out := make([]interfaces.MenuItemBrief, 0, len(items))
 	for _, m := range items {
-		typeIDs := make([]uuid.UUID, 0, len(m.MenuTypes))
+		// typeIDs := make([]uuid.UUID, 0, len(m.MenuTypes))
 		types   := make([]interfaces.MenuTypeBrief, 0, len(m.MenuTypes))
 		for _, t := range m.MenuTypes {
-			typeIDs = append(typeIDs, t.ID)
+			// typeIDs = append(typeIDs, t.ID)
 			types   = append(types, interfaces.MenuTypeBrief{ID: t.ID, Type: t.Type})
 		}
 		out = append(out, interfaces.MenuItemBrief{
 			ID: m.ID, Name: m.Name, Price: m.Price, MenuPic: m.MenuPic,
 			TimeTaken: m.TimeTaken, Description: m.Description,
-			MenuTypeIDs: typeIDs,
+			// MenuTypeIDs: typeIDs,
 			Types:       types, // 👈 ติด tag รายละเอียดมาด้วย
 		})
 	}
