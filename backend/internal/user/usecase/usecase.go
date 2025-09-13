@@ -1,48 +1,54 @@
 package usecase
 
 import (
-	"fmt"
+	// "fmt"
 	"time"
 
 	// "github.com/google/uuid"
 
-	"backend/internal/user/dto"
+	// "backend/internal/user/dto"
 	"backend/internal/user/interfaces"
 	"backend/internal/utils"
-	customerInterfaces "backend/internal/customer/interfaces"
-	restaurantInterfaces "backend/internal/restaurant/interfaces"
+	// customerInterfaces "backend/internal/customer/interfaces"
+	// restaurantInterfaces "backend/internal/restaurant/interfaces"
 )
 
 type UserUsecase struct {
 	userRepository   interfaces.UserRepository
-	customerUsecase  customerInterfaces.CustomerUsecase
-	restaurantUsecase restaurantInterfaces.RestaurantUsecase
+	// customerUsecase  customerInterfaces.CustomerUsecase
+	// restaurantUsecase restaurantInterfaces.RestaurantUsecase
 }
 
-func NewUserUsecase(userRepository interfaces.UserRepository, 
-					customerUsecase customerInterfaces.CustomerUsecase, 
-					restaurantUsecase restaurantInterfaces.RestaurantUsecase) interfaces.UserUsecase {
+func NewUserUsecase(userRepository interfaces.UserRepository) interfaces.UserUsecase {
 	return &UserUsecase{
 		userRepository:  	userRepository,
-		customerUsecase:    customerUsecase,
-		restaurantUsecase:  restaurantUsecase,
 	}
 }
 
-func (u *UserUsecase) Login(request *dto.LoginRequest) (string, error) {
-	token, err := u.customerUsecase.Login(request)
-	if err == nil {
-		return token, nil
-	}
+// func NewUserUsecase(userRepository interfaces.UserRepository, 
+// 					customerUsecase customerInterfaces.CustomerUsecase, 
+// 					restaurantUsecase restaurantInterfaces.RestaurantUsecase) interfaces.UserUsecase {
+// 	return &UserUsecase{
+// 		userRepository:  	userRepository,
+// 		customerUsecase:    customerUsecase,
+// 		restaurantUsecase:  restaurantUsecase,
+// 	}
+// }
 
-	token, err = u.restaurantUsecase.Login(request)
-	if err == nil {
-		return token, nil
-	}
+// func (u *UserUsecase) Login(request *dto.LoginRequest) (string, error) {
+// 	token, err := u.customerUsecase.Login(request)
+// 	if err == nil {
+// 		return token, nil
+// 	}
 
-	return "", fmt.Errorf("invalid username or password")
+// 	token, err = u.restaurantUsecase.Login(request)
+// 	if err == nil {
+// 		return token, nil
+// 	}
 
-}
+// 	return "", fmt.Errorf("invalid username or password")
+
+// }
 
 
 func (u *UserUsecase) Logout(token string, expiry time.Time) error {
