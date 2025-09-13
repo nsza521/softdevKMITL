@@ -1,18 +1,36 @@
 package http
 
 import (
-	// "github.com/gin-gonic/gin"
+	"net/http"
 
-	"backend/internal/menu/interfaces"
-	// "backend/internal/menu/dto"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	menuuc "backend/internal/menu/interfaces"
 )
 
-type MenuHandler struct {
-	menuUsecase interfaces.MenuUsecase
-}
+type MenuHandler struct{ uc menuuc.MenuUsecase }
 
-func NewMenuHandler(menuUsecase interfaces.MenuUsecase) interfaces.MenuHandler {
-	return &MenuHandler{
-		menuUsecase: menuUsecase,
+func NewMenuHandler(uc menuuc.MenuUsecase) *MenuHandler { return &MenuHandler{uc: uc} }
+
+// GET /food/menu/restaurant/:restaurantID/items
+func (h *MenuHandler) ListByRestaurant(c *gin.Context) {
+	
+	rid, err := uuid.Parse(c.Param("restaurantID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid restaurant id"})
+		return
 	}
+
+	CheckRestaurantExistsErr := h.uc.CheckRestaurantExists(c.Request.Context(), rid)
+	if CheckRestaurantExistsErr != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "restaurant not found"})
+		return
+	}
+
+	out, err := h.uc.ListByRestaurant(c.Request.Context(), rid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, out)
 }
