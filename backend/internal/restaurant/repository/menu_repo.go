@@ -11,15 +11,15 @@ import (
     "backend/internal/restaurant/interfaces"
 )
 
-type menuRepository struct {
+type MenuRepository struct {
     db *gorm.DB
 }
 
-func NewMenuRepository(db *gorm.DB) *menuRepository {
-    return &menuRepository{db}
+func NewMenuRepository(db *gorm.DB) *MenuRepository {
+    return &MenuRepository{db}
 }
 
-func (r *menuRepository) FindItemsByRestaurant(ctx context.Context, restaurantID string, q interfaces.MenuQuery) ([]models.MenuItem, int64, error) {
+func (r *MenuRepository) FindItemsByRestaurant(ctx context.Context, restaurantID string, q interfaces.MenuQuery) ([]models.MenuItem, int64, error) {
     // ตารางตาม default naming ของ GORM: menus, menu_items
     base := r.db.WithContext(ctx).
         Model(&models.MenuItem{}).
