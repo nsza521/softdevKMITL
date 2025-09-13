@@ -9,15 +9,22 @@ import (
 
 	"backend/internal/user/dto"
 	"backend/internal/user/interfaces"
+	customerInterfaces "backend/internal/customer/interfaces"
+	restaurantInterfaces "backend/internal/restaurant/interfaces"
 )
 
 type UserHandler struct {
-	userUsecase interfaces.UserUsecase
+	userUsecase         interfaces.UserUsecase
+	customerUsecase     customerInterfaces.CustomerUsecase
+	restaurantUsecase   restaurantInterfaces.RestaurantUsecase
 }
 
-func NewUserHandler(userUsecase interfaces.UserUsecase) interfaces.UserHandler {
+func NewUserHandler(userUsecase interfaces.UserUsecase, customerusecase customerInterfaces.CustomerUsecase,
+	restaurantusecase restaurantInterfaces.RestaurantUsecase) interfaces.UserHandler {
 	return &UserHandler{
 		userUsecase: userUsecase,
+		customerUsecase: customerusecase,
+		restaurantUsecase: restaurantusecase,
 	}
 }
 
@@ -31,10 +38,13 @@ func (h *UserHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		token, err := h.userUsecase.Login(request)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
+		token, _ := h.customerUsecase.Login(request)
+		if token == "" {
+			token, _ = h.restaurantUsecase.Login(request)
+			if token == "" {
+				c.JSON(401, gin.H{"error": "invalid username or password"})
+				return
+			}
 		}
 		
 		c.JSON(200, gin.H{"token": token})
