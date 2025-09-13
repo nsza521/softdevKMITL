@@ -2,17 +2,17 @@ package interfaces
 
 import (
 	"time"
-	// "github.com/google/uuid"
-
+	"github.com/gin-gonic/gin"
 	"backend/internal/user/dto"
 )
 
-type CustomerLogin interface {
-    Login(*dto.LoginRequest) (string, error)
+type UserHandler interface {
+	Login() gin.HandlerFunc
+	Logout() gin.HandlerFunc
 }
 
-type RestaurantLogin interface {
-    Login(*dto.LoginRequest) (string, error)
+type UserRepository interface {
+
 }
 
 type UserUsecase interface {

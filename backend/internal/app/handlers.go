@@ -29,10 +29,6 @@ import (
 	foodOrderUsecase "backend/internal/order/usecase"
 	foodOrderRepository "backend/internal/order/repository"
 
-	menuHttp "backend/internal/menu/delivery/http"
-	menuUsecase "backend/internal/menu/usecase"
-	menuRepository "backend/internal/menu/repository"
-
 	notiHttp "backend/internal/notifications/delivery/http"
 	notiUsecase "backend/internal/notifications/usecase"
 	notiRepository "backend/internal/notifications/repository"
@@ -45,7 +41,6 @@ func (s *App) MapHandlers() error {
 	restaurantGroup := s.gin.Group("/restaurant")
 	tableGroup := s.gin.Group("/table")
 	tableReservationGroup := s.gin.Group("/table/reservation")
-	menuGroup := s.gin.Group("/food/menu")
 	foodOrderGroup := s.gin.Group("/food/order")
 	notificationGroup := s.gin.Group("/notification")
 	paymentGroup := s.gin.Group("/payment")
@@ -85,12 +80,6 @@ func (s *App) MapHandlers() error {
 	paymentUsecase := paymentUsecase.NewPaymentUsecase(paymentRepository)
 	paymentHandler := paymentHttp.NewPaymentHandler(paymentUsecase)
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
-
-	// Menu group
-	menuRepository := menuRepository.NewMenuRepository(s.db)
-	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
-	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
-	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
 
 	// Food Order Group
 	foodOrderRepository := foodOrderRepository.NewFoodOrderRepository(s.db)
