@@ -1,12 +1,12 @@
-# Use Go 1.24
-FROM golang:latest
+# Use Go latest image as base
+FROM golang:latest AS dev
 
 WORKDIR /app
 
 # Install Air for hot reload
 RUN go install github.com/air-verse/air@latest
 
-# Copy go.mod and go.sum first to leverage Docker cache
+# Copy go mod files and download deps
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -14,4 +14,4 @@ RUN go mod download
 COPY . .
 
 # Set Air as the entrypoint
-CMD ["air"]
+CMD ["air", "-c", ".air.toml"]

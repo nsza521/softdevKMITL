@@ -12,6 +12,8 @@ tmp_dir = "tmp"
   exclude_dir = ["assets", "tmp", "vendor"]
 
   poll = true
+  poll_interval = 1000 # 1s
+
 [log]
   level = "debug"
 
