@@ -73,6 +73,8 @@ func initMySQL() (*gorm.DB, error) {
 		&models.MenuTag{},
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
+		&models.FoodOrderHistory{},
+		&models.PaymentMethod{},
 		&models.Payment{},
 		&models.Notifications{},
 	); err != nil {
