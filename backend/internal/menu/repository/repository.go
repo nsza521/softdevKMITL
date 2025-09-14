@@ -102,3 +102,11 @@ func (r *menuRepo) LoadMenuItemWithTypes(ctx context.Context, id uuid.UUID) (*mo
 	}
 	return &m, nil
 }
+
+func (r *menuRepo) GetMenuItemByID(ctx context.Context, id uuid.UUID) (*models.MenuItem, error) {
+	var m models.MenuItem
+	if err := r.db.WithContext(ctx).First(&m, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &m, nil
+}

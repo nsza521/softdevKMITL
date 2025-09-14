@@ -20,5 +20,7 @@ type MenuRepository interface {
 
 	VerifyMenuTypesBelongToRestaurant(ctx context.Context, restaurantID uuid.UUID, typeIDs []uuid.UUID) error
 	LoadMenuItemWithTypes(ctx context.Context, id uuid.UUID) (*models.MenuItem, error)
+
+	GetMenuItemByID(ctx context.Context, id uuid.UUID) (*models.MenuItem, error)
 	
 }

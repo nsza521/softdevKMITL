@@ -3,10 +3,13 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
+	"mime/multipart"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"backend/internal/db_model"
+	"backend/internal/utils"
 	iface "backend/internal/menu/interfaces"
 )
 
@@ -53,8 +56,11 @@ func (u *menuUsecase) CreateMenuItem(ctx context.Context, restaurantID uuid.UUID
 		return nil, err
 	}
 	mi := &models.MenuItem{
-		Name: in.Name, Price: in.Price, MenuPic: in.MenuPic,
-		TimeTaken: in.TimeTaken, Description: in.Description,
+		Name: in.Name, Price: in.Price, 
+		MenuPic: in.MenuPic,
+		TimeTaken: in.TimeTaken, 
+		Description: in.Description,
+		RestaurantID: restaurantID,
 	}
 	if mi.TimeTaken == 0 { mi.TimeTaken = 1 }
 	if err := u.repo.CreateMenuItem(ctx, mi); err != nil { return nil, err }
@@ -118,4 +124,50 @@ func toBrief(m *models.MenuItem) iface.MenuItemBrief {
 		// MenuTypeIDs: typeIDs, 
 		Types: types,
 	}
+}
+
+func (u *menuUsecase) UploadMenuItemPicture(ctx context.Context, restaurantID uuid.UUID, itemID uuid.UUID, file *multipart.FileHeader) (string, error) {
+
+	// Check if menu item exists
+	menuItem, err := u.repo.GetMenuItemByID(ctx, itemID)
+	if err != nil {
+		return "", err
+	}
+	if menuItem.RestaurantID != restaurantID {
+		return "", errors.New("menu item does not belong to this restaurant")
+	}
+
+	// Open file
+	fileContent, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer fileContent.Close()
+
+	// Upload to MinIO
+	const bucketName = "restaurant-pictures"
+	const subBucket = "menu-items"
+	filename := restaurantID.String()
+	objectName := fmt.Sprintf("%s/%s", subBucket, filename)
+
+	url, err := utils.UploadImage(fileContent, file, bucketName, objectName, u.minioClient)
+	if err != nil {
+		return "", err
+	}
+
+	// Update restaurant profile picture URL
+	if menuItem != nil {
+		menuItem.MenuPic = &url
+	}
+	err = u.repo.UpdateMenuItem(ctx, menuItem.ID, map[string]any{"menu_pic": menuItem.MenuPic})
+	if err != nil {
+		return "", err
+	}
+
+	// presignURL, err := utils.GetPresignedURL(u.minioClient, bucketName, objectName)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	return url, nil
 }

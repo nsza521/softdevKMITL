@@ -3,6 +3,7 @@ package interfaces
 
 import (
 	"context"
+	"mime/multipart"
 	"github.com/google/uuid"
 )
 
@@ -49,4 +50,5 @@ type MenuUsecase interface {
 	CreateMenuItem(ctx context.Context, restaurantID uuid.UUID, in *CreateMenuItemRequest) (*MenuItemBrief, error)
 	UpdateMenuItem(ctx context.Context, menuItemID uuid.UUID, in *UpdateMenuItemRequest) (*MenuItemBrief, error)
 	DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) error
+	UploadMenuItemPicture(ctx context.Context, restaurantID, menuItemID uuid.UUID, file *multipart.FileHeader) (string, error)
 }

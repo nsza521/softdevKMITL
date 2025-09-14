@@ -61,7 +61,7 @@ func seedMenuForRestaurant(db *gorm.DB, restaurantID uuid.UUID) error {
 	}
 
 	for _, it := range items {
-		menuItem, created, err := getOrCreateMenuItem(db, it.Name, it.Price, it.TimeTaken, it.Description)
+		menuItem, created, err := getOrCreateMenuItem(db, restaurantID, it.Name, it.Price, it.TimeTaken, it.Description)
 		if err != nil {
 			return err
 		}
@@ -101,9 +101,9 @@ func getOrCreateMenuType(db *gorm.DB, restaurantID uuid.UUID, typeName string) (
 	return &mt, nil
 }
 
-func getOrCreateMenuItem(db *gorm.DB, name string, price float64, timeTaken int, desc string) (*models.MenuItem, bool, error) {
+func getOrCreateMenuItem(db *gorm.DB, restaurantID uuid.UUID, name string, price float64, timeTaken int, desc string) (*models.MenuItem, bool, error) {
 	var mi models.MenuItem
-	if err := db.Where("name = ?", name).First(&mi).Error; err == nil {
+	if err := db.Where("name = ? AND restaurant_id = ?", name, restaurantID).First(&mi).Error; err == nil {
 		// อัปเดตราคา/desc เบา ๆ ให้ทันสมัย (ถ้าต้องการ)
 		mi.Price = price
 		mi.Description = desc
@@ -125,6 +125,7 @@ func getOrCreateMenuItem(db *gorm.DB, name string, price float64, timeTaken int,
 		Price:       price,
 		TimeTaken:   timeTaken,
 		Description: desc,
+		RestaurantID: restaurantID,
 	}
 	if mi.TimeTaken == 0 {
 		mi.TimeTaken = 1
