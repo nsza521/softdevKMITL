@@ -16,6 +16,7 @@ type MenuType struct {
 
 type MenuItem struct {
 	Base
+	RestaurantID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Name        string     `gorm:"not null"`
 	Price       float64    `gorm:"not null"`
 	MenuPic     *string    `gorm:"type:text"`
