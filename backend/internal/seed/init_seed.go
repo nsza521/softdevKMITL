@@ -27,6 +27,10 @@ func InitAllSeedData(db *gorm.DB)  error {
 		return fmt.Errorf("error seeding tables and time slots: %v", err)
 	}
 
+	if err := seedFixedForNoodleShop(db); err != nil {
+		return fmt.Errorf("seed noodle shop: %v", err)
+	}
+
 	return nil
 }
 
