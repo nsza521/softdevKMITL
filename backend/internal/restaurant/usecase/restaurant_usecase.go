@@ -111,10 +111,11 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 	var restaurantDetails []dto.RestaurantDetailResponse
 	for _, r := range restaurants {
 		detail := dto.RestaurantDetailResponse{
-			ID:        r.ID,
-			Username:  r.Username,
+			ID:         r.ID,
+			Username:   r.Username,
 			PictureURL: r.ProfilePic,
-			Email:     r.Email,
+			Email:      r.Email,
+			Status:     r.Status,
 		}
 		restaurantDetails = append(restaurantDetails, detail)
 	}
@@ -165,3 +166,18 @@ func (u *RestaurantUsecase) UploadProfilePicture(restaurantID uuid.UUID, file *m
 	return url, nil
 }
 
+func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error {
+	// Check if restaurant exists
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return err
+	}
+
+	// Update status
+	if request.Status != "" {
+		restaurant.Status = request.Status
+		return u.restaurantRepository.Update(restaurant)
+	}
+
+	return nil
+}
