@@ -84,7 +84,7 @@ func (r *RestaurantRepository) GetAll() ([]*models.Restaurant, error) {
 
 	var restaurants []*models.Restaurant
 
-	result := r.db.Find(&restaurants)
+	result := r.db.Order("created_at ASC").Find(&restaurants)
 	if result.Error != nil {
 		return nil, result.Error
 	}

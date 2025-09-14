@@ -61,11 +61,11 @@ func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "User unauthorized"})
 			return
 		}
-		role, exist := c.Get("role")
-		if !exist || role.(string) != "customer" {
-			c.JSON(401, gin.H{"error": "User unauthorized"})
-			return
-		}
+		// role, exist := c.Get("role")
+		// if !exist || role.(string) != "customer" {
+		// 	c.JSON(401, gin.H{"error": "User unauthorized"})
+		// 	return
+		// }
 
 		restaurants, err := h.restaurantUsecase.GetAll()
 		if err != nil {
@@ -115,5 +115,41 @@ func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 		}
 
 		c.JSON(200, gin.H{"message": "Restaurant profile picture uploaded successfully", "url": url})
+	}
+}
+
+func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		userID, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(401, gin.H{"error": "User unauthorized"})
+			return
+		}
+		role, exists := c.Get("role")
+		if !exists || role.(string) != "restaurant" {
+			c.JSON(401, gin.H{"error": "Restaurant unauthorized"})
+			return
+		}
+
+		restaurantID, err := uuid.Parse(userID.(string))
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Invalid restaurant ID"})
+			return
+		}
+
+		var request *dto.ChangeStatusRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		err = h.restaurantUsecase.ChangeStatus(restaurantID, request)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "Restaurant status changed successfully"})
 	}
 }
