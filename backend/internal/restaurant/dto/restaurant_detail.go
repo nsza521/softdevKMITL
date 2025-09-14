@@ -9,4 +9,9 @@ type RestaurantDetailResponse struct {
 	Username  string  `json:"username"`
 	PictureURL *string `json:"picture_url"`
 	Email     string `json:"email"`
+	Status    string `json:"status"`
+}
+
+type ChangeStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=open closed"`
 }

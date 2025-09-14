@@ -16,6 +16,7 @@ type RestaurantHandler interface {
 	Login() gin.HandlerFunc
 	GetAll() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
+	ChangeStatus() gin.HandlerFunc
 }
 
 type RestaurantRepository interface {
@@ -33,4 +34,5 @@ type RestaurantUsecase interface {
 	Login(request *user.LoginRequest) (string, error)
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
+	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
 }
