@@ -94,3 +94,7 @@ func (r *RestaurantRepository) GetAll() ([]*models.Restaurant, error) {
 func (r *RestaurantRepository) CreateBankAccount(bankAccount *models.BankAccount) error {
 	return r.db.Create(bankAccount).Error
 }
+
+func (r *RestaurantRepository) Update(restaurant *models.Restaurant) error {
+	return r.db.Save(&restaurant).Error
+}

@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"fmt"
+	"mime/multipart"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
 
 	"backend/internal/restaurant/interfaces"
 	"backend/internal/restaurant/dto"
@@ -14,12 +17,14 @@ import (
 type RestaurantUsecase struct {
 	restaurantRepository interfaces.RestaurantRepository
 	menuRepository       menuInterfaces.MenuRepository
+	minioClient          *minio.Client
 }
 
-func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository menuInterfaces.MenuRepository) interfaces.RestaurantUsecase {
+func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository menuInterfaces.MenuRepository, minioClient *minio.Client) interfaces.RestaurantUsecase {
 	return &RestaurantUsecase{
 		restaurantRepository: restaurantRepository,
 		menuRepository:       menuRepository,
+		minioClient:          minioClient,
 	}
 }
 
@@ -116,3 +121,47 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 
 	return restaurantDetails, nil
 }
+
+func (u *RestaurantUsecase) UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error) {
+
+	// Check if restaurant exists
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return "", err
+	}
+
+	// Open file
+	fileContent, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer fileContent.Close()
+
+	// Upload to MinIO
+	const bucketName = "restaurant-pictures"
+	const subBucket = "restaurants"
+	filename := restaurantID.String()
+	objectName := fmt.Sprintf("%s/%s", subBucket, filename)
+
+	url, err := utils.UploadImage(fileContent, file, bucketName, objectName, u.minioClient)
+	if err != nil {
+		return "", err
+	}
+
+	// Update restaurant profile picture URL
+	if restaurant != nil {
+		restaurant.ProfilePic = &url
+	}
+	err = u.restaurantRepository.Update(restaurant)
+	if err != nil {
+		return "", err
+	}
+
+	// presignURL, err := utils.GetPresignedURL(u.minioClient, bucketName, objectName)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	return url, nil
+}
+

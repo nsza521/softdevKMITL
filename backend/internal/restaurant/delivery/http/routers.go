@@ -10,4 +10,5 @@ import (
 func MapRestaurantRoutes(restaurantGroup *gin.RouterGroup, restaurantHandler interfaces.RestaurantHandler) {
 	restaurantGroup.POST("/register", restaurantHandler.Register())
 	restaurantGroup.GET("/all", middleware.AuthMiddleware(), restaurantHandler.GetAll())
+	restaurantGroup.POST("/upload_pic", middleware.AuthMiddleware(), restaurantHandler.UploadProfilePicture())
 }

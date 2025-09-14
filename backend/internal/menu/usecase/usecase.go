@@ -5,12 +5,22 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
+
 	interfaces "backend/internal/menu/interfaces"
 )
 
-type menuUsecase struct{ repo interfaces.MenuRepository }
+type menuUsecase struct{ 
+	repo interfaces.MenuRepository 
+	minioClient *minio.Client
+}
 
-func NewMenuUsecase(r interfaces.MenuRepository) interfaces.MenuUsecase { return &menuUsecase{repo: r} }
+func NewMenuUsecase(r interfaces.MenuRepository, minioClient *minio.Client) interfaces.MenuUsecase { 
+	return &menuUsecase{
+		repo: r, 
+		minioClient: minioClient,
+	} 
+}
 
 func (u *menuUsecase) ListByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]interfaces.MenuItemBrief, error) {
 

@@ -58,13 +58,13 @@ func (s *App) MapHandlers() error {
 
 	// Menu Group
 	menuRepository := menuRepository.NewMenuRepository(s.db)
-	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository)
+	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository, s.minio)
 	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
 	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
 
 	// Restaurant Group
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
-	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository)
+	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository, s.minio)
 	restaurantHandler := restaurantHttp.NewRestaurantHandler(restaurantUsecase)
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
 
