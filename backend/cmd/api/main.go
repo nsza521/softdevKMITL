@@ -95,7 +95,7 @@ func initMySQL() (*gorm.DB, error) {
 
 func initMinIO() (*minio.Client, error) {
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
+	endpoint := os.Getenv("MINIO_INTERNAL_ENDPOINT")
 	if endpoint == "" {
 		endpoint = "minio:9000" // default for docker compose
 	}

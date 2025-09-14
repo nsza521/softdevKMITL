@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"mime/multipart"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -13,6 +15,7 @@ type RestaurantHandler interface {
 	Register() gin.HandlerFunc
 	Login() gin.HandlerFunc
 	GetAll() gin.HandlerFunc
+	UploadProfilePicture() gin.HandlerFunc
 }
 
 type RestaurantRepository interface {
@@ -22,10 +25,12 @@ type RestaurantRepository interface {
 	GetByID(id uuid.UUID) (*models.Restaurant, error)
 	GetAll() ([]*models.Restaurant, error)
 	CreateBankAccount(bankAccount *models.BankAccount) error
+	Update(restaurant *models.Restaurant) error
 }
 
 type RestaurantUsecase interface {
 	Register(request *dto.RegisterRestaurantRequest) error
 	Login(request *user.LoginRequest) (string, error)
 	GetAll() ([]dto.RestaurantDetailResponse, error)
+	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 }

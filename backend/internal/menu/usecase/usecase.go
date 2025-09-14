@@ -5,13 +5,22 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	models "backend/internal/db_model"
+	"github.com/minio/minio-go/v7"
+	"backend/internal/db_model"
 	iface "backend/internal/menu/interfaces"
 )
 
-type menuUsecase struct{ repo iface.MenuRepository }
+type menuUsecase struct{ 
+	repo iface.MenuRepository 
+	minioClient *minio.Client
+}
 
-func NewMenuUsecase(r iface.MenuRepository) iface.MenuUsecase { return &menuUsecase{repo: r} }
+func NewMenuUsecase(r iface.MenuRepository, minioClient *minio.Client) iface.MenuUsecase { 
+	return &menuUsecase{
+		repo: r, 
+		minioClient: minioClient,
+	} 
+}
 
 func (u *menuUsecase) ListByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]iface.MenuItemBrief, error) {
 	items, err := u.repo.ListMenuByRestaurant(ctx, restaurantID)
