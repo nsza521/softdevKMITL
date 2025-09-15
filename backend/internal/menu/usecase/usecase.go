@@ -72,7 +72,7 @@ func (u *menuUsecase) CreateMenuItem(ctx context.Context, restaurantID uuid.UUID
 	return &resp, nil
 }
 
-func (u *menuUsecase) UpdateMenuItem(ctx context.Context, id uuid.UUID, in *iface.UpdateMenuItemRequest) (*iface.MenuItemBrief, error) {
+func (u *menuUsecase) UpdateMenuItem(ctx context.Context, restaurantID uuid.UUID, id uuid.UUID, in *iface.UpdateMenuItemRequest) (*iface.MenuItemBrief, error) {
 	if in == nil {
 		return nil, errors.New("nil request")
 	}
@@ -107,7 +107,7 @@ func (u *menuUsecase) UpdateMenuItem(ctx context.Context, id uuid.UUID, in *ifac
 }
 
 
-func (u *menuUsecase) DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) error {
+func (u *menuUsecase) DeleteMenuItem(ctx context.Context, restaurantID uuid.UUID, menuItemID uuid.UUID) error {
 	return u.repo.DeleteMenuItem(ctx, menuItemID)
 }
 

@@ -18,6 +18,11 @@ func seedMenuTypesAndItems(db *gorm.DB) error {
 	}
 
 	for _, rest := range restaurants {
+
+		if rest.Username == "restaurant_noodle" {
+			continue
+		}
+
 		if err := seedMenuForRestaurant(db, rest.ID); err != nil {
 			return err
 		}

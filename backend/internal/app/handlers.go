@@ -2,40 +2,40 @@ package app
 
 import (
 	userHttp "backend/internal/user/delivery/http"
-	userUsecase "backend/internal/user/usecase"
 	userRepository "backend/internal/user/repository"
+	userUsecase "backend/internal/user/usecase"
 
-	customerHttp"backend/internal/customer/delivery/http"
-	customerUsecase "backend/internal/customer/usecase"
+	customerHttp "backend/internal/customer/delivery/http"
 	customerRepository "backend/internal/customer/repository"
+	customerUsecase "backend/internal/customer/usecase"
 
 	restaurantHttp "backend/internal/restaurant/delivery/http"
-	restaurantUsecase "backend/internal/restaurant/usecase"
 	restaurantRepository "backend/internal/restaurant/repository"
+	restaurantUsecase "backend/internal/restaurant/usecase"
 
 	tableHttp "backend/internal/table/delivery/http"
-	tableUsecase "backend/internal/table/usecase"
 	tableRepository "backend/internal/table/repository"
+	tableUsecase "backend/internal/table/usecase"
 
 	tableReservationHttp "backend/internal/reservation/delivery/http"
-	tableReservationUsecase "backend/internal/reservation/usecase"
 	tableReservationRepository "backend/internal/reservation/repository"
+	tableReservationUsecase "backend/internal/reservation/usecase"
 
 	paymentHttp "backend/internal/payment/delivery/http"
-	paymentUsecase "backend/internal/payment/usecase"
 	paymentRepository "backend/internal/payment/repository"
+	paymentUsecase "backend/internal/payment/usecase"
 
 	foodOrderHttp "backend/internal/order/delivery/http"
-	foodOrderUsecase "backend/internal/order/usecase"
 	foodOrderRepository "backend/internal/order/repository"
+	foodOrderUsecase "backend/internal/order/usecase"
 
 	notiHttp "backend/internal/notifications/delivery/http"
-	notiUsecase "backend/internal/notifications/usecase"
 	notiRepository "backend/internal/notifications/repository"
+	notiUsecase "backend/internal/notifications/usecase"
 
 	menuHttp "backend/internal/menu/delivery/http"
-	menuUsecase "backend/internal/menu/usecase"
-	menuRepository "backend/internal/menu/repository"
+	menuRepo "backend/internal/menu/repository"
+	menuUC "backend/internal/menu/usecase"
 )
 
 func (s *App) MapHandlers() error {
@@ -56,19 +56,23 @@ func (s *App) MapHandlers() error {
 	customerHandler := customerHttp.NewCustomerHandler(customerUsecase)
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
-	// Menu Group
-	menuRepository := menuRepository.NewMenuRepository(s.db)
-	menuUsecase := menuUsecase.NewMenuUsecase(menuRepository, s.minio)
-	menuHandler := menuHttp.NewMenuHandler(menuUsecase)
-	menuHttp.MapMenuRoutes(menuGroup, menuHandler)
+	// --- MenuItem (ของเดิม) ---
+	mRepo := menuRepo.NewMenuRepository(s.db)
+	mUC := menuUC.NewMenuUsecase(mRepo, s.minio)
+	mH := menuHttp.NewMenuHandler(mUC)
+	menuHttp.MapMenuRoutes(menuGroup, mH)
+
+	// --- MenuType (ของใหม่) ---
+	mtRepo := menuRepo.NewMenuTypeRepository(s.db)
+	mtUC := menuUC.NewMenuTypeUsecase(mtRepo)
+	mtH := menuHttp.NewMenuTypeHandler(mtUC)
+	menuHttp.MapMenuTypeRoutes(menuGroup, mtH)
 
 	// Restaurant Group
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
-	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, menuRepository, s.minio)
+	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, mRepo, s.minio)
 	restaurantHandler := restaurantHttp.NewRestaurantHandler(restaurantUsecase)
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
-
-
 
 	// User Group
 	userRepository := userRepository.NewUserRepository(s.db)
@@ -82,7 +86,7 @@ func (s *App) MapHandlers() error {
 	tableUsecase := tableUsecase.NewTableUsecase(tableRepository)
 	tableHandler := tableHttp.NewTableHandler(tableUsecase)
 	tableHttp.MapTableRoutes(tableGroup, tableHandler)
-	
+
 	// Table Reservation Group
 	tableReservationRepository := tableReservationRepository.NewTableReservationRepository(s.db)
 	tableReservationUsecase := tableReservationUsecase.NewTableReservationUsecase(tableReservationRepository)
