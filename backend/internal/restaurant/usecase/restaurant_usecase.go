@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"strings"
 	"mime/multipart"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -55,9 +56,11 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 		return err
 	}
 
+	username := strings.TrimSpace(request.Username)
+
 	// Create new restaurant
 	restaurant := models.Restaurant{
-		Username:     request.Username,
+		Username:     username,
 		Email:        request.Email,
 		Password:     hashedPassword,
 	}
