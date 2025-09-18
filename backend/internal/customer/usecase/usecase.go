@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -49,12 +50,16 @@ func (u *CustomerUsecase) Register(request *dto.RegisterCustomerRequest) error {
 		return err
 	}
 
+	firstName := strings.TrimSpace(strings.ToLower(request.FirstName))
+	lastName := strings.TrimSpace(strings.ToLower(request.LastName))
+	username := strings.TrimSpace(request.Username)
+
 	// Create new customer
 	customer := models.Customer{
-		Username:     request.Username,
+		Username:     username,
 		Email:        request.Email,
-		FirstName:    request.FirstName,
-		LastName:     request.LastName,
+		FirstName:    firstName,
+		LastName:     lastName,
 		Password:     hashedPassword,
 	}
 
@@ -131,3 +136,29 @@ func (u *CustomerUsecase) EditProfile(customerID uuid.UUID, request *dto.EditPro
 
 	return u.customerRepository.Update(customer)
 }
+
+func (u *CustomerUsecase) GetFullnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFullnameResponse, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil {
+		return nil, fmt.Errorf("customer not found")
+	}
+
+	customer, err = u.customerRepository.GetByUsername(request.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	name, err := utils.ToTitleCase(customer.FirstName, customer.LastName)
+	if err != nil {
+		return nil, err
+	}
+	fullName := &dto.GetFullnameResponse{
+		Fullname: name,
+	}
+
+	return fullName, nil
+}
+
