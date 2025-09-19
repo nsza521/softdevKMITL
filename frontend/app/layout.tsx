@@ -13,7 +13,7 @@ const notoThai = Noto_Sans_Thai({
 });
 
 const titleGroups: Record<string, string[]> = {
-  "จองโต๊ะ": ["/reserve", "/reserveSelectTime"],
+  "จองโต๊ะ": ["/reserve", "/reserveSelectTime", "/reserveSelectTable", "/reserveFillUsr"],
   "หน้าหลัก": ["/home",],
   "ประวัติ" : ["/history"],
 };
@@ -31,6 +31,8 @@ export default function RootLayout({ children, metadata }: any) {
   // กำหนด path ที่ไม่ต้องการ Navbar + Footer
   const hiddenLayoutRoutes = ["/login", "/signup", "/restaurant"];
   const isHiddenLayout = hiddenLayoutRoutes.includes(pathname);
+  const fullScreenLayoutRoutes = ["/restaurant"];
+  const isFullScreen = fullScreenLayoutRoutes.includes(pathname);
 
   return (
     <html lang="th" className={notoThai.className}>
@@ -47,6 +49,8 @@ export default function RootLayout({ children, metadata }: any) {
           flexDirection: "column",
           minHeight: "100vh",
         }}
+
+        className={isFullScreen ? "fullscreen-layout" : "mobile-layout"}
       >
         {isHiddenLayout ? (
           children

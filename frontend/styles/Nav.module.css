@@ -1,12 +1,14 @@
 .nav{
     background-color: #6D6D6D;
     width: 100%;
+    max-width: 440px; 
     height: 48px;
     display: flex;
     align-items: center;
     justify-content: flex-start; /* ลูกตัวแรกจะอยู่ซ้าย */
     color: #FFFFFF;
     position: fixed;
+    z-index: 1000;
 }
 .nav span:nth-child(1) {
     margin-left: 12px;
