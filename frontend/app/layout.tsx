@@ -15,6 +15,7 @@ const notoThai = Noto_Sans_Thai({
 const titleGroups: Record<string, string[]> = {
   "จองโต๊ะ": ["/reserve", "/reserveSelectTime"],
   "หน้าหลัก": ["/home",],
+  "ประวัติ" : ["/history"],
 };
 
 function getTitle(pathname: string): string {
