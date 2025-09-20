@@ -21,7 +21,7 @@ const icon = {
 
 
 
-export default function TransactionPage(){
+export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
     return(
         <div className={`${styles.content} ${notoThai.variable}`}>
