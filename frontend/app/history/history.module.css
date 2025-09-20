@@ -3,13 +3,12 @@
     padding: 0;
     display: flex;
     flex-direction: column;
+    background-color: var(--color5);
+    /* height: 100vh; */
 
 }
 
-.nav {
-    display: block;
-    /* margin-top: 0; */
-}
+
 
 .catagories {
     display: flex;
@@ -17,14 +16,18 @@
     gap: 10px;
     button{
         font-size: 16px;
-        padding: 10px;
+        padding: 5px 10px;
         border-radius: 15px;
     }
 }
 
 .detail_container {
-    height: 81vh;
+    height: 80vh;
     overflow:scroll;
+   
+}
+.detail_container::-webkit-scrollbar {
+  display: none;
 }
 
 .active {
