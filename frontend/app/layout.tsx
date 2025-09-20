@@ -16,6 +16,8 @@ const titleGroups: Record<string, string[]> = {
   "จองโต๊ะ": ["/reserve", "/reserveSelectTime", "/reserveSelectTable", "/reserveFillUsr"],
   "หน้าหลัก": ["/home",],
   "ประวัติ" : ["/history"],
+  "เติมเงิน": ["/topup"],
+  "รายการแจ้งเตือน" : ["/noti"],
 };
 
 function getTitle(pathname: string): string {
