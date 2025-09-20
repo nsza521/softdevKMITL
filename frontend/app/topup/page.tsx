@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import styles from "./topup.module.css"
-import Navbar from "@/components/Navbar";
-import TransacDetail from "@/components/TransacDetail";
-import { title } from "process";
 import { Noto_Sans_Thai } from "next/font/google";
 
 
@@ -15,11 +12,11 @@ const notoThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
 });
 
-const iconPayment = {
-    qr : "qr.png",
-    kbank : "",
-    scb : ""
-} ;
+// const iconPayment = {
+//     qr : "qr.png",
+//     kbank : "",
+//     scb : ""
+// } ;
 
 const balance = 4000;
 const amounts = [100, 200, 300, 500];
@@ -30,14 +27,29 @@ const methods = [
 ];
 
 export default function TopUpPage(){
-    const [selected, setSelected] = useState<number | "custom" | null>(null);
-    const [customAmount, setCustomAmount] = useState<number | "">("");
-    const [active, setActive] = useState<string | null>(null);
-    const [showPopup, setShowPopup] = useState(false);
+    const [amount, setAmount] = useState<number | null>(null);
+    const [bank, setBank] = useState<string | null>(null);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+    
+
+    const handleTopup = () => {
+        if (!amount && !bank){
+            setError("กรุณาเลือกจำนวนเงินและธนาคาร");
+        }else if (!amount) {
+            setError("กรุณาเลือกจำนวนเงิน");
+        }else if (!bank) {
+            setError("กรุณาเลือกธนาคาร");
+        }else {
+            setError("");
+            //api
+            setSuccess(true);
+        }
+    }
+
 
     return(
         <div className={`${styles.container} ${notoThai.variable}`}>
-            <Navbar title="เติมเงิน"/>
             <div className={styles.content}>
                 <div className={styles.balance}>
                     <p>จำนวนเงินของคุณ</p>
@@ -50,36 +62,14 @@ export default function TopUpPage(){
                         <button
                             key={amt}
                             className={`${styles.optionAmount} ${
-                            selected === amt ? styles.active : ""
+                            amount === amt ? styles.active : ""
                             }`}
-                            onClick={() => setSelected(amt)}
+                            onClick={() => setAmount(amt)}
                         >
                             {amt} บาท
                         </button>  ))}
                     </div>
 
-                    <div className={styles.defined}>
-                        <button
-                        className={`${styles.optionBtn} ${
-                            selected === "custom" ? styles.active : ""
-                        }`}
-                        onClick={() => setSelected("custom")}
-                        >
-                        กำหนดเอง
-                        </button>
-                        
-                        {selected === "custom" && (
-                            <div className={styles.customInput}>
-                            <input
-                                type="number"
-                                placeholder="กรอกจำนวนเงิน"
-                                value={customAmount}
-                                onChange={(e) => setCustomAmount(Number(e.target.value))}
-                            />
-                            <span>บาท</span>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 <div className={styles.paymentmethod}>
@@ -89,9 +79,9 @@ export default function TopUpPage(){
                          <button
                          key={mth.name}
                          className={`${styles.payment} ${
-                             active === mth.name ? styles.activepayment : ""
+                             bank === mth.name ? styles.activepayment : ""
                             }`}
-                            onClick={() => setActive(mth.name)}
+                            onClick={() => setBank(mth.name)}
                             >
                         <img src={mth.icon} alt={mth.name} className={styles.icon} />
                         {mth.name}
@@ -100,18 +90,28 @@ export default function TopUpPage(){
                     </div>
                 </div>
 
-                <div className={styles.btnTopup}>
-                    <button onClick={() => setShowPopup(true)}>เติมเงิน</button>
-                </div>
-                {showPopup && (
-                    <div className={styles.overlayTopup}>
-                        <p>ยืนยันเติมเงินเข้าสู่ระบบ</p>
+                {error && (
+                    <div className={styles.overlayTopup} onClick={() => setError("")}>
+                        <p>{error}</p>
                         <div className={styles.actionBtn}>
-                            <button onClick={() => setShowPopup(false)}>ยกเลิก</button>
-                            <button>ยืนยัน</button>
+                        <button onClick={() => setError("")}>ปิด</button>
                         </div>
                     </div>
                 )}
+
+                {success && (
+                    <div className={styles.overlayTopup} onClick={() => setSuccess(false)}>
+                            <p>ต้องการเติมเงิน {amount} บาท ผ่าน {bank} ใช่หรือไม่</p>
+                            <div className={styles.actionBtn}>
+                                <button onClick={() => setSuccess(false)}>ยกเลิก</button>
+                                <button onClick={() => setSuccess(false)}>ตกลง</button>
+                            </div>
+                    </div>
+                )}
+
+                <div className={styles.btnTopup}>
+                    <button onClick={handleTopup}>เติมเงิน</button>
+                </div>
             </div>
         </div>
     )

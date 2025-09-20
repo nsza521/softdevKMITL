@@ -5,20 +5,22 @@
     display: flex;
     justify-content: center;
     font-size: 16px;
+    background-color: var(--color5);
 }
 
 .content {
     display: flex;
     flex-direction: column;
-    gap: 45px;
+    gap: 25px;
     justify-content: center;
     align-items: center;
+    height: 100vh;
 }
 
 .balance {
     width: 216px;
     height: 84px;
-    margin-top: 100px;
+    margin-top: 20px;
     display: inline-flex;
     padding: 10px 30px;
     flex-direction: column;
@@ -31,7 +33,7 @@
 
 .amount {
     width: 364px;
-    height: 204px;
+    height: 154px;
     display: flex;
     flex-direction: column;
     gap: 36px;
@@ -53,14 +55,7 @@
         border-radius: 10px;
     }
 
-    .customInput{
-    }
     
-    .defined {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-    }
 }
 
 .header {
@@ -73,10 +68,10 @@
 
 .paymentmethod {
     width: 362px;
-    height: 226px;
+    height: 176px;
     display: flex;
     flex-direction: column;
-    gap: 34px;
+    gap: 15px;
     background-color: #ffffff;
     padding: 20px 15px;
     border-radius: 10px;
@@ -126,15 +121,32 @@
 }
 
 .overlayTopup {
-    width: 300px;
-    height: 251px;
+    width: 250px;
+    height: 200px;
     position: absolute;
     background-color: #ffffff;
-    top: 368px;
-    left: 72px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
-    gap: 20;
     justify-content: center;
     align-items: center;
+
+    p{
+        position: absolute;
+        top: 70px;
+        padding: 0 10px;
+        text-align: center;
+    }
+
+    .actionBtn{
+        position: absolute;
+        bottom: 25px;
+        display: flex;
+        gap: 30px;
+        
+        button {
+            padding: 5px 20px;
+            border-radius: 20px;
+        }
+    }
 }
