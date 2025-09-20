@@ -2,6 +2,10 @@ package usecase
 
 import (
 	"fmt"
+	"strings"
+	"mime/multipart"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
 
 	"context"
 
@@ -17,12 +21,14 @@ import (
 type RestaurantUsecase struct {
 	restaurantRepository interfaces.RestaurantRepository
 	menuRepository       menuInterfaces.MenuRepository
+	minioClient          *minio.Client
 }
 
-func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository menuInterfaces.MenuRepository) interfaces.RestaurantUsecase {
+func NewRestaurantUsecase(restaurantRepository interfaces.RestaurantRepository, menuRepository menuInterfaces.MenuRepository, minioClient *minio.Client) interfaces.RestaurantUsecase {
 	return &RestaurantUsecase{
 		restaurantRepository: restaurantRepository,
 		menuRepository:       menuRepository,
+		minioClient:          minioClient,
 	}
 }
 
@@ -53,11 +59,14 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 		return err
 	}
 
+	username := strings.TrimSpace(request.Username)
+
 	// Create new restaurant
 	restaurant := models.Restaurant{
-		Username: request.Username,
-		Email:    request.Email,
-		Password: hashedPassword,
+
+		Username:     username,
+		Email:        request.Email,
+		Password:     hashedPassword,
 	}
 	createdRestaurant, err := u.restaurantRepository.Create(&restaurant)
 	if err != nil {
@@ -113,6 +122,7 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 			Username:   r.Username,
 			PictureURL: r.ProfilePic,
 			Email:      r.Email,
+			Status:     r.Status,
 		}
 		restaurantDetails = append(restaurantDetails, detail)
 	}
@@ -120,69 +130,61 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 	return restaurantDetails, nil
 }
 
-func (u *RestaurantUsecase) EditRestaurant(
-	ctx context.Context,
-	id , // path param จาก handler
-	userID , role string, // ออกมาจาก JWT/middleware
-	req dto.EditRestaurantRequest, // body JSON (pointer fields)
-) (dto.RestaurantDetailResponse, error) {
+func (u *RestaurantUsecase) UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error) {
 
-	rid, err := uuid.Parse(id)
+	// Check if restaurant exists
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
 	if err != nil {
-		return dto.RestaurantDetailResponse{}, fmt.Errorf("invalid restaurant id")
+		return "", err
 	}
-	current, err := u.restaurantRepository.GetByID(rid)
+
+	// Open file
+	fileContent, err := file.Open()
 	if err != nil {
-		return dto.RestaurantDetailResponse{}, err
+		return "", err
+	}
+	defer fileContent.Close()
+
+	// Upload to MinIO
+	const bucketName = "restaurant-pictures"
+	const subBucket = "restaurants"
+	filename := restaurantID.String()
+	objectName := fmt.Sprintf("%s/%s", subBucket, filename)
+
+	url, err := utils.UploadImage(fileContent, file, bucketName, objectName, u.minioClient)
+	if err != nil {
+		return "", err
 	}
 
-	if current.ID.String() != userID {
-		return dto.RestaurantDetailResponse{}, fmt.Errorf("forbidden")
+	// Update restaurant profile picture URL
+	if restaurant != nil {
+		restaurant.ProfilePic = &url
+	}
+	err = u.restaurantRepository.Update(restaurant)
+	if err != nil {
+		return "", err
 	}
 
-	changes := map[string]any{}
-	if req.Username != nil {
-		changes["username"] = *req.Username
-	}
-	if req.Email != nil {
-		changes["email"] = *req.Email
-	}
-	if req.BankName != nil {
-		changes["bank_name"] = *req.BankName
-	}
-	if req.AccountNumber != nil {
-		changes["account_number"] = *req.AccountNumber
-	}
-	if req.AccountName != nil {
-		changes["account_name"] = *req.AccountName
+	// presignURL, err := utils.GetPresignedURL(u.minioClient, bucketName, objectName)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	return url, nil
+}
+
+func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error {
+	// Check if restaurant exists
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return err
 	}
 
-	if req.Email != nil && !utils.IsValidEmail(*req.Email) {
-		return dto.RestaurantDetailResponse{}, fmt.Errorf("invalid email format")
+	// Update status
+	if request.Status != "" {
+		restaurant.Status = request.Status
+		return u.restaurantRepository.Update(restaurant)
 	}
 
-	if len(changes) == 0 {
-		return dto.RestaurantDetailResponse{
-			ID:         current.ID,
-			Username:   current.Username,
-			PictureURL: current.ProfilePic,
-			Email:      current.Email,
-		}, nil
-	}
-
-	// changes["updated_at"] = time.Now()
-
-	if err := u.restaurantRepository.PartialUpdate(ctx, id, changes); err != nil {
-		return dto.RestaurantDetailResponse{}, err
-	}
-	updated, err := u.restaurantRepository.GetByID(rid)
-	if err != nil { return dto.RestaurantDetailResponse{}, err }
-
-	resp := dto.RestaurantDetailResponse{
-		ID:         updated.ID,
-		Username:   updated.Username,
-		PictureURL: updated.ProfilePic, // ให้ตรงกับ db_model.Restaurant
-		Email:      updated.Email,
-	}
-	return resp, nil
+	return nil
 }

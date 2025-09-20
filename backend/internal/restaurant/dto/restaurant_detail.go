@@ -9,14 +9,9 @@ type RestaurantDetailResponse struct {
 	Username  string  `json:"username"`
 	PictureURL *string `json:"picture_url"`
 	Email     string `json:"email"`
+	Status    string `json:"status"`
 }
 
-type EditRestaurantRequest struct {
-	Username		*string `json:"username,omitempty"`
-	Email			*string `json:"email,omitempty"`
-	// PictureURL *string `json:"picture_url"`
-	BankName    	*string `json:"bank_name,omitempty"`
-	AccountNumber 	*string `json:"account_no,omitempty"`
-	AccountName   	*string `json:"account_name,omitempty"`
-	// PictureURL   *string `json:"picture_url"`
+type ChangeStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=open closed"`
 }

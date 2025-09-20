@@ -40,6 +40,7 @@ func main() {
 	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
 	}
+
 }
 
 func initMySQL() (*gorm.DB, error) {
@@ -86,6 +87,7 @@ func initMySQL() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error seeding database: %v", err)
 	}
+	
 	log.Println("Database seeding completed successfully")
 
 	return db, nil
@@ -93,7 +95,7 @@ func initMySQL() (*gorm.DB, error) {
 
 func initMinIO() (*minio.Client, error) {
 
-	endpoint := os.Getenv("MINIO_ENDPOINT")
+	endpoint := os.Getenv("MINIO_INTERNAL_ENDPOINT")
 	if endpoint == "" {
 		endpoint = "minio:9000" // default for docker compose
 	}
@@ -113,6 +115,7 @@ func initMinIO() (*minio.Client, error) {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}
 	log.Println("MinIO client initialized successfully")
+	
 
 	return minioClient, nil
 }

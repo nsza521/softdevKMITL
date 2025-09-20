@@ -86,7 +86,7 @@ func (r *RestaurantRepository) GetAll() ([]*models.Restaurant, error) {
 
 	var restaurants []*models.Restaurant
 
-	result := r.db.Find(&restaurants)
+	result := r.db.Order("created_at ASC").Find(&restaurants)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -97,35 +97,6 @@ func (r *RestaurantRepository) CreateBankAccount(bankAccount *models.BankAccount
 	return r.db.Create(bankAccount).Error
 }
 
-func (r *RestaurantRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).
-		Model(&models.Restaurant{}).
-		Where("id = ?", id).
-		Count(&count).Error; err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-func (r *RestaurantRepository) IsOwner(ctx context.Context, restaurantID, userID string) (bool, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).
-		// Table("restaurants").
-		Model(&models.Restaurant{}).
-		Where("id = ? AND owner_id = ?", restaurantID, userID).
-		Count(&count).Error; err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-func (r *RestaurantRepository) PartialUpdate(ctx context.Context, id string, changes map[string]any) error {
-	if len(changes) == 0 {
-		return nil // ไม่มีอะไรให้แก้
-	}
-	return r.db.WithContext(ctx).
-		Model(&models.Restaurant{}).
-		Where("id = ?", id).
-		Updates(changes).Error
+func (r *RestaurantRepository) Update(restaurant *models.Restaurant) error {
+	return r.db.Save(&restaurant).Error
 }
