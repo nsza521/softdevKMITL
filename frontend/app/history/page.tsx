@@ -15,11 +15,7 @@ const notoThai = Noto_Sans_Thai({
 const icon = {
     success : "/success.svg",
     food : "/food.svg",
-    wallet : "wallet.png",
-    mail : "",
-    order_cancle : "",
-    create : "",
-    unsuccess : "",
+    wallet : "/wallet.svg",
 };
 
 

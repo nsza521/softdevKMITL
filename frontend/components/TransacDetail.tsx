@@ -21,10 +21,12 @@ export default function TransacDetail({ head, detail, date, viewdetail, price, i
                 <p>{head}</p>
                 <p>{detail}</p>
                 <p>{date}</p>
-                <div className={styles.viewdetail}>
-                    <p>{viewdetail}</p>
-                    <img src="Arrow_Right_LG.svg" alt="Arrow_Right_LG" />
-                </div>
+                    {viewdetail && (
+                        <div className={styles.viewdetail}>
+                            <p>{viewdetail}</p>
+                            <img src="Arrow_Right_LG.svg" alt="Arrow_Right_LG" />
+                        </div>
+                    )}
             </div>
             <div className={styles.right_content}>
                 <p>{price}</p>
