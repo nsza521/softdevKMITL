@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
