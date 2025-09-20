@@ -1,0 +1,32 @@
+
+.container {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color5);
+    height: 100vh;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    position: absolute;
+    margin-top: 48px;
+    padding: 20px;
+
+}
+.confirmBtn {
+    position: absolute;
+    bottom: 70px;
+    left: 495px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    button {
+        width: 400px;
+        height: 35px;
+        border-radius: 20px;
+    }
+    }
