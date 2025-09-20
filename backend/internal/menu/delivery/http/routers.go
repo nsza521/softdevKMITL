@@ -7,13 +7,17 @@ import (
 
 func MapMenuRoutes(g *gin.RouterGroup, h *MenuHandler) {
 	g.GET("/:restaurantID/items", middleware.AuthMiddleware(),h.ListByRestaurant)
+
+
+	//	g.GET("/items/:itemID/detail", middleware.AuthMiddleware(), h.GetDetail)
+	g.GET("/:restaurantID/:itemID/detail", middleware.AuthMiddleware(), h.GetDetail)
+
 	g.POST("/:restaurantID/items", middleware.AuthMiddleware(), h.Create) // middleware.RequireRole("restaurant_owner"),
 	g.PATCH("/items/:itemID", middleware.AuthMiddleware(), h.Update)      // middleware.RequireRole("restaurant_owner"),
 	g.DELETE("/items/:itemID", middleware.AuthMiddleware(), h.Delete)    // middleware.RequireRole("restaurant_owner"),
 	g.POST("/items/:itemID/upload_pic", middleware.AuthMiddleware(), h.UploadMenuItemPicture) // middleware.RequireRole("restaurant_owner"),
 
 }
-
 
 // MapMenuTypeRoutes กำหนดเส้นทาง CRUD ของ MenuType
 func MapMenuTypeRoutes(g *gin.RouterGroup, h *MenuTypeHandler) {
@@ -42,5 +46,8 @@ func MapAddOnRoutes(g *gin.RouterGroup, h *AddOnHandler) {
 
 	// Update/Delete option ใช้ optionID โดยตรง
 	g.PATCH("/options/:optionID", middleware.AuthMiddleware(), h.UpdateOption)
+	g.GET("/addon-groups/:groupID/options", middleware.AuthMiddleware(), h.ListOptions) // ✅
+    g.GET("/options/:optionID", middleware.AuthMiddleware(), h.GetOption)          
+
 	g.DELETE("/options/:optionID", middleware.AuthMiddleware(), h.DeleteOption)
 }

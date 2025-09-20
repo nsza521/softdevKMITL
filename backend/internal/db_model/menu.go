@@ -17,7 +17,7 @@ type MenuType struct {
 	MenuItems []MenuItem `gorm:"many2many:menu_tags;joinForeignKey:MenuTypeID;joinReferences:MenuItemID"`
 
 	// ใหม่: ผูก Add-on ระดับ "หมวด"
-	AddOnGroups []MenuAddOnGroup `gorm:"many2many:menu_type_addon_groups;joinForeignKey:MenuTypeID;joinReferences:AddOnGroupID"`
+	AddOnGroups []MenuAddOnGroup `gorm:"many2many:menu_type_add_on_groups;joinForeignKey:MenuTypeID;joinReferences:AddOnGroupID"`
 }
 
 type MenuItem struct {
@@ -34,7 +34,7 @@ type MenuItem struct {
 	MenuTypes []MenuType `gorm:"many2many:menu_tags;joinForeignKey:MenuItemID;joinReferences:MenuTypeID"`
 
 	// (คงไว้เป็น "override เฉพาะเมนู") เช่น เพิ่ม/ลด group บางอัน
-	AddOnGroups []MenuAddOnGroup `gorm:"many2many:menu_item_addon_groups;joinForeignKey:MenuItemID;joinReferences:AddOnGroupID"`
+	AddOnGroups []MenuAddOnGroup `gorm:"many2many:menu_item_add_on_groups;joinForeignKey:MenuItemID;joinReferences:AddOnGroupID"`
 }
 
 type MenuTag struct {

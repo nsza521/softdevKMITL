@@ -87,6 +87,35 @@ func (u *addOnUsecase) DeleteGroup(id uuid.UUID) error {
 }
 
 // Option
+
+// usecase/addon_uc.go
+func (u *addOnUsecase) GetOption(id uuid.UUID) (menu.AddOnOptionResponse, error) {
+    opt, err := u.repo.GetOptionByID(id)
+    if err != nil {
+        return menu.AddOnOptionResponse{}, err
+    }
+    return menu.AddOnOptionResponse{
+        ID: opt.ID, Name: opt.Name, PriceDelta: opt.PriceDelta,
+        IsDefault: opt.IsDefault, MaxQty: opt.MaxQty, GroupID: opt.GroupID,
+    }, nil
+}
+
+func (u *addOnUsecase) ListOptions(groupID uuid.UUID) ([]menu.AddOnOptionResponse, error) {
+    group, err := u.repo.GetGroupByID(groupID)
+    if err != nil {
+        return nil, err
+    }
+    var res []menu.AddOnOptionResponse
+    for _, opt := range group.Options {
+        res = append(res, menu.AddOnOptionResponse{
+            ID: opt.ID, Name: opt.Name, PriceDelta: opt.PriceDelta,
+            IsDefault: opt.IsDefault, MaxQty: opt.MaxQty, GroupID: opt.GroupID,
+        })
+    }
+    return res, nil
+}
+
+
 func (u *addOnUsecase) CreateOption(groupID uuid.UUID, input menu.CreateAddOnOptionRequest) (menu.AddOnOptionResponse, error) {
 	opt := models.MenuAddOnOption{
 		GroupID:    groupID,

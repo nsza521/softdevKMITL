@@ -14,6 +14,9 @@ type AddOnUsecase interface {
 	DeleteGroup(id uuid.UUID) error
 
 	// Option
+	GetOption(id uuid.UUID) (menu.AddOnOptionResponse, error)
+	ListOptions(groupID uuid.UUID) ([]menu.AddOnOptionResponse, error)
+
 	CreateOption(groupID uuid.UUID, input menu.CreateAddOnOptionRequest) (menu.AddOnOptionResponse, error)
 	UpdateOption(id uuid.UUID, input menu.UpdateAddOnOptionRequest) error
 	DeleteOption(id uuid.UUID) error

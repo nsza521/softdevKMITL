@@ -85,6 +85,38 @@ func (h *AddOnHandler) DeleteGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 
+// GET /options/:optionID
+func (h *AddOnHandler) GetOption(c *gin.Context) {
+    id, err := uuid.Parse(c.Param("optionID"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option id"})
+        return
+    }
+    opt, err := h.uc.GetOption(id)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, opt)
+}
+
+// GET /addon-groups/:groupID/options
+func (h *AddOnHandler) ListOptions(c *gin.Context) {
+    gid, err := uuid.Parse(c.Param("groupID"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group id"})
+        return
+    }
+    opts, err := h.uc.ListOptions(gid)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, opts)
+}
+
+
+
 // POST /addon-groups/:groupID/options
 func (h *AddOnHandler) CreateOption(c *gin.Context) {
 	groupID, err := uuid.Parse(c.Param("groupID"))
@@ -105,9 +137,9 @@ func (h *AddOnHandler) CreateOption(c *gin.Context) {
 	c.JSON(http.StatusCreated, opt)
 }
 
-// PUT /options/:id
+// PUT /options/:optionID
 func (h *AddOnHandler) UpdateOption(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("optionID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
@@ -124,9 +156,9 @@ func (h *AddOnHandler) UpdateOption(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
-// DELETE /options/:id
+// DELETE /options/:optionID
 func (h *AddOnHandler) DeleteOption(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("optionID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return

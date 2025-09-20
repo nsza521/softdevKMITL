@@ -66,6 +66,22 @@ func (h *MenuHandler) ListByRestaurant(c *gin.Context) {
 	})
 }
 
+// GET /restaurant/menu/item/:itemID
+func (h *MenuHandler) GetDetail(c *gin.Context) {
+	itemID, err := uuid.Parse(c.Param("itemID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item id"})
+		return
+	}
+	res, err := h.uc.GetDetail(itemID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+
 func (h *MenuHandler) Create(c *gin.Context) {
 	rid, err := uuid.Parse(c.Param("restaurantID"))
 	if err != nil {
