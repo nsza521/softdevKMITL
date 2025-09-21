@@ -56,11 +56,11 @@ func (h *RestaurantHandler) Login() gin.HandlerFunc {
 func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		_, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "User unauthorized"})
-			return
-		}
+		// _, exists := c.Get("user_id")
+		// if !exists {
+		// 	c.JSON(401, gin.H{"error": "User unauthorized"})
+		// 	return
+		// }
 		// role, exist := c.Get("role")
 		// if !exist || role.(string) != "customer" {
 		// 	c.JSON(401, gin.H{"error": "User unauthorized"})

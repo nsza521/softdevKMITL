@@ -11,6 +11,7 @@ import (
 	"backend/internal/db_model"
 	"backend/internal/utils"
 	iface "backend/internal/menu/interfaces"
+	menu "backend/internal/menu/dto"
 )
 
 type menuUsecase struct{ 
@@ -50,6 +51,123 @@ func (u *menuUsecase) CheckRestaurantExists(ctx context.Context, restaurantID uu
 	return u.repo.RestaurantExists(ctx, restaurantID)
 }
 
+// GetDetail retrieves detailed information about a menu item, including its associated menu types and add-ons.
+// ใหม่: GetDetail
+func (u *menuUsecase) GetDetail(itemID uuid.UUID) (menu.MenuItemDetailResponse, error) {
+	item, err := u.repo.GetItemWithTypesAndAddOns(itemID)
+	if err != nil {
+		return menu.MenuItemDetailResponse{}, err
+	}
+
+	// 1) map types → []MenuTypeBrief
+	types := make([]menu.MenuTypeBrief, 0, len(item.MenuTypes))
+	for _, t := range item.MenuTypes {
+		types = append(types, menu.MenuTypeBrief{ID: t.ID, Name: t.Type})
+	}
+
+	// 2) สร้างแผนที่ group โดย key = groupID (เพื่อ merge)
+	type groupAgg struct {
+		src    string               // "type" | "item" | "merged"
+		group  models.MenuAddOnGroup
+		opts   []models.MenuAddOnOption
+	}
+	groupMap := map[uuid.UUID]*groupAgg{}
+
+	// 2.1 จาก type-level
+	for _, mt := range item.MenuTypes {
+		for _, g := range mt.AddOnGroups {
+			entry := groupMap[g.ID]
+			if entry == nil {
+				cp := g // copy
+				groupMap[g.ID] = &groupAgg{
+					src:   "type",
+					group: cp,
+					opts:  append([]models.MenuAddOnOption{}, g.Options...),
+				}
+			} else {
+				// merge options (กันซ้ำด้วย ID)
+				entry.src = "merged"
+				entry.opts = mergeOptions(entry.opts, g.Options)
+			}
+		}
+	}
+
+	// 2.2 จาก item-level (override/เพิ่ม)
+	for _, g := range item.AddOnGroups {
+		entry := groupMap[g.ID]
+		if entry == nil {
+			cp := g
+			groupMap[g.ID] = &groupAgg{
+				src:   "item",
+				group: cp,
+				opts:  append([]models.MenuAddOnOption{}, g.Options...),
+			}
+		} else {
+			entry.src = "merged"
+			// แนวนโยบายง่าย ๆ: รวม options เข้าด้วยกัน (dedupe ตาม ID)
+			entry.opts = mergeOptions(entry.opts, g.Options)
+			// ถ้าต้องการให้ item-level override ฟิลด์ group (เช่น Required/AllowQty) ก็อัปเดตที่นี่
+			// ex: entry.group.Required = g.Required
+		}
+	}
+
+	// 3) แปลงเป็น DTO
+	addons := make([]menu.AddOnGroupDTO, 0, len(groupMap))
+	for _, ag := range groupMap {
+		optsDTO := make([]menu.AddOnOptionDTO, 0, len(ag.opts))
+		for _, o := range ag.opts {
+			optsDTO = append(optsDTO, menu.AddOnOptionDTO{
+				ID:         o.ID,
+				Name:       o.Name,
+				PriceDelta: o.PriceDelta,
+				IsDefault:  o.IsDefault,
+				MaxQty:     o.MaxQty,
+			})
+		}
+		addons = append(addons, menu.AddOnGroupDTO{
+			ID:        ag.group.ID,
+			Name:      ag.group.Name,
+			Required:  ag.group.Required,
+			MinSelect: ag.group.MinSelect,
+			MaxSelect: ag.group.MaxSelect,
+			AllowQty:  ag.group.AllowQty,
+			From:      ag.src,
+			Options:   optsDTO,
+		})
+	}
+
+	// 4) สร้าง response
+	resp := menu.MenuItemDetailResponse{
+		ID:           item.ID,
+		RestaurantID: item.RestaurantID,
+		Name:         item.Name,
+		Price:        item.Price,
+		MenuPic:      item.MenuPic,
+		TimeTaken:    item.TimeTaken,
+		Description:  item.Description,
+		Types:        types,
+		AddOns:       addons,
+	}
+	return resp, nil
+}
+
+// helper: รวม option แบบกันซ้ำตาม ID
+func mergeOptions(a, b []models.MenuAddOnOption) []models.MenuAddOnOption {
+	idx := make(map[uuid.UUID]struct{}, len(a))
+	out := make([]models.MenuAddOnOption, 0, len(a)+len(b))
+	for _, x := range a {
+		out = append(out, x)
+		idx[x.ID] = struct{}{}
+	}
+	for _, x := range b {
+		if _, ok := idx[x.ID]; !ok {
+			out = append(out, x)
+			idx[x.ID] = struct{}{}
+		}
+	}
+	return out
+}
+
 func (u *menuUsecase) CreateMenuItem(ctx context.Context, restaurantID uuid.UUID, in *iface.CreateMenuItemRequest) (*iface.MenuItemBrief, error) {
 	if in == nil { return nil, errors.New("nil request") }
 	if err := u.repo.VerifyMenuTypesBelongToRestaurant(ctx, restaurantID, in.MenuTypeIDs); err != nil {
@@ -72,7 +190,7 @@ func (u *menuUsecase) CreateMenuItem(ctx context.Context, restaurantID uuid.UUID
 	return &resp, nil
 }
 
-func (u *menuUsecase) UpdateMenuItem(ctx context.Context, id uuid.UUID, in *iface.UpdateMenuItemRequest) (*iface.MenuItemBrief, error) {
+func (u *menuUsecase) UpdateMenuItem(ctx context.Context, restaurantID uuid.UUID, id uuid.UUID, in *iface.UpdateMenuItemRequest) (*iface.MenuItemBrief, error) {
 	if in == nil {
 		return nil, errors.New("nil request")
 	}
@@ -107,7 +225,7 @@ func (u *menuUsecase) UpdateMenuItem(ctx context.Context, id uuid.UUID, in *ifac
 }
 
 
-func (u *menuUsecase) DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) error {
+func (u *menuUsecase) DeleteMenuItem(ctx context.Context, restaurantID uuid.UUID, menuItemID uuid.UUID) error {
 	return u.repo.DeleteMenuItem(ctx, menuItemID)
 }
 
