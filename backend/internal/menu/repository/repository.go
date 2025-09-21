@@ -9,6 +9,7 @@ import (
 
 	models "backend/internal/db_model"
 	iface "backend/internal/menu/interfaces"
+	"gorm.io/gorm/logger"
 )
 
 type menuRepo struct{ db *gorm.DB }
@@ -43,6 +44,29 @@ func (r *menuRepo) RestaurantExists(ctx context.Context, restaurantID uuid.UUID)
 	}
 	return nil
 }
+
+//Get detail 
+
+
+func (r *menuRepo) GetItemWithTypesAndAddOns(itemID uuid.UUID) (*models.MenuItem, error) {
+    var item models.MenuItem
+    db := r.db.Session(&gorm.Session{Logger: logger.Default.LogMode(logger.Info)})
+
+    err := db.
+        Preload("MenuTypes").
+        Preload("MenuTypes.AddOnGroups").
+        Preload("MenuTypes.AddOnGroups.Options").
+        Preload("AddOnGroups").
+        Preload("AddOnGroups.Options").
+        First(&item, "id = ?", itemID).Error
+    if err != nil {
+        return nil, err
+    }
+    return &item, nil
+}
+
+
+
 
 func (r *menuRepo) CreateMenuItem(ctx context.Context, mi *models.MenuItem) error {
 	return r.db.WithContext(ctx).Create(mi).Error
