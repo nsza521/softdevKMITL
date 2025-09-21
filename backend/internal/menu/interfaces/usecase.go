@@ -5,6 +5,7 @@ import (
 	"context"
 	"mime/multipart"
 	"github.com/google/uuid"
+	menu "backend/internal/menu/dto"
 )
 
 type MenuTypeBrief struct {
@@ -46,9 +47,12 @@ type MenuUsecase interface {
 	ListByRestaurant(ctx context.Context, restaurantID uuid.UUID) ([]MenuItemBrief, error)
 	CheckRestaurantExists(ctx context.Context, restaurantID uuid.UUID) error
 
+
+	GetDetail(itemID uuid.UUID) (menu.MenuItemDetailResponse, error)
+
 	// สร้าง/แก้ไข/ลบ MenuItem (และผูก/แก้ไข/ลบ MenuType ผ่าน MenuTag)
 	CreateMenuItem(ctx context.Context, restaurantID uuid.UUID, in *CreateMenuItemRequest) (*MenuItemBrief, error)
-	UpdateMenuItem(ctx context.Context, menuItemID uuid.UUID, in *UpdateMenuItemRequest) (*MenuItemBrief, error)
-	DeleteMenuItem(ctx context.Context, menuItemID uuid.UUID) error
+	UpdateMenuItem(ctx context.Context, restaurantID, menuItemID uuid.UUID, in *UpdateMenuItemRequest) (*MenuItemBrief, error)
+	DeleteMenuItem(ctx context.Context, restaurantID, menuItemID uuid.UUID) error
 	UploadMenuItemPicture(ctx context.Context, restaurantID, menuItemID uuid.UUID, file *multipart.FileHeader) (string, error)
 }

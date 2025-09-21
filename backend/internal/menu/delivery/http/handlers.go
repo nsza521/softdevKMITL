@@ -61,10 +61,26 @@ func (h *MenuHandler) ListByRestaurant(c *gin.Context) {
 	canEdit := (role == "restaurant" && userID != uuid.Nil && userID == rid)
 
 	c.JSON(http.StatusOK, gin.H{
-		"canEdit": canEdit,
-		"items":   items,
+		"canEdit":     canEdit,
+		"items":      items,
 	})
 }
+
+// GET /restaurant/menu/item/:itemID
+func (h *MenuHandler) GetDetail(c *gin.Context) {
+	itemID, err := uuid.Parse(c.Param("itemID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item id"})
+		return
+	}
+	res, err := h.uc.GetDetail(itemID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
 
 func (h *MenuHandler) Create(c *gin.Context) {
 	rid, err := uuid.Parse(c.Param("restaurantID"))
@@ -101,26 +117,30 @@ func (h *MenuHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid itemID"})
 		return
 	}
-
-	ridStr := c.Query("restaurantID")
-	rid, err := uuid.Parse(ridStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "restaurantID (query) required for ownership check"})
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
+	role, exists := c.Get("role")
+	if !exists || role.(string) != "restaurant" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	restaurantID, err := uuid.Parse(userID.(string))
 
-	userID, role := getAuth(c)
-	if role != "restaurant" || userID == uuid.Nil || userID != rid {
+	if role.(string) != "restaurant" || userID == uuid.Nil || err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden: not restaurant owner"})
 		return
 	}
+
 
 	var body menuuc.UpdateMenuItemRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
 		return
 	}
-	_, err = h.uc.UpdateMenuItem(c.Request.Context(), id, &body)
+	_, err = h.uc.UpdateMenuItem(c.Request.Context(), restaurantID, id, &body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -135,20 +155,25 @@ func (h *MenuHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	ridStr := c.Query("restaurantID")
-	rid, err := uuid.Parse(ridStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "restaurantID (query) required for ownership check"})
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	role, exists := c.Get("role")
+	if !exists || role.(string) != "restaurant" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, role := getAuth(c)
-	if role != "restaurant" || userID == uuid.Nil || userID != rid {
+	restaurantID, err := uuid.Parse(userID.(string))
+
+	if role.(string) != "restaurant" || userID == uuid.Nil || err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden: not restaurant owner"})
 		return
 	}
 
-	if err := h.uc.DeleteMenuItem(c.Request.Context(), id); err != nil {
+	if err := h.uc.DeleteMenuItem(c.Request.Context(), restaurantID, id); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}

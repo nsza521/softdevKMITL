@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"log"
 	"os"
 	"time"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
@@ -14,8 +14,8 @@ import (
 
 	"backend/internal/app"
 	"backend/internal/db_model"
-	"backend/internal/utils"
 	"backend/internal/seed"
+	"backend/internal/utils"
 )
 
 func main() {
@@ -23,9 +23,9 @@ func main() {
 	utils.BlacklistCleanup(5 * time.Minute)
 
 	if err := godotenv.Load(); err != nil {
-        log.Println("Warning: .env file not found, using system environment variables")
-    }
-	
+		log.Println("Warning: .env file not found, using system environment variables")
+	}
+
 	db, err := initMySQL()
 	if err != nil {
 		log.Fatalf("Error initializing MySQL: %v", err)
@@ -69,9 +69,16 @@ func initMySQL() (*gorm.DB, error) {
 		&models.TableTimeslot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
+		// Menu
 		&models.MenuType{},
 		&models.MenuItem{},
 		&models.MenuTag{},
+		&models.MenuAddOnGroup{},
+		&models.MenuAddOnOption{},
+		&models.MenuTypeAddOnGroup{},
+		&models.MenuItemAddOnGroup{},
+
+
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
 		&models.FoodOrderHistory{},
@@ -87,7 +94,7 @@ func initMySQL() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error seeding database: %v", err)
 	}
-	
+
 	log.Println("Database seeding completed successfully")
 
 	return db, nil
@@ -115,7 +122,6 @@ func initMinIO() (*minio.Client, error) {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}
 	log.Println("MinIO client initialized successfully")
-	
 
 	return minioClient, nil
 }
