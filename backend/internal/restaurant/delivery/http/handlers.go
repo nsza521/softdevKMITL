@@ -159,8 +159,8 @@ func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
 
 func (h *RestaurantHandler) EditInfo() gin.HandlerFunc {
     return func(c *gin.Context) {
-        idStr := c.Param("id")
-        restID, err := uuid.Parse(idStr)
+        // idStr := c.Param("id")
+        restID, err := uuid.Parse(c.Param("id"))
         if err != nil {
             c.JSON(401, gin.H{"error": "invalid restaurant id"})
             return
