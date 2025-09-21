@@ -64,6 +64,7 @@ func initMySQL() (*gorm.DB, error) {
 		&models.Customer{},
 		&models.Restaurant{},
 		&models.BankAccount{},
+		&models.RestaurantAddOn{},
 		&models.Table{},
 		&models.Timeslot{},
 		&models.TableTimeslot{},

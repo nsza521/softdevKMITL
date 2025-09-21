@@ -17,6 +17,9 @@ type Restaurant struct {
 	ProfilePic    *string   `gorm:"type:text"`
 
 	// BankAccountID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+
+	Name          *string   `gorm:"type:varchar(255)"`
+	MenuType      *string   `gorm:"type:varchar(64)"`
 }
 
 type BankAccount struct {
@@ -26,4 +29,10 @@ type BankAccount struct {
 	AccountNumber 	string 		`gorm:"not null"`
 	AccountName   	string 		`gorm:"not null"`
 	AccountBalance 	float32 	`gorm:"default:0"`
+}
+
+type RestaurantAddOn struct {
+    ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
+    RestaurantID uuid.UUID `gorm:"type:char(36);index"`
+    ItemName     string    `gorm:"type:varchar(255);index:idx_rest_addon,priority:2"`
 }

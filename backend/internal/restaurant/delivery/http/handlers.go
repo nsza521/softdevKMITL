@@ -156,3 +156,26 @@ func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
 		c.JSON(200, gin.H{"message": "Restaurant status changed successfully"})
 	}
 }
+
+func (h *RestaurantHandler) EditInfo() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        idStr := c.Param("id")
+        restID, err := uuid.Parse(idStr)
+        if err != nil {
+            c.JSON(401, gin.H{"error": "invalid restaurant id"})
+            return
+        }
+        var req dto.EditRestaurantRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+            c.JSON(401, gin.H{"error": "invalid json body"})
+            return
+        }
+        resp, err := h.restaurantUsecase.EditInfo(restID, &req)
+        if err != nil {
+            c.JSON(500, gin.H{"error": err.Error()})
+            return
+        }
+        // c.JSON(200, gin.H{"message": "Edit Restaurant Info changed successfully"})
+		c.JSON(200, resp)
+    }
+}

@@ -25,8 +25,8 @@ type EditRestaurantRequest struct {
 }
 
 type EditRestaurantResponse struct {
-	ID		 	uint64 `json:"id"`
-	Name 	    string `json:"name"`
-	MenuType    string `json:"menu_type"`
-	AddOnMenuItem []string `json:"add_on_menu_item"`
+	ID		 	uuid.UUID 	`json:"id"`
+	Name 	    string     	`json:"name"`
+	MenuType    string     	`json:"menu_type"`
+	AddOnMenuItem []string 	`json:"add_on_menu_item"`
 }
