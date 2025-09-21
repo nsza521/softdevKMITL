@@ -31,6 +31,7 @@ export default function TopUpPage(){
     const [bank, setBank] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [custom, setCustom] = useState(false);
     
 
     const handleTopup = () => {
@@ -62,13 +63,43 @@ export default function TopUpPage(){
                         <button
                             key={amt}
                             className={`${styles.optionAmount} ${
-                            amount === amt ? styles.active : ""
+                            amount === amt && !custom ? styles.active : ""
                             }`}
-                            onClick={() => setAmount(amt)}
+                            onClick={() => {
+                            setAmount(amt);
+                            setCustom(false); // ถ้าเลือกปุ่มตัวเลข ปิดโหมดกำหนดเอง
+                            }}
                         >
                             {amt} บาท
-                        </button>  ))}
+                        </button>
+                        ))}
                     </div>
+                <div className={styles.customAmount}>
+                    <button
+                    className={`${styles.optionAmount} ${custom ? styles.active : ""}`}
+                    onClick={() => {
+                        setCustom(true);
+                        setAmount(null); // reset amount ปกติ
+                    }}
+                    >
+                    กำหนดเอง
+                    </button>
+
+                    {custom && (
+                        <div>
+                            <input
+                                type="number"
+                                placeholder="กรอกจำนวนเงิน"
+                                value={amount ?? ""} // ให้ input แสดงค่าที่พิมพ์
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setAmount(val === "" ? null : Number(val));
+                                }}
+                                />
+                            <span>บาท</span>
+                        </div>
+                    )}
+                </div>
 
                 </div>
 
