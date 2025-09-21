@@ -68,6 +68,12 @@ func (s *App) MapHandlers() error {
 	mtH := menuHttp.NewMenuTypeHandler(mtUC)
 	menuHttp.MapMenuTypeRoutes(menuGroup, mtH)
 
+	// --- AddOn (Group + Option) ---
+	addonRepo := menuRepo.NewAddOnRepository(s.db)
+	addonUC := menuUC.NewAddOnUsecase(addonRepo)
+	addonH := menuHttp.NewAddOnHandler(addonUC)
+	menuHttp.MapAddOnRoutes(menuGroup, addonH)
+
 	// Restaurant Group
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
 	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, mRepo, s.minio)
