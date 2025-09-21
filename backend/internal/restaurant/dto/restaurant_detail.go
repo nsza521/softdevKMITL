@@ -15,3 +15,18 @@ type RestaurantDetailResponse struct {
 type ChangeStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=open closed"`
 }
+
+// edit
+
+type EditRestaurantRequest struct {
+	Name	   *string `json:"name,omitempty"`
+	MenuType   *string `json:"menu_type,omitempty"`
+	AddOnMenuItem []string `json:"add_on_menu_item"`
+}
+
+type EditRestaurantResponse struct {
+	ID		 	uint64 `json:"id"`
+	Name 	    string `json:"name"`
+	MenuType    string `json:"menu_type"`
+	AddOnMenuItem []string `json:"add_on_menu_item"`
+}

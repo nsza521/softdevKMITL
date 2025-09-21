@@ -17,6 +17,8 @@ type RestaurantHandler interface {
 	GetAll() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
 	ChangeStatus() gin.HandlerFunc
+
+	EditInfo() gin.HandlerFunc
 }
 
 type RestaurantRepository interface {
@@ -27,6 +29,11 @@ type RestaurantRepository interface {
 	GetAll() ([]*models.Restaurant, error)
 	CreateBankAccount(bankAccount *models.BankAccount) error
 	Update(restaurant *models.Restaurant) error
+
+	// edit
+	PartialUpdate(restaurantID uuid.UUID, name *string, menuType *string, addOnMenuItem []string) (*models.Restaurant, error)
+	ReplaceAddOnMenuItems(restaurantID uuid.UUID, addOnMenuItem []string) error
+	GetAddOnMenuItems(restaurantID uuid.UUID) ([]string, error)
 }
 
 type RestaurantUsecase interface {
@@ -35,4 +42,5 @@ type RestaurantUsecase interface {
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
+	EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error)
 }
