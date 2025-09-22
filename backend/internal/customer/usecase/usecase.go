@@ -109,6 +109,7 @@ func (u *CustomerUsecase) GetProfile(customerID uuid.UUID) (*dto.ProfileResponse
 		Email:     customer.Email,
 		FirstName: customer.FirstName,
 		LastName:  customer.LastName,
+		WalletBalance: customer.WalletBalance,
 	}
 	return response, nil
 }

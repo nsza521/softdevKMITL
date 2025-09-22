@@ -29,5 +29,4 @@ type FoodOrderHistory struct {
 	FoodOrderID   uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	TotalAmount   float32   `gorm:"not null"`
-	OrderDate     time.Time `gorm:"not null"`
 }
