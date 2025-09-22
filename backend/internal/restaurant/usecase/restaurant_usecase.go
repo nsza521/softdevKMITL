@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"time"
 	"strings"
 	"mime/multipart"
 	"github.com/google/uuid"
@@ -182,5 +183,10 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 		return u.restaurantRepository.Update(restaurant)
 	}
 
+	return nil
+}
+
+func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
+	utils.BlacklistToken(token, expiry.Unix())
 	return nil
 }

@@ -13,6 +13,6 @@ func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interface
 	customerGroup.GET("/profile", middleware.AuthMiddleware(), customerHandler.GetProfile())
 	customerGroup.PATCH("/profile", middleware.AuthMiddleware(), customerHandler.EditProfile())
 	customerGroup.GET("/fullname", middleware.AuthMiddleware(), customerHandler.GetFullnameByUsername())
-	// customerGroup.POST("/logout", middleware.AuthMiddleware(), customerHandler.Logout())
+	customerGroup.POST("/logout", middleware.AuthMiddleware(), customerHandler.Logout())
 	// customerGroup.PUT("/change_password", middleware.AuthMiddleware(), customerHandler.ChangePassword())
 }
