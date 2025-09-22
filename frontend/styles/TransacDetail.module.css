@@ -8,6 +8,8 @@
     
 }
 
+
+
 .left_content {
     padding: 0;
     justify-self: center;
@@ -17,6 +19,12 @@
 .middle_content {
     align-self: center;
     padding-left: 20px;
+
+    .viewdetail{
+        color: #b9b9b9;
+        display: flex;
+        gap: 5px;
+    }
 }
 
 .right_content {
