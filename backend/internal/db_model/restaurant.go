@@ -34,5 +34,5 @@ type BankAccount struct {
 type RestaurantAddOn struct {
     ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
     RestaurantID uuid.UUID `gorm:"type:char(36);index"`
-    ItemName     string    `gorm:"type:varchar(255);index:idx_rest_addon,priority:2"`
+    ItemName     string    `gorm:"type:varchar(255);index"`
 }

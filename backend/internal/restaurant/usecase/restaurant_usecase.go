@@ -2,19 +2,21 @@ package usecase
 
 import (
 	"fmt"
-	"strings"
 	"mime/multipart"
+	"strings"
+
 	// "github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
 	// "context"
 
-	"backend/internal/db_model"
+	models "backend/internal/db_model"
 	menuInterfaces "backend/internal/menu/interfaces"
 	"backend/internal/restaurant/dto"
 	"backend/internal/restaurant/interfaces"
 	user "backend/internal/user/dto"
 	"backend/internal/utils"
+
 	"github.com/google/uuid"
 )
 
@@ -64,9 +66,9 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 	// Create new restaurant
 	restaurant := models.Restaurant{
 
-		Username:     username,
-		Email:        request.Email,
-		Password:     hashedPassword,
+		Username: username,
+		Email:    request.Email,
+		Password: hashedPassword,
 	}
 	createdRestaurant, err := u.restaurantRepository.Create(&restaurant)
 	if err != nil {
@@ -189,52 +191,45 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 	return nil
 }
 
+func strOrEmpty(p *string) string {
+	if p != nil {
+		return *p
+	}
+	return ""
+}
 
 func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error) {
-	// 1) ตรวจว่ามีร้านนี้ไหม
+	if request == nil {
+		return nil, fmt.Errorf("nil request")
+	}
 	if _, err := u.restaurantRepository.GetByID(restaurantID); err != nil {
 		return nil, err
 	}
 
-	// 2) อัปเดต: repo ของคุณรวมทั้ง Name, MenuType และ AddOnMenuItem ไว้ใน "PartialUpdate"
-	//    - ส่ง 4 อาร์กิวเมนต์ให้ครบ (uuid, *string, *string, []string)
-	//    - ถ้าไม่อยากแก้ add-ons ให้ส่ง nil มาใน request.AddOnMenuItem ได้ (repo ควรตีความว่า "ไม่แตะ")
-	if request.Name != nil || request.MenuType != nil || request.AddOnMenuItem != nil {
-		_, err := u.restaurantRepository.PartialUpdate(restaurantID, request.Name, request.MenuType)
-		if err != nil {
+	if request.Name != nil || request.MenuType != nil {
+		if _, err := u.restaurantRepository.PartialUpdate(restaurantID, request.Name, request.MenuType); err != nil {
+			return nil, err
+		}
+	}
+	if request.AddOnMenuItem != nil {
+		if err := u.restaurantRepository.ReplaceAddOnMenuItems(restaurantID, request.AddOnMenuItem); err != nil {
 			return nil, err
 		}
 	}
 
-	// 3) ดึงค่าล่าสุด
 	updated, err := u.restaurantRepository.GetByID(restaurantID)
 	if err != nil {
 		return nil, err
 	}
-
-	// 4) map -> dto: จัดการ *string -> string ให้ตรงชนิดของ EditRestaurantResponse
-	var nameVal string
-	if updated.Name != nil {
-		nameVal = *updated.Name
-	}
-	var menuTypeVal string
-	if updated.MenuType != nil {
-		menuTypeVal = *updated.MenuType
+	addOns, err := u.restaurantRepository.GetAddOnMenuItems(restaurantID)
+	if err != nil {
+		return nil, err
 	}
 
-	// 5) add-ons: เนื่องจากยังไม่มี GetAddOnItems ใน repo ของคุณ
-	//    - ถ้ารอบนี้มีส่ง add-ons มาด้วย ให้ใช้ค่าที่เพิ่งแก้ (request.AddOnMenuItem)
-	//    - ถ้าไม่ได้ส่งมา (nil) และอยากได้ค่าจริงจาก DB แนะนำเพิ่มเมธอด GetAddOnItems ภายหลัง
-	addOns := []string{}
-	if request.AddOnMenuItem != nil {
-		addOns = request.AddOnMenuItem
-	}
-
-	resp := &dto.EditRestaurantResponse{
-		ID:            updated.ID,     // ต้องเป็น uuid.UUID ใน DTO
-		Name:          nameVal,        // from *string
-		MenuType:      menuTypeVal,    // from *string
-		AddOnMenuItem: addOns,         // จาก request รอบนี้ (ถ้า nil จะเป็น [] ว่าง)
-	}
-	return resp, nil
+	return &dto.EditRestaurantResponse{
+		ID:            updated.ID,
+		Name:          strOrEmpty(updated.Name),
+		MenuType:      strOrEmpty(updated.MenuType),
+		AddOnMenuItem: addOns,
+	}, nil
 }

@@ -174,10 +174,12 @@ func (r *RestaurantRepository) ReplaceAddOnItems(restaurantID uuid.UUID, items [
 	return r.db.Create(&bulk).Error
 }
 
-// ✅ ดึงรายการ add-on เป็น []string
+// ดึง Add-on เป็น []string
 func (r *RestaurantRepository) GetAddOnMenuItems(restaurantID uuid.UUID) ([]string, error) {
 	var rows []models.RestaurantAddOn
-	if err := r.db.Where("restaurant_id = ?", restaurantID).Order("item_name asc").Find(&rows).Error; err != nil {
+	if err := r.db.Where("restaurant_id = ?", restaurantID).
+		Order("item_name asc").
+		Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	out := make([]string, 0, len(rows))
@@ -187,18 +189,15 @@ func (r *RestaurantRepository) GetAddOnMenuItems(restaurantID uuid.UUID) ([]stri
 	return out, nil
 }
 
-// ✅ แทนที่ Add-on ทั้งหมดของร้าน (ถ้า [] ว่าง = ล้าง)
+// แทนที่ Add-on ทั้งหมด (ถ้า [] ว่าง = ล้าง)
 func (r *RestaurantRepository) ReplaceAddOnMenuItems(restaurantID uuid.UUID, items []string) error {
-	// ลบของเก่าทั้งหมดก่อน
 	if err := r.db.Where("restaurant_id = ?", restaurantID).
 		Delete(&models.RestaurantAddOn{}).Error; err != nil {
 		return err
 	}
-	// ถ้าไม่ได้ส่งของใหม่มา → ถือว่าเคลียร์เสร็จ
 	if len(items) == 0 {
 		return nil
 	}
-	// bulk insert ของใหม่
 	bulk := make([]models.RestaurantAddOn, 0, len(items))
 	for _, it := range items {
 		bulk = append(bulk, models.RestaurantAddOn{
