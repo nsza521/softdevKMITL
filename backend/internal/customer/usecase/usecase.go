@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"time"
 	"strings"
 
 	"github.com/google/uuid"
@@ -92,8 +93,8 @@ func (u *CustomerUsecase) Login(request *user.LoginRequest) (string, error) {
 
 }
 
-func (u *CustomerUsecase) Logout() error {
-	// Implement logout logic if needed (e.g., token invalidation)
+func (u *CustomerUsecase) Logout(token string, expiry time.Time) error {
+	utils.BlacklistToken(token, expiry.Unix())
 	return nil
 }
 

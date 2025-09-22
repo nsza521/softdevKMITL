@@ -1,6 +1,8 @@
 package http
 
 import (
+	"time"
+	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -17,6 +19,28 @@ func NewRestaurantHandler(restaurantUsecase interfaces.RestaurantUsecase) interf
 	return &RestaurantHandler{
 		restaurantUsecase: restaurantUsecase,
 	}
+}
+
+func getRestaurantIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return uuid.Nil, false
+	}
+
+	role, exist := c.Get("role")
+	if !exist || role.(string) != "restaurant" {
+		c.JSON(401, gin.H{"error": "restaurant unauthorized"})
+		return uuid.Nil, false
+	}
+
+	restaurantID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(500, gin.H{"error": "invalid user id"})
+		return uuid.Nil, false
+	}
+
+	return restaurantID, true
 }
 
 func (h *RestaurantHandler) Register() gin.HandlerFunc {
@@ -56,16 +80,16 @@ func (h *RestaurantHandler) Login() gin.HandlerFunc {
 func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		// _, exists := c.Get("user_id")
-		// if !exists {
-		// 	c.JSON(401, gin.H{"error": "User unauthorized"})
-		// 	return
-		// }
-		// role, exist := c.Get("role")
-		// if !exist || role.(string) != "customer" {
-		// 	c.JSON(401, gin.H{"error": "User unauthorized"})
-		// 	return
-		// }
+		_, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(401, gin.H{"error": "user unauthorized"})
+			return
+		}
+		role, exist := c.Get("role")
+		if !exist || role.(string) != "customer" {
+			c.JSON(401, gin.H{"error": "customer unauthorized"})
+			return
+		}
 
 		restaurants, err := h.restaurantUsecase.GetAll()
 		if err != nil {
@@ -79,32 +103,20 @@ func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "Restaurant unauthorized"})
-			return
-		}
-		role, exists := c.Get("role")
-		if !exists || role.(string) != "restaurant" {
-			c.JSON(401, gin.H{"error": "Restaurant unauthorized"})
-			return
-		}
-
-		restaurantID, err := uuid.Parse(userID.(string))
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid restaurant ID"})
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
 			return
 		}
 
 		file, err := c.FormFile("restaurant_picture")
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Failed to get file: " + err.Error()})
+			c.JSON(400, gin.H{"error": "failed to get file: " + err.Error()})
 			return
 		}
 
 		const maxFileSize = 3 << 20 // limit to 3MB
 		if file.Size > maxFileSize {
-			c.JSON(400, gin.H{"error": "File too large. Max allowed is 3MB"})
+			c.JSON(400, gin.H{"error": "file too large. Max allowed is 3MB"})
 			return
 		}
 
@@ -114,27 +126,14 @@ func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, gin.H{"message": "Restaurant profile picture uploaded successfully", "url": url})
+		c.JSON(200, gin.H{"message": "restaurant profile picture uploaded successfully", "url": url})
 	}
 }
 
 func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "User unauthorized"})
-			return
-		}
-		role, exists := c.Get("role")
-		if !exists || role.(string) != "restaurant" {
-			c.JSON(401, gin.H{"error": "Restaurant unauthorized"})
-			return
-		}
-
-		restaurantID, err := uuid.Parse(userID.(string))
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid restaurant ID"})
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
 			return
 		}
 
@@ -144,12 +143,51 @@ func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
 			return
 		}
 
-		err = h.restaurantUsecase.ChangeStatus(restaurantID, request)
+		err := h.restaurantUsecase.ChangeStatus(restaurantID, request)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(200, gin.H{"message": "Restaurant status changed successfully"})
+		c.JSON(200, gin.H{"message": "restaurant status changed successfully"})
+	}
+}
+
+func (h *RestaurantHandler) Logout() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		_, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(401, gin.H{"error": "invalid token format"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		expClaim, exists := c.Get("exp")
+		if !exists {
+			c.JSON(500, gin.H{"error": "token expiry not found"})
+			return
+		}
+
+		expFloat, ok := expClaim.(float64)
+		if !ok {
+			c.JSON(500, gin.H{"error": "invalid token expiry format"})
+			return
+		}
+
+		expiry := time.Unix(int64(expFloat), 0)
+
+		err := h.restaurantUsecase.Logout(tokenString, expiry)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "logged out successfully"})
 	}
 }
