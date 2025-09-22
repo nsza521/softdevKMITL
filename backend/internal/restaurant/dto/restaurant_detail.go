@@ -5,11 +5,11 @@ import (
 )
 
 type RestaurantDetailResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string  `json:"username"`
-	PictureURL *string `json:"picture_url"`
-	Email     string `json:"email"`
-	Status    string `json:"status"`
+	ID         uuid.UUID `json:"id"`
+	Username   string    `json:"username"`
+	PictureURL *string   `json:"picture_url"`
+	Email      string    `json:"email"`
+	Status     string    `json:"status"`
 }
 
 type ChangeStatusRequest struct {
@@ -19,14 +19,14 @@ type ChangeStatusRequest struct {
 // edit
 
 type EditRestaurantRequest struct {
-	Name	   *string `json:"name,omitempty"`
-	MenuType   *string `json:"menu_type,omitempty"`
+	Name          *string  `json:"name,omitempty"`
+	MenuType      *string  `json:"menu_type,omitempty"`
 	AddOnMenuItem []string `json:"add_on_menu_item"`
 }
 
 type EditRestaurantResponse struct {
-	ID		 	uuid.UUID 	`json:"id"`
-	Name 	    string     	`json:"name"`
-	MenuType    string     	`json:"menu_type"`
-	AddOnMenuItem []string 	`json:"add_on_menu_item"`
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	MenuType      string    `json:"menu_type"`
+	AddOnMenuItem []string  `json:"add_on_menu_item"`
 }
