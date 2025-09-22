@@ -24,6 +24,15 @@ func (h *AddOnHandler) CreateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid restaurant id"})
 		return
 	}
+
+	UserID, userIDExists := c.Get("user_id")
+	Role, roleExists := c.Get("role")
+
+	if !userIDExists || !roleExists || Role != "restaurant" || UserID == nil || UserID != restID.String() {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}		
+
 	var req menu.CreateAddOnGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -44,6 +53,16 @@ func (h *AddOnHandler) ListGroups(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid restaurant id"})
 		return
 	}
+
+	UserID, userIDExists := c.Get("user_id")
+	Role, roleExists := c.Get("role")
+
+	if !userIDExists || !roleExists || Role != "restaurant" || UserID == nil || UserID != restID.String() {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}		
+
+
 	groups, err := h.uc.ListGroups(restID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -54,6 +73,7 @@ func (h *AddOnHandler) ListGroups(c *gin.Context) {
 
 // PUT /addon-groups/:id
 func (h *AddOnHandler) UpdateGroup(c *gin.Context) {
+	
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})

@@ -83,13 +83,11 @@ type MenuAddOnOption struct {
 
 // ===== Join Tables =====
 
-// ผูก "MenuType ↔ AddOnGroup" เพื่อใช้งานของหมดระดับหมวด
 type MenuTypeAddOnGroup struct {
 	MenuTypeID   uuid.UUID `gorm:"type:char(36);not null;index"`
 	AddOnGroupID uuid.UUID `gorm:"type:char(36);not null;index"`
 }
 
-// (คงไว้) ผูก "MenuItem ↔ AddOnGroup" สำหรับ override เฉพาะเมนู
 type MenuItemAddOnGroup struct {
 	MenuItemID   uuid.UUID `gorm:"type:char(36);not null;index"`
 	AddOnGroupID uuid.UUID `gorm:"type:char(36);not null;index"`
