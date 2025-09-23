@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"time"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -12,8 +14,10 @@ import (
 type CustomerHandler interface {
 	Register() gin.HandlerFunc
 	Login() gin.HandlerFunc
+	Logout() gin.HandlerFunc
 	GetProfile() gin.HandlerFunc
 	EditProfile() gin.HandlerFunc
+	GetFullnameByUsername() gin.HandlerFunc
 }
 
 type CustomerRepository interface {
@@ -29,5 +33,6 @@ type CustomerUsecase interface {
 	Login(request *user.LoginRequest) (string, error)
 	GetProfile(customerID uuid.UUID) (*dto.ProfileResponse, error)
 	EditProfile(customerID uuid.UUID, request *dto.EditProfileRequest) error
-	Logout() error
+	GetFullnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFullnameResponse, error)
+	Logout(token string, expiry time.Time) error
 }

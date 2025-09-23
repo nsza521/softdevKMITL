@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"fmt"
+	"time"
+	"strings"
 	"mime/multipart"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -55,9 +57,11 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 		return err
 	}
 
+	username := strings.TrimSpace(request.Username)
+
 	// Create new restaurant
 	restaurant := models.Restaurant{
-		Username:     request.Username,
+		Username:     username,
 		Email:        request.Email,
 		Password:     hashedPassword,
 	}
@@ -179,5 +183,10 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 		return u.restaurantRepository.Update(restaurant)
 	}
 
+	return nil
+}
+
+func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
+	utils.BlacklistToken(token, expiry.Unix())
 	return nil
 }
