@@ -208,3 +208,18 @@ func (r *RestaurantRepository) ReplaceAddOnMenuItems(restaurantID uuid.UUID, ite
 	}
 	return r.db.Create(&bulk).Error
 }
+
+func (r *RestaurantRepository) UpdateName(restaurantID uuid.UUID, name string) (*models.Restaurant, error) {
+    if err := r.db.Model(&models.Restaurant{}).
+        Where("id = ?", restaurantID).
+        Update("name", name).Error; err != nil {
+        return nil, err
+    }
+
+    var updated models.Restaurant
+    if err := r.db.First(&updated, "id = ?", restaurantID).Error; err != nil {
+        return nil, err
+    }
+
+    return &updated, nil
+}

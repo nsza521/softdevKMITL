@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"context"
+
 	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +21,7 @@ type RestaurantHandler interface {
 	ChangeStatus() gin.HandlerFunc
 
 	EditInfo() gin.HandlerFunc
+	UpdateName() gin.HandlerFunc
 }
 
 type RestaurantRepository interface {
@@ -34,6 +37,8 @@ type RestaurantRepository interface {
 	PartialUpdate(restaurantID uuid.UUID, name *string, menuType *string) (*models.Restaurant, error)
     ReplaceAddOnMenuItems(restaurantID uuid.UUID, items []string) error
     GetAddOnMenuItems(restaurantID uuid.UUID) ([]string, error)
+
+	UpdateName(id uuid.UUID, name string) (*models.Restaurant, error)
 }
 
 type RestaurantUsecase interface {
@@ -43,4 +48,5 @@ type RestaurantUsecase interface {
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
 	EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error)
+	UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error)
 }

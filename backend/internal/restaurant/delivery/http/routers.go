@@ -13,4 +13,5 @@ func MapRestaurantRoutes(restaurantGroup *gin.RouterGroup, restaurantHandler int
 	restaurantGroup.POST("/upload_pic", middleware.AuthMiddleware(), restaurantHandler.UploadProfilePicture())
 	restaurantGroup.PATCH("/status", middleware.AuthMiddleware(), restaurantHandler.ChangeStatus()) // No auth middleware here, should be added later
 	restaurantGroup.PUT("/edit/:id", middleware.AuthMiddleware(), restaurantHandler.EditInfo())
+	restaurantGroup.PATCH("/restaurants/editname/:id", restaurantHandler.UpdateName())
 }

@@ -8,7 +8,7 @@ import (
 	// "github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
-	// "context"
+	"context"
 
 	models "backend/internal/db_model"
 	menuInterfaces "backend/internal/menu/interfaces"
@@ -232,4 +232,8 @@ func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRe
 		MenuType:      strOrEmpty(updated.MenuType),
 		AddOnMenuItem: addOns,
 	}, nil
+}
+
+func (u *RestaurantUsecase) UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error) {
+    return u.restaurantRepository.PartialUpdate(id, &name, nil)
 }
