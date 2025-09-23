@@ -125,6 +125,7 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 			PictureURL: r.ProfilePic,
 			Email:      r.Email,
 			Status:     r.Status,
+			Name: 		r.Name,
 		}
 		restaurantDetails = append(restaurantDetails, detail)
 	}

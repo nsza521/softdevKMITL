@@ -10,6 +10,7 @@ type RestaurantDetailResponse struct {
 	PictureURL *string   `json:"picture_url"`
 	Email      string    `json:"email"`
 	Status     string    `json:"status"`
+	Name       *string    `json:"name"`
 }
 
 type ChangeStatusRequest struct {
