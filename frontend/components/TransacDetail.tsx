@@ -5,12 +5,13 @@ type TransacDetailProps = {
   head: string;
   detail?: string;
   date: string;
+  viewdetail?: string;
   price?: string;
   imgsrc: string;
   imgalt?: string;
 };
 
-export default function TransacDetail({ head, detail, date, price, imgsrc, imgalt }: TransacDetailProps) {
+export default function TransacDetail({ head, detail, date, viewdetail, price, imgsrc, imgalt }: TransacDetailProps) {
     return(
         <div className={styles.container}>
             <div className={styles.left_content}>
@@ -20,6 +21,12 @@ export default function TransacDetail({ head, detail, date, price, imgsrc, imgal
                 <p>{head}</p>
                 <p>{detail}</p>
                 <p>{date}</p>
+                    {viewdetail && (
+                        <div className={styles.viewdetail}>
+                            <p>{viewdetail}</p>
+                            <img src="Arrow_Right_LG.svg" alt="Arrow_Right_LG" />
+                        </div>
+                    )}
             </div>
             <div className={styles.right_content}>
                 <p>{price}</p>

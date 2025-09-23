@@ -110,3 +110,31 @@ func (h *CustomerHandler) EditProfile() gin.HandlerFunc {
 		c.JSON(200, gin.H{"message": "profile updated successfully"})
 	}
 }
+
+func (h *CustomerHandler) GetFullnameByUsername() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(401, gin.H{"error": "unauthorized"})
+			return
+		}
+		parseCustomerID, err := uuid.Parse(customerID.(string))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid user id"})
+			return
+		}
+		var request *dto.GetFullnameRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		fullname, err := h.customerUsecase.GetFullnameByUsername(parseCustomerID, request)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, fullname)
+	}
+}

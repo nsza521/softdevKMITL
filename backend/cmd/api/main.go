@@ -69,6 +69,8 @@ func initMySQL() (*gorm.DB, error) {
 		&models.TableTimeslot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
+		&models.TopupHistory{},
+		
 		// Menu
 		&models.MenuType{},
 		&models.MenuItem{},
