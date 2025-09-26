@@ -8,9 +8,18 @@ import (
 )
 
 func MapTableRoutes(tableGroup *gin.RouterGroup, tableHandler interfaces.TableHandler) {
+	// Table routes
 	tableGroup.POST("/create", tableHandler.CreateTable())
-	tableGroup.GET("/all", middleware.AuthMiddleware(), tableHandler.GetAllTables())
+
+	// Timeslot routes
 	tableGroup.POST("/timeslot/create", tableHandler.CreateTimeslot())
 	tableGroup.GET("/timeslot/all", tableHandler.GetAllTimeslots())
-	tableGroup.GET("/timeslot/:timeslot_id", middleware.AuthMiddleware(), tableHandler.GetTableTimeslotByTimeslotID())
+
+
+	tableGroup.Use(middleware.AuthMiddleware())
+	// Table routes
+	tableGroup.GET("/all", tableHandler.GetAllTables())
+	
+	// Timeslot routes
+	tableGroup.GET("/timeslot/:timeslot_id", tableHandler.GetTableTimeslotByTimeslotID())
 }
