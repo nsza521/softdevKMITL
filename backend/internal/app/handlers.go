@@ -95,7 +95,7 @@ func (s *App) MapHandlers() error {
 
 	// Table Reservation Group
 	tableReservationRepository := tableReservationRepository.NewTableReservationRepository(s.db)
-	tableReservationUsecase := tableReservationUsecase.NewTableReservationUsecase(tableReservationRepository)
+	tableReservationUsecase := tableReservationUsecase.NewTableReservationUsecase(tableReservationRepository, tableRepository, customerRepository)
 	tableReservationHandler := tableReservationHttp.NewTableReservationHandler(tableReservationUsecase)
 	tableReservationHttp.MapTableReservationRoutes(tableReservationGroup, tableReservationHandler)
 
