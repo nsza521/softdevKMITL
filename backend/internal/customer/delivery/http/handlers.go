@@ -1,6 +1,9 @@
 package http
 
 import (
+	"time"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -18,6 +21,29 @@ func NewCustomerHandler(customerUsecase interfaces.CustomerUsecase) interfaces.C
 		customerUsecase: customerUsecase,
 	}
 }
+
+func getCustomerIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return uuid.Nil, false
+	}
+
+	role, exist := c.Get("role")
+	if !exist || role.(string) != "customer" {
+		c.JSON(401, gin.H{"error": "customer unauthorized"})
+		return uuid.Nil, false
+	}
+
+	customerID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(500, gin.H{"error": "invalid user id"})
+		return uuid.Nil, false
+	}
+
+	return customerID, true
+}
+
 
 func (h *CustomerHandler) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -60,19 +86,12 @@ func (h *CustomerHandler) Login() gin.HandlerFunc {
 
 func (h *CustomerHandler) GetProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		customerID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
-		parseCustomerID, err := uuid.Parse(customerID.(string))
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid user id"})
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
 			return
 		}
 
-		profile, err := h.customerUsecase.GetProfile(parseCustomerID)
+		profile, err := h.customerUsecase.GetProfile(customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -85,14 +104,8 @@ func (h *CustomerHandler) GetProfile() gin.HandlerFunc {
 func (h *CustomerHandler) EditProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		customerID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
-		parseCustomerID, err := uuid.Parse(customerID.(string))
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid user id"})
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
 			return
 		}
 
@@ -102,7 +115,7 @@ func (h *CustomerHandler) EditProfile() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.customerUsecase.EditProfile(parseCustomerID, request); err != nil {
+		if err := h.customerUsecase.EditProfile(customerID, request); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
@@ -114,27 +127,62 @@ func (h *CustomerHandler) EditProfile() gin.HandlerFunc {
 func (h *CustomerHandler) GetFullnameByUsername() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		customerID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
 			return
 		}
-		parseCustomerID, err := uuid.Parse(customerID.(string))
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid user id"})
-			return
-		}
+		
 		var request *dto.GetFullnameRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		fullname, err := h.customerUsecase.GetFullnameByUsername(parseCustomerID, request)
+
+		fullname, err := h.customerUsecase.GetFullnameByUsername(customerID, request)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
 		c.JSON(200, fullname)
+	}
+}
+
+func (h *CustomerHandler) Logout() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		_, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(401, gin.H{"error": "invalid token format"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		expClaim, exists := c.Get("exp")
+		if !exists {
+			c.JSON(500, gin.H{"error": "token expiry not found"})
+			return
+		}
+
+		expFloat, ok := expClaim.(float64)
+		if !ok {
+			c.JSON(500, gin.H{"error": "invalid token expiry format"})
+			return
+		}
+
+		expiry := time.Unix(int64(expFloat), 0)
+
+		err := h.customerUsecase.Logout(tokenString, expiry)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "logged out successfully"})
 	}
 }
