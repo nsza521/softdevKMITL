@@ -5,7 +5,6 @@ import (
 	"time"
 	"strings"
 	"mime/multipart"
-	"strings"
 
 	// "github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -239,6 +238,7 @@ func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRe
 
 func (u *RestaurantUsecase) UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error) {
     return u.restaurantRepository.PartialUpdate(id, &name, nil)
+}
 func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
 	utils.BlacklistToken(token, expiry.Unix())
 	return nil
