@@ -68,6 +68,12 @@ func (s *App) MapHandlers() error {
 	mtH := menuHttp.NewMenuTypeHandler(mtUC)
 	menuHttp.MapMenuTypeRoutes(menuGroup, mtH)
 
+	// --- AddOn (Group + Option) ---
+	addonRepo := menuRepo.NewAddOnRepository(s.db)
+	addonUC := menuUC.NewAddOnUsecase(addonRepo)
+	addonH := menuHttp.NewAddOnHandler(addonUC)
+	menuHttp.MapAddOnRoutes(menuGroup, addonH)
+
 	// Restaurant Group
 	restaurantRepository := restaurantRepository.NewRestaurantRepository(s.db)
 	restaurantUsecase := restaurantUsecase.NewRestaurantUsecase(restaurantRepository, mRepo, s.minio)
@@ -89,7 +95,7 @@ func (s *App) MapHandlers() error {
 
 	// Table Reservation Group
 	tableReservationRepository := tableReservationRepository.NewTableReservationRepository(s.db)
-	tableReservationUsecase := tableReservationUsecase.NewTableReservationUsecase(tableReservationRepository)
+	tableReservationUsecase := tableReservationUsecase.NewTableReservationUsecase(tableReservationRepository, tableRepository, customerRepository)
 	tableReservationHandler := tableReservationHttp.NewTableReservationHandler(tableReservationUsecase)
 	tableReservationHttp.MapTableReservationRoutes(tableReservationGroup, tableReservationHandler)
 

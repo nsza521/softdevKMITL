@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 
+	"time"
 	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 type RestaurantHandler interface {
 	Register() gin.HandlerFunc
 	Login() gin.HandlerFunc
+	Logout() gin.HandlerFunc
 	GetAll() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
 	ChangeStatus() gin.HandlerFunc
@@ -44,6 +46,7 @@ type RestaurantRepository interface {
 type RestaurantUsecase interface {
 	Register(request *dto.RegisterRestaurantRequest) error
 	Login(request *user.LoginRequest) (string, error)
+	Logout(token string, expiry time.Time) error
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error

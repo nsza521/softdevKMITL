@@ -16,7 +16,7 @@ func seedTableTimeslots(db *gorm.DB) error {
 	for col := 1; col <= 3; col++ {
 		for row := 1; row <= 6; row++ {
 			table := models.Table{
-				PeopleNum: 6,
+				MaxSeats: 6,
 				Row:      fmt.Sprintf("%c", 'A'+(row-1)),
 				Col:      fmt.Sprintf("%d", col),
 			}
@@ -54,8 +54,8 @@ func seedTableTimeslots(db *gorm.DB) error {
 	for _, table := range tables {
 		for _, timeSlot := range timeSlots {
 
-			status := "available"
-			if timeSlot.EndTime.In(loc).After(time.Now().In(loc)) {
+			status := "available" // status have "available", "full", "expired", "partial"
+			if timeSlot.StartTime.In(loc).Before(time.Now().In(loc)) {
 				status = "expired"
 			}
 
@@ -63,6 +63,7 @@ func seedTableTimeslots(db *gorm.DB) error {
 				TableID:    table.ID,
 				TimeslotID: timeSlot.ID,
 				Status:     status,
+				ReservedSeats: 0,
 			}
 			if err := db.Create(&tableTimeslot).Error; err != nil {
 				return err

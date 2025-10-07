@@ -1,10 +1,12 @@
 # Backend Development Setup
 This project provides a Go backend with MySQL, MinIO, and phpMyAdmin for development.
 
+
 ## Prerequisites
 Before starting, make sure you have the following installed:
 - [Go](https://golang.org/dl/) (>= 1.22 recommended)
 - [Docker](https://docs.docker.com/get-docker/)
+
 
 ## Setup Instructions
 
@@ -27,6 +29,7 @@ go mod download
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
 ```
+
 
 ## Stop and remove containers, networks, and volumes
 Use this command when you want to completely reset all services including databases.
