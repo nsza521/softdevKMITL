@@ -7,13 +7,13 @@ import (
 	// "github.com/google/uuid"
 
 	// "backend/internal/notifications/dto"
-	"backend/internal/notifications/interfaces"
+	// "backend/internal/notifications/interfaces"
 
 )
 
-type NotificationHandler struct {
-	uc interfaces.NotiHandler
-}
+// type NotificationHandler struct {
+// 	uc interfaces.NotiHandler
+// }
 
 // func NewNotificationHandler(r *gin.Engine, uc interfaces.NotiHandler) {
 // 	h := &NotificationHandler{uc: uc}
