@@ -109,24 +109,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	// ✅ PATCH: Mark all as read
-	// r.PATCH("/read-all", func(c *gin.Context) {
-	// 	rid, err := uuid.Parse(c.Query("receiverId"))
-	// 	if err != nil {
-	// 		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverId"})
-	// 		return
-	// 	}
-	// 	rt := c.Query("receiverType")
-	// 	if rt != "customer" && rt != "restaurant" {
-	// 		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
-	// 		return
-	// 	}
-	// 	if updated, err := h.MarkAllRead(c.Request.Context(), rid, rt); err != nil {
-	// 		c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	} else {
-	// 		c.JSON(stdhttp.StatusOK, gin.H{"updated": updated})
-	// 	}
-	// })
-
 	r.PATCH("/read-all", func(c *gin.Context) {
 	type RequestReadAll struct {
 		ReceiverID   string `json:"receiverId" binding:"required"`
@@ -163,7 +145,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	c.JSON(stdhttp.StatusOK, gin.H{
 		"message": "All notifications marked as read successfully",
 		"updated": updated,
-		"rid": rid,
+		// "rid": rid,
 	})
 	})
 
