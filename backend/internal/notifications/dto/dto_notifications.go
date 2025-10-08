@@ -17,6 +17,11 @@ type Notification struct {
 	CreatedAt    time.Time `json:"createdAt"`
 }
 
+type RequestReadAll struct {
+	ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
+	ReceiverType string    `json:"receiverType" binding:"required"`
+}
+
 type ListQuery struct {
 	ReceiverID   uuid.UUID `form:"receiverId" binding:"required, stripuuid"`
 	ReceiverType string    `form:"receiverType" binding:"required,oneof=customer restaurant"`

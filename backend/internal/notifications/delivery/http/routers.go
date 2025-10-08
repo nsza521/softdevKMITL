@@ -99,27 +99,72 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		if err := h.MarkRead(c.Request.Context(), id, req.IsRead); err != nil {
 			c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
 		} else {
-			c.Status(stdhttp.StatusNoContent)
+			// c.Status(stdhttp.StatusNoContent)
+			c.JSON(stdhttp.StatusOK, gin.H{
+				"message": "notification IsRead",
+				"noti_Id": id,
+			})
 		}
+
 	})
 
 	// ✅ PATCH: Mark all as read
+	// r.PATCH("/read-all", func(c *gin.Context) {
+	// 	rid, err := uuid.Parse(c.Query("receiverId"))
+	// 	if err != nil {
+	// 		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverId"})
+	// 		return
+	// 	}
+	// 	rt := c.Query("receiverType")
+	// 	if rt != "customer" && rt != "restaurant" {
+	// 		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
+	// 		return
+	// 	}
+	// 	if updated, err := h.MarkAllRead(c.Request.Context(), rid, rt); err != nil {
+	// 		c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	} else {
+	// 		c.JSON(stdhttp.StatusOK, gin.H{"updated": updated})
+	// 	}
+	// })
+
 	r.PATCH("/read-all", func(c *gin.Context) {
-		rid, err := uuid.Parse(c.Query("receiverId"))
-		if err != nil {
-			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverId"})
-			return
-		}
-		rt := c.Query("receiverType")
-		if rt != "customer" && rt != "restaurant" {
-			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
-			return
-		}
-		if updated, err := h.MarkAllRead(c.Request.Context(), rid, rt); err != nil {
-			c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
-		} else {
-			c.JSON(stdhttp.StatusOK, gin.H{"updated": updated})
-		}
+	type RequestReadAll struct {
+		ReceiverID   string `json:"receiverId" binding:"required"`
+		ReceiverType string `json:"receiverType" binding:"required"`
+	}
+
+	var req RequestReadAll
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	rid, err := uuid.Parse(strings.Trim(req.ReceiverID, "[]\" "))
+	if err != nil {
+		c.JSON(stdhttp.StatusBadRequest, gin.H{
+			"error":      "invalid receiverId",
+			"raw_value":  req.ReceiverID,
+			"parseError": err.Error(),
+		})
+		return
+	}
+
+	if req.ReceiverType != "customer" && req.ReceiverType != "restaurant" {
+		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
+		return
+	}
+
+	updated, err := h.MarkAllRead(c.Request.Context(), rid, req.ReceiverType)
+	if err != nil {
+		c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(stdhttp.StatusOK, gin.H{
+		"message": "All notifications marked as read successfully",
+		"updated": updated,
+		"rid": rid,
+	})
 	})
 
 	r.POST("/event", func(c *gin.Context) {
@@ -134,5 +179,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		return
 	}
 	c.JSON(stdhttp.StatusCreated, resp)
-})
+	})
+
 }
