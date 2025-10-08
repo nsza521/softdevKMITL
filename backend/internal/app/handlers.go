@@ -28,6 +28,7 @@ import (
 	foodOrderHttp "backend/internal/order/delivery/http"
 	foodOrderRepository "backend/internal/order/repository"
 	foodOrderUsecase "backend/internal/order/usecase"
+	foodOrderAdapter "backend/internal/order/adapter"
 
 	notiHttp "backend/internal/notifications/delivery/http"
 	notiRepository "backend/internal/notifications/repository"
@@ -106,9 +107,10 @@ func (s *App) MapHandlers() error {
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
 
 	// Food Order Group
-	foodOrderRepository := foodOrderRepository.NewFoodOrderRepository(s.db)
-	foodOrderUsecase := foodOrderUsecase.NewFoodOrderUsecase(foodOrderRepository)
-	foodOrderHandler := foodOrderHttp.NewFoodOrderHandler(foodOrderUsecase)
+	foodOrderRepository := foodOrderRepository.NewOrderRepository(s.db)
+	menuRead := foodOrderAdapter.NewMenuReadAdapter(mUC)
+	foodOrderUsecase := foodOrderUsecase.NewOrderUsecase(foodOrderRepository, menuRead)
+	foodOrderHandler := foodOrderHttp.NewOrderHandler(foodOrderUsecase)
 	foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
 
 	// Notification Group

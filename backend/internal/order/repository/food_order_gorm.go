@@ -1,69 +1,75 @@
 package repository
 
 import (
-	"backend/internal/db_model"
 	"context"
+	"errors"
+	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"backend/internal/db_model"
 )
 
-type FoodOrderRepository struct {
-	db *gorm.DB
+// ใช้ guard แบบ scoped โดยผูก reservation กับ restaurant_id เสมอเวลา query
+type Reservation struct {
+	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
+	RestaurantID uuid.UUID `gorm:"type:char(36);index;not null"`
+	CustomerID   uuid.UUID `gorm:"type:char(36);index;not null"`
+	Status       string    `gorm:"type:varchar(32);not null"`
+	ReserveDate  time.Time
 }
 
-func NewFoodOrderRepository(db *gorm.DB) *FoodOrderRepository {
-	return &FoodOrderRepository{db: db}
+func (Reservation) TableName() string { return "table_reservations" }
+
+type OrderRepository interface {
+	LoadReservation(ctx context.Context, id uuid.UUID) (*Reservation, error)
+	CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
 }
 
-func (r *FoodOrderRepository) CreateOrderWithItems(ctx context.Context,
-	order models.FoodOrder,
-	items []models.FoodOrderItem,
-	options []models.FoodOrderItemOption,
-) (*models.FoodOrder, error) {
-	var created models.FoodOrder
+type orderRepository struct{ db *gorm.DB }
 
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&order).Error; err != nil {
+func NewOrderRepository(db *gorm.DB) OrderRepository {
+	return &orderRepository{db: db}
+}
+
+func (r *orderRepository) LoadReservation(ctx context.Context, id uuid.UUID) (*Reservation, error) {
+	var res Reservation
+	if err := r.db.WithContext(ctx).First(&res, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+// สร้างออเดอร์แบบ transactional และผูก guard ตาม restaurant_id ของ reservation
+func (r *orderRepository) CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// double-check reservation ยังอยู่และเป็นร้านเดียวกัน
+		var chk Reservation
+		if err := tx.First(&chk, "id=? AND restaurant_id=?", rsv.ID, rsv.RestaurantID).Error; err != nil {
 			return err
 		}
+		if chk.Status == "cancelled" {
+			return errors.New("reservation cancelled")
+		}
 
+		if err := tx.Create(order).Error; err != nil {
+			return err
+		}
 		for i := range items {
 			items[i].FoodOrderID = order.ID
 		}
-		if err := tx.Create(&items).Error; err != nil {
-			return err
-		}
-
-		// ต้อง map options ให้ตรงกับ item แต่ละตัว (ใน usecase ควรผูกมาให้แล้ว)
-		for i := range options {
-			if options[i].FoodOrderItemID == uuid.Nil {
-				return gorm.ErrInvalidData
-			}
-		}
-		if len(options) > 0 {
-			if err := tx.Create(&options).Error; err != nil {
+		if len(items) > 0 {
+			if err := tx.Create(&items).Error; err != nil {
 				return err
 			}
 		}
-
-		created = order
+		if len(opts) > 0 {
+			// ต้องใส่ FoodOrderItemID ให้ครบก่อนเรียก Create (usecase จะเซ็ตมาแล้ว)
+			if err := tx.Create(&opts).Error; err != nil {
+				return err
+			}
+		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return &created, nil
-}
-
-func (r *FoodOrderRepository) GetOrderWithItems(ctx context.Context, orderID uuid.UUID) (*models.FoodOrder, error) {
-	var order models.FoodOrder
-	err := r.db.WithContext(ctx).
-		Preload("Items").
-		Preload("Items.Options").
-		First(&order, "id = ?", orderID).Error
-	if err != nil {
-		return nil, err
-	}
-	return &order, nil
 }
