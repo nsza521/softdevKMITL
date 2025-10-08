@@ -12,33 +12,25 @@ import (
 
 type OrderHandler struct{ uc usecase.OrderUsecase }
 
-func NewOrderHandler(uc usecase.OrderUsecase) *OrderHandler {
-	return &OrderHandler{uc: uc}
-}
+func NewOrderHandler(uc usecase.OrderUsecase) *OrderHandler { return &OrderHandler{uc: uc} }
 
-// POST /restaurant/reservations/:reservationID/orders
+// POST /orders  (reservation_id เป็น optional ใน body)
 func (h *OrderHandler) Create(c *gin.Context) {
-	rid, err := uuid.Parse(c.Param("reservationID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid reservation id"})
-		return
-	}
-
+	
 	var req dto.CreateFoodOrderReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// JWT middleware ควร inject "user_id" (customer) ใน context
-	userIDStr := c.GetString("user_id")
+	userIDStr := c.GetString("user_id") // JWT middleware inject
 	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
+	if err != nil || userID == uuid.Nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	resp, err := h.uc.Create(c.Request.Context(), rid, req, userID)
+	resp, err := h.uc.Create(c.Request.Context(), req, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

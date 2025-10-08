@@ -3,12 +3,13 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
+	models "backend/internal/db_model" // <— ให้ alias เป็น models ให้ตรงกับการใช้งานด้านล่าง
 	"backend/internal/order/dto"
-	"backend/internal/db_model"
 	"backend/internal/order/repository"
 )
 
@@ -39,11 +40,11 @@ type AddOnGroup struct {
 	Options   []AddOption `json:"options"`
 }
 type AddOption struct {
-	ID         uuid.UUID  `json:"id"`
-	Name       string     `json:"name"`
-	PriceDelta float64    `json:"price_delta"`
-	IsDefault  bool       `json:"is_default"`
-	MaxQty     *int       `json:"max_qty"`
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	PriceDelta float64   `json:"price_delta"`
+	IsDefault  bool      `json:"is_default"`
+	MaxQty     *int      `json:"max_qty"`
 }
 
 /***************  Port to read menu detail  ***************/
@@ -53,7 +54,9 @@ type MenuReadService interface {
 
 /***************  Usecase  ***************/
 type OrderUsecase interface {
-	Create(ctx context.Context, reservationID uuid.UUID, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error)
+	// เวอร์ชันใหม่: reservation_id อยู่ใน body (optional)
+	Create(ctx context.Context, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error)
+	GetDetailForRestaurant(ctx context.Context, input GetDetailForRestaurantInput) (dto.OrderDetailForRestaurantResp, error)
 }
 
 type orderUsecase struct {
@@ -66,32 +69,38 @@ func NewOrderUsecase(repo repository.OrderRepository, menu MenuReadService) Orde
 	return &orderUsecase{repo: repo, menu: menu, nowFn: time.Now}
 }
 
-func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error) {
+func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error) {
 	if len(req.Items) == 0 {
 		return dto.CreateFoodOrderResp{}, errors.New("no items")
 	}
 
-	// 1) โหลด reservation + guard
-	rsv, err := u.repo.LoadReservation(ctx, reservationID)
-	if err != nil {
-		return dto.CreateFoodOrderResp{}, err
-	}
-	if rsv.CustomerID != currentCustomer {
-		return dto.CreateFoodOrderResp{}, errors.New("forbidden: reservation not owned by customer")
+	// 1) โหลด reservation เฉพาะกรณีมี reservation_id ใน body
+	var rsv *repository.Reservation
+	if req.ReservationID != nil {
+		rr, err := u.repo.LoadReservationForCustomer(ctx, *req.ReservationID, currentCustomer)
+		if err != nil {
+			return dto.CreateFoodOrderResp{}, err
+		}
+		rsv = rr
+		fmt.Printf("Loaded reservation22: %+v\n", rsv)
 	}
 
 	order := &models.FoodOrder{
-		ID:            uuid.New(),
+		ID: uuid.New(),
+		// ReservationID: จะถูกเซ็ตใน repo ถ้ามี rsv (หรือจะเซ็ตเองที่นี่ก็ได้)
 		ReservationID: rsv.ID,
-		CustomerID:    currentCustomer,
-		Status:        "pending",
-		OrderDate:     u.nowFn(),
-		Note:          req.Note,
+		CustomerID: currentCustomer,
+		Status:     "pending",
+		OrderDate:  u.nowFn(),
+		Note:       req.Note,
 	}
-	var orderItems []models.FoodOrderItem
-	var orderOpts  []models.FoodOrderItemOption
 
+	var orderItems []models.FoodOrderItem
+	var orderOpts []models.FoodOrderItemOption
 	var total float64
+
+	// ป้องกัน cross-tenant: รวม restaurant ของทุกรายการ
+	var restID *uuid.UUID
 
 	for _, it := range req.Items {
 		if it.Quantity <= 0 {
@@ -102,11 +111,20 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 		if err != nil {
 			return dto.CreateFoodOrderResp{}, err
 		}
+
+		// (Guard) ทุก item ต้องเป็นร้านเดียวกัน
+		if restID == nil {
+			rid := detail.RestaurantID
+			restID = &rid
+		} else if *restID != detail.RestaurantID {
+			return dto.CreateFoodOrderResp{}, errors.New("items belong to multiple restaurants")
+		}
+
 		// 3) ทำ map group/option
 		type groupCtx struct {
-			group  AddOnGroup
-			opts   map[uuid.UUID]AddOption
-			picks  int // จำนวน selections ใน group (นับเป็นรายการ ไม่ใช่ qty)
+			group AddOnGroup
+			opts  map[uuid.UUID]AddOption
+			picks int // จำนวน selections ใน group (นับเป็นรายการ ไม่ใช่ qty)
 		}
 		groups := map[uuid.UUID]*groupCtx{}
 		for _, g := range detail.AddOns {
@@ -125,11 +143,11 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 		for _, sel := range it.Selections {
 			gc, ok := groups[sel.GroupID]
 			if !ok {
-				return dto.CreateFoodOrderResp{}, errors.New("invalid selection: unknown group")
+				return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: unknown group (%s)", sel.GroupID)
 			}
 			op, ok := gc.opts[sel.OptionID]
 			if !ok {
-				return dto.CreateFoodOrderResp{}, errors.New("invalid selection: option not in group")
+				return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: option not in group (%s)", sel.OptionID)
 			}
 			qty := sel.Qty
 			if !gc.group.AllowQty {
@@ -146,28 +164,27 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 
 			addonSubtotal += float64(qty) * op.PriceDelta
 			itemOpts = append(itemOpts, models.FoodOrderItemOption{
-				ID:             uuid.New(),
-				AddOnOptionID:  op.ID,
-				GroupID:        gc.group.ID,
-				GroupName:      gc.group.Name,
-				OptionName:     op.Name,
-				PriceDelta:     op.PriceDelta,
-				Qty:            qty,
+				ID:            uuid.New(),
+				AddOnOptionID: op.ID,
+				GroupID:       gc.group.ID,
+				GroupName:     gc.group.Name,
+				OptionName:    op.Name,
+				PriceDelta:    op.PriceDelta,
+				Qty:           qty,
 			})
 		}
 
 		// 5) ตรวจ min/max per group
 		for _, gc := range groups {
 			if gc.group.Required && gc.picks == 0 {
-				return dto.CreateFoodOrderResp{}, errors.New("required group not selected: " + gc.group.Name)
+				return dto.CreateFoodOrderResp{}, fmt.Errorf("required group not selected: %s", gc.group.Name)
 			}
 			if gc.picks > 0 {
-				// นับเป็นจำนวน selections (ไม่ใช่ qty)
 				if gc.picks < gc.group.MinSelect {
-					return dto.CreateFoodOrderResp{}, errors.New("min_select not met for group: " + gc.group.Name)
+					return dto.CreateFoodOrderResp{}, fmt.Errorf("min_select not met for group: %s", gc.group.Name)
 				}
 				if gc.group.MaxSelect > 0 && gc.picks > gc.group.MaxSelect {
-					return dto.CreateFoodOrderResp{}, errors.New("max_select exceeded for group: " + gc.group.Name)
+					return dto.CreateFoodOrderResp{}, fmt.Errorf("max_select exceeded for group: %s", gc.group.Name)
 				}
 			}
 		}
@@ -185,7 +202,6 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 			Subtotal:     lineSubtotal,
 			Note:         it.Note,
 		}
-		// ใส่ FoodOrderItemID ให้ options หลังสร้างใน repo (หรือจะเซ็ตหลัง append ก็ได้)
 		for i := range itemOpts {
 			itemOpts[i].FoodOrderItemID = item.ID
 		}
@@ -196,7 +212,7 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 
 	order.TotalAmount = total
 
-	// 6) persist (transaction)
+	// 6) persist (transaction) — repo จะ set ReservationID ให้ถ้ามี rsv
 	if err := u.repo.CreateOrderTx(ctx, rsv, order, orderItems, orderOpts); err != nil {
 		return dto.CreateFoodOrderResp{}, err
 	}

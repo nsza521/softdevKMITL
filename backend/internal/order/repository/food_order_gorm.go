@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
-
+	"fmt"
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
@@ -23,8 +23,9 @@ type Reservation struct {
 func (Reservation) TableName() string { return "table_reservations" }
 
 type OrderRepository interface {
-	LoadReservation(ctx context.Context, id uuid.UUID) (*Reservation, error)
+	LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error)
 	CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
+	GetOrderDetailForRestaurant(ctx context.Context, orderID, restaurantID uuid.UUID) (*OrderDetailForRestaurant, error)
 }
 
 type orderRepository struct{ db *gorm.DB }
@@ -33,22 +34,45 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 	return &orderRepository{db: db}
 }
 
-func (r *orderRepository) LoadReservation(ctx context.Context, id uuid.UUID) (*Reservation, error) {
+func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error) {
 	var res Reservation
-	if err := r.db.WithContext(ctx).First(&res, "id = ?", id).Error; err != nil {
+	// โหลด reservation
+	if err := r.db.Debug().WithContext(ctx).
+		First(&res, "id = ?", reservationID).Error; err != nil {
 		return nil, err
+	}
+
+	// ถ้าเป็นเจ้าของ → ผ่าน
+	if res.CustomerID == customerID {
+		return &res, nil
+	}
+
+	// ไม่ใช่เจ้าของ → ตรวจในตารางสมาชิก
+	var cnt int64
+	if err := r.db.Debug().WithContext(ctx).
+		Table("table_reservation_members").
+		Where("reservation_id = ? AND customer_id = ?", reservationID, customerID).
+		Count(&cnt).Error; err != nil {
+		return nil, err
+	}
+	if cnt == 0 {
+		return nil, errors.New("forbidden: not a member of this reservation")
 	}
 	return &res, nil
 }
+
 
 // สร้างออเดอร์แบบ transactional และผูก guard ตาม restaurant_id ของ reservation
 func (r *orderRepository) CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// double-check reservation ยังอยู่และเป็นร้านเดียวกัน
+
+		fmt.Printf("Order about to write: %+v\n", order)
+		fmt.Printf("Reservation about to check: %+v\n", rsv)
 		var chk Reservation
-		if err := tx.First(&chk, "id=? AND restaurant_id=?", rsv.ID, rsv.RestaurantID).Error; err != nil {
-			return err
-		}
+		// if err := tx.First(&chk, "id=? AND restaurant_id=?", rsv.ID, rsv.RestaurantID).Error; err != nil {
+		// 	return err
+		// }
 		if chk.Status == "cancelled" {
 			return errors.New("reservation cancelled")
 		}

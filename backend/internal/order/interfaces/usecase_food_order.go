@@ -1,15 +1,18 @@
+// internal/order/interfaces/usecase_food_order.go
 package usecase
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
+	models "backend/internal/db_model"
 	"backend/internal/order/dto"
-	"backend/internal/db_model"
 	"backend/internal/order/repository"
+	"backend/internal/order/usecase" // import usecase package (for GetDetailForRestaurantInput)
 )
 
 /***************  Menu Read-Model (match JSON ของคุณ)  ***************/
@@ -54,6 +57,8 @@ type MenuReadService interface {
 /***************  Usecase  ***************/
 type OrderUsecase interface {
 	Create(ctx context.Context, reservationID uuid.UUID, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error)
+
+	GetDetailForRestaurant(ctx context.Context, in usecase.GetDetailForRestaurantInput) (dto.OrderDetailForRestaurantResp, error)
 }
 
 type orderUsecase struct {
@@ -72,13 +77,12 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 	}
 
 	// 1) โหลด reservation + guard
-	rsv, err := u.repo.LoadReservation(ctx, reservationID)
+	rsv, err := u.repo.LoadReservationForCustomer(ctx, reservationID, currentCustomer)
 	if err != nil {
+		fmt.Printf("Failed to load reservation: %v\n", err)
 		return dto.CreateFoodOrderResp{}, err
 	}
-	if rsv.CustomerID != currentCustomer {
-		return dto.CreateFoodOrderResp{}, errors.New("forbidden: reservation not owned by customer")
-	}
+	fmt.Printf("Loaded reservation: %+v\n", rsv)
 
 	order := &models.FoodOrder{
 		ID:            uuid.New(),
@@ -206,4 +210,10 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 		TotalAmount: order.TotalAmount,
 		Status:      order.Status,
 	}, nil
+}
+
+// Implement GetDetailForRestaurant to satisfy the OrderUsecase interface.
+func (u *orderUsecase) GetDetailForRestaurant(ctx context.Context, in usecase.GetDetailForRestaurantInput) (dto.OrderDetailForRestaurantResp, error) {
+	// This is a stub implementation. Replace with actual logic as needed.
+	return dto.OrderDetailForRestaurantResp{}, errors.New("not implemented")
 }

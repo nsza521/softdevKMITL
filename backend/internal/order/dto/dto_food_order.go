@@ -2,17 +2,17 @@ package dto
 
 import "github.com/google/uuid"
 
-// POST /restaurant/reservations/:reservationID/orders
 type CreateFoodOrderReq struct {
-	Items []CreateFoodOrderItem `json:"items" binding:"required,min=1"`
-	Note  *string               `json:"note"`
+	ReservationID *uuid.UUID            `json:"reservation_id"`           // <-- เพิ่มบรรทัดนี้
+	Items         []CreateFoodOrderItem `json:"items" binding:"required,min=1"`
+	Note          *string               `json:"note"`
 }
 
 type CreateFoodOrderItem struct {
 	MenuItemID uuid.UUID               `json:"menu_item_id" binding:"required"`
 	Quantity   int                     `json:"quantity" binding:"required,min=1"`
 	Note       *string                 `json:"note"`
-	Selections []CreateFoodOrderSelect `json:"selections"` // ตามตัวเลือก addon ที่ user กด
+	Selections []CreateFoodOrderSelect `json:"selections"`
 }
 
 type CreateFoodOrderSelect struct {
