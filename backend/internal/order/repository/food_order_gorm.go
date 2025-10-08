@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
-	"fmt"
+	// "fmt"
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
@@ -24,7 +24,7 @@ func (Reservation) TableName() string { return "table_reservations" }
 
 type OrderRepository interface {
 	LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error)
-	CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
+	CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
 	GetOrderDetailForRestaurant(ctx context.Context, orderID, restaurantID uuid.UUID) (*OrderDetailForRestaurant, error)
 }
 
@@ -63,19 +63,10 @@ func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reserv
 
 
 // สร้างออเดอร์แบบ transactional และผูก guard ตาม restaurant_id ของ reservation
-func (r *orderRepository) CreateOrderTx(ctx context.Context, rsv *Reservation, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
+func (r *orderRepository) CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// double-check reservation ยังอยู่และเป็นร้านเดียวกัน
 
-		fmt.Printf("Order about to write: %+v\n", order)
-		fmt.Printf("Reservation about to check: %+v\n", rsv)
-		var chk Reservation
-		// if err := tx.First(&chk, "id=? AND restaurant_id=?", rsv.ID, rsv.RestaurantID).Error; err != nil {
-		// 	return err
-		// }
-		if chk.Status == "cancelled" {
-			return errors.New("reservation cancelled")
-		}
 
 		if err := tx.Create(order).Error; err != nil {
 			return err

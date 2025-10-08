@@ -201,7 +201,7 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 	order.TotalAmount = total
 
 	// 6) persist (transaction)
-	if err := u.repo.CreateOrderTx(ctx, rsv, order, orderItems, orderOpts); err != nil {
+	if err := u.repo.CreateOrderTx(ctx, order, orderItems, orderOpts); err != nil {
 		return dto.CreateFoodOrderResp{}, err
 	}
 

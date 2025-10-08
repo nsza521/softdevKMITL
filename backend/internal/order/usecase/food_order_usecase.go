@@ -213,7 +213,7 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
 	order.TotalAmount = total
 
 	// 6) persist (transaction) — repo จะ set ReservationID ให้ถ้ามี rsv
-	if err := u.repo.CreateOrderTx(ctx, rsv, order, orderItems, orderOpts); err != nil {
+	if err := u.repo.CreateOrderTx(ctx, order, orderItems, orderOpts); err != nil {
 		return dto.CreateFoodOrderResp{}, err
 	}
 

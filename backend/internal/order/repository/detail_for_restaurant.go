@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-
 	"github.com/google/uuid"
+	"time"
 	// "gorm.io/gorm"
 
 	models "backend/internal/db_model"
@@ -13,7 +13,9 @@ type OrderDetailForRestaurant struct {
 	Order           models.FoodOrder
 	Items           []models.FoodOrderItem
 	Options         []models.FoodOrderItemOption
-	TableNumber     *string
+	TableLabel      *string
+	TimeslotStart   *time.Time
+	TimeslotEnd     *time.Time
 	CustomerDisplay *string
 }
 
@@ -24,12 +26,12 @@ func (r *orderRepository) GetOrderDetailForRestaurant(
 ) (*OrderDetailForRestaurant, error) {
 
 	var ord models.FoodOrder
-	if err := r.db.Debug().WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		First(&ord, "id = ?", orderID).Error; err != nil {
 		return nil, err
 	}
 
-	// ดึงเฉพาะ item ของร้านนี้ (join menu_items เพื่อกรอง)
+	// ดึงเฉพาะ items ของ "ร้านนี้" (กรองด้วย menu_items.restaurant_id)
 	var items []models.FoodOrderItem
 	if err := r.db.WithContext(ctx).
 		Table("food_order_items AS i").
@@ -41,7 +43,7 @@ func (r *orderRepository) GetOrderDetailForRestaurant(
 	}
 
 	// options ของ items เหล่านี้
-	opts := make([]models.FoodOrderItemOption, 0)
+	var opts []models.FoodOrderItemOption
 	if len(items) > 0 {
 		itemIDs := make([]uuid.UUID, 0, len(items))
 		for _, it := range items {
@@ -54,25 +56,39 @@ func (r *orderRepository) GetOrderDetailForRestaurant(
 		}
 	}
 
-	// (optional) table number ถ้ามีการจอง — NOTE: ReservationID เป็น uuid.UUID
-	var tableNumber *string
-	if ord.ReservationID != uuid.Nil {
-		type Row struct{ Number *string }
-		var row Row
-		_ = r.db.WithContext(ctx).Raw(`
-			SELECT t.number
-			FROM table_reservations tr
-			JOIN tables t ON t.id = tr.table_id
-			WHERE tr.id = ? LIMIT 1
-		`, ord.ReservationID).Scan(&row).Error
-		tableNumber = row.Number
+	// ===== ดึงข้อมูลโต๊ะ/เวลาจากสคีมาของคุณ =====
+	var tableLabel *string
+	var tStart, tEnd *time.Time
+
+	type rr struct {
+		TableLabel *string    `gorm:"column:table_label"`
+		StartTime  *time.Time `gorm:"column:start_time"`
+		EndTime    *time.Time `gorm:"column:end_time"`
+	}
+
+	var out rr
+	err := r.db.Debug().WithContext(ctx).
+		Table("`table_reservations` AS tr").
+		Select("CONCAT(t.`row`, t.`col`) AS table_label, ts.`start_time` AS start_time, ts.`end_time` AS end_time").
+		Joins("JOIN `table_timeslots` tt ON tt.id = tr.table_timeslot_id").
+		Joins("JOIN `tables` t ON t.id = tt.table_id").
+		Joins("JOIN `timeslots` ts ON ts.id = tt.timeslot_id").
+		Where("tr.id = ?", ord.ReservationID).
+		Limit(1).
+		Take(&out).Error
+
+	if err == nil {
+		tableLabel = out.TableLabel
+		tStart = out.StartTime
+		tEnd = out.EndTime
 	}
 
 	return &OrderDetailForRestaurant{
-		Order:           ord,
-		Items:           items,
-		Options:         opts,
-		TableNumber:     tableNumber,
-		CustomerDisplay: nil,
+		Order:         ord,
+		Items:         items,
+		Options:       opts,
+		TableLabel:    tableLabel,
+		TimeslotStart: tStart,
+		TimeslotEnd:   tEnd,
 	}, nil
 }

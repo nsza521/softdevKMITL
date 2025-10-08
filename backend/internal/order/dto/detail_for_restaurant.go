@@ -7,17 +7,19 @@ import (
 )
 
 type OrderDetailForRestaurantResp struct {
-	OrderID            uuid.UUID                      `json:"order_id"`
-	Status             string                         `json:"status"`
-	OrderDate          time.Time                      `json:"order_date"`
-	ExpectedReceive    *time.Time                     `json:"expected_receive_time,omitempty"`
-	ReservationID      *uuid.UUID                     `json:"reservation_id,omitempty"`
-	Note               *string                        `json:"note,omitempty"`
-	// optional info ให้ครัวเห็นพอประมาณ
-	TableNumber        *string                        `json:"table_number,omitempty"` // ถ้ามี
-	CustomerDisplay    *string                        `json:"customer_display,omitempty"`
+	OrderID         uuid.UUID          `json:"order_id"`
+	Status          string             `json:"status"`
+	OrderDate       time.Time          `json:"order_date"`
+	ExpectedReceive *time.Time         `json:"expected_receive_time,omitempty"`
+	ReservationID   *uuid.UUID         `json:"reservation_id,omitempty"`
+	Note            *string            `json:"note,omitempty"`
 
-	Items              []OrderKitchenItem             `json:"items"`
+	// 👇 เพิ่มตามสคีมา table_reservations
+	TableLabel    *string    `json:"table_label,omitempty"`     // เช่น "A5" จาก Row+Col
+	TimeslotStart *time.Time `json:"timeslot_start,omitempty"`  // จาก timeslots.start_time
+	TimeslotEnd   *time.Time `json:"timeslot_end,omitempty"`    // จาก timeslots.end_time
+
+	Items []OrderKitchenItem `json:"items"`
 }
 
 type OrderKitchenItem struct {

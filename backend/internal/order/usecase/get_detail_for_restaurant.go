@@ -2,9 +2,9 @@
 package usecase
 
 import (
+	"backend/internal/order/dto"
 	"context"
 	"github.com/google/uuid"
-	"backend/internal/order/dto"
 )
 
 func (u *orderUsecase) GetDetailForRestaurant(
@@ -48,11 +48,11 @@ func (u *orderUsecase) GetDetailForRestaurant(
 		Status:          raw.Order.Status,
 		OrderDate:       raw.Order.OrderDate,
 		ExpectedReceive: raw.Order.ExpectedReceive,
-		ReservationID:   &raw.Order.ReservationID,
 		Note:            raw.Order.Note,
-		TableNumber:     raw.TableNumber,
-		CustomerDisplay: raw.CustomerDisplay,
 		Items:           items,
+		TableLabel:      raw.TableLabel,
+		TimeslotStart:   raw.TimeslotStart,
+		TimeslotEnd:     raw.TimeslotEnd,
 	}
 	return resp, nil
 }
