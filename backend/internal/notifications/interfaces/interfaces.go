@@ -15,6 +15,8 @@ type NotiHandler interface {
 	MarkRead(ctx context.Context, id uuid.UUID, isRead bool) error
 	MarkAllRead(ctx context.Context, receiverId uuid.UUID, receiverType string) (int, error)
 	MockCreate(ctx context.Context, req dto.MockCreateRequest) (*dto.MockCreateResponse, error)
+
+	CreateFromEvent(ctx context.Context, req dto.CreateEventRequest) (*dto.CreateEventResponse, error)
 }
 
 type ListFilter struct {
@@ -31,6 +33,8 @@ type NotiRepository interface {
     CreateBulk(ctx context.Context, db *gorm.DB, notis []db_model.Notifications) error
     MarkRead(ctx context.Context, db *gorm.DB, id uuid.UUID, isRead bool) error
     MarkAllRead(ctx context.Context, db *gorm.DB, receiverId uuid.UUID, receiverType string) (int64, error)
+
+	Create(ctx context.Context, db *gorm.DB, noti *db_model.Notifications) error // ต้องมีเมธอดนี้
 }
 
 type NotiUsecase interface {
@@ -38,4 +42,6 @@ type NotiUsecase interface {
 	MarkRead(ctx context.Context, id uuid.UUID, isRead bool) error
 	MarkAllRead(ctx context.Context, receiverId uuid.UUID, receiverType string) (int, error)
 	MockCreate(ctx context.Context, req dto.MockCreateRequest) (*dto.MockCreateResponse, error)
+
+	CreateFromEvent(ctx context.Context, req dto.CreateEventRequest) (*dto.CreateEventResponse, error)
 }

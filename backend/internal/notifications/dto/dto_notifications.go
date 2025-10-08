@@ -56,3 +56,52 @@ type ListFilter struct {
     Limit        int
     SortAsc      bool
 }
+
+type CreateEventRequest struct {
+	Event        string      `json:"event" binding:"required"` // reserve_with | order_finished | order_canceled | reserve_success | reserve_failed
+	ReceiverID   uuid.UUID   `json:"receiverId" binding:"required"`
+	ReceiverType string      `json:"receiverType" binding:"required,oneof=customer restaurant"`
+	Data         interface{} `json:"data" binding:"required"` // payload เฉพาะแต่ละ event (struct ด้านล่าง)
+}
+
+type CreateEventResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// ---- payload เฉพาะเหตุการณ์ ----
+type ReserveWithData struct {
+	TableNo     string   `json:"tableNo"`
+	When        string   `json:"when"`          // "19 ส.ค. 2025, เวลา xx:xx น."
+	Restaurant  string   `json:"restaurant"`    // ชื่อร้าน
+	Members     []string `json:"members"`       // ["Username", "Username", ...]
+}
+
+type OrderFinishedData struct {
+	TableNo    string `json:"tableNo"`
+	When       string `json:"when"`
+	Restaurant string `json:"restaurant"`
+	QueueNo    string `json:"queueNo,omitempty"`
+}
+
+type OrderCanceledData struct {
+	TableNo    string `json:"tableNo"`
+	When       string `json:"when"`
+	Restaurant string `json:"restaurant"`
+	Reason     string `json:"reason,omitempty"` // เช่น "ลูกค้ากดยกเลิก"
+}
+
+type ReserveSuccessData struct {
+	TableNo    string `json:"tableNo"`
+	When       string `json:"when"`
+	Restaurant string `json:"restaurant"`
+	Seat       int    `json:"seat"`
+}
+
+type ReserveFailedData struct {
+	TableNo    string `json:"tableNo"`
+	When       string `json:"when"`
+	Restaurant string `json:"restaurant"`
+}

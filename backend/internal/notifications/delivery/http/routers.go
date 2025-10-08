@@ -121,4 +121,18 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 			c.JSON(stdhttp.StatusOK, gin.H{"updated": updated})
 		}
 	})
+
+	r.POST("/event", func(c *gin.Context) {
+	var req dto.CreateEventRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	resp, err := h.CreateFromEvent(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(stdhttp.StatusCreated, resp)
+})
 }

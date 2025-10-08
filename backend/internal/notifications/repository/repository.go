@@ -77,3 +77,10 @@ func (r *notiRepository) MarkAllRead(ctx context.Context, db *gorm.DB, receiverI
 
 	return tx.RowsAffected, tx.Error
 }
+
+func (r *notiRepository) Create(ctx context.Context, db *gorm.DB, noti *db_model.Notifications) error {
+	if db == nil {
+		db = r.db
+	}
+	return db.WithContext(ctx).Create(noti).Error
+}
