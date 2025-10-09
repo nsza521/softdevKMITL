@@ -42,4 +42,5 @@ type TableReservationMembers struct {
 	Base
 	ReservationID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CustomerID    uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Status        string    `gorm:"not null; default:'pending'"` // e.g., "pending", "confirmed", "canceled"
 }
