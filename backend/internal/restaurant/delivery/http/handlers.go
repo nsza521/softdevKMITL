@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"backend/internal/restaurant/interfaces"
 	"backend/internal/restaurant/dto"
+	"backend/internal/restaurant/interfaces"
 	user "backend/internal/user/dto"
 )
 
@@ -190,4 +190,53 @@ func (h *RestaurantHandler) Logout() gin.HandlerFunc {
 
 		c.JSON(200, gin.H{"message": "logged out successfully"})
 	}
+}
+
+func (h *RestaurantHandler) EditInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// idStr := c.Param("id")
+		restID, err := uuid.Parse(c.Param("id"))
+		if err != nil {
+			c.JSON(401, gin.H{"error": "invalid restaurant id"})
+			return
+		}
+		var req dto.EditRestaurantRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(401, gin.H{"error": "invalid json body"})
+			return
+		}
+		resp, err := h.restaurantUsecase.EditInfo(restID, &req)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		// c.JSON(200, gin.H{"message": "Edit Restaurant Info changed successfully"})
+		c.JSON(200, resp)
+	}
+}
+
+func (h *RestaurantHandler) UpdateName() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        id, err := uuid.Parse(c.Param("id"))
+        if err != nil {
+            c.JSON(401, gin.H{"error": "invalid restaurant id"})
+            return
+        }
+
+        var req struct {
+            Name string `json:"name" binding:"required,min=1"`
+        }
+        if err := c.ShouldBindJSON(&req); err != nil {
+            c.JSON(401, gin.H{"error": err.Error()})
+            return
+        }
+
+        updated, err := h.restaurantUsecase.UpdateRestaurantName(c.Request.Context(), id, req.Name)
+        if err != nil {
+            c.JSON(500, gin.H{"error": err.Error()})
+            return
+        }
+
+        c.JSON(200, updated)
+    }
 }
