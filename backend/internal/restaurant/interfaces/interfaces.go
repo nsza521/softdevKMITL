@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"context"
+
 	"time"
 	"mime/multipart"
 
@@ -19,6 +21,9 @@ type RestaurantHandler interface {
 	GetAll() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
 	ChangeStatus() gin.HandlerFunc
+
+	EditInfo() gin.HandlerFunc
+	UpdateName() gin.HandlerFunc
 }
 
 type RestaurantRepository interface {
@@ -29,6 +34,13 @@ type RestaurantRepository interface {
 	GetAll() ([]*models.Restaurant, error)
 	CreateBankAccount(bankAccount *models.BankAccount) error
 	Update(restaurant *models.Restaurant) error
+
+	// edit
+	PartialUpdate(restaurantID uuid.UUID, name *string, menuType *string) (*models.Restaurant, error)
+    ReplaceAddOnMenuItems(restaurantID uuid.UUID, items []string) error
+    GetAddOnMenuItems(restaurantID uuid.UUID) ([]string, error)
+
+	UpdateName(id uuid.UUID, name string) (*models.Restaurant, error)
 }
 
 type RestaurantUsecase interface {
@@ -38,4 +50,6 @@ type RestaurantUsecase interface {
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
+	EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error)
+	UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error)
 }

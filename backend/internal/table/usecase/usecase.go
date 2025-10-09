@@ -34,7 +34,7 @@ func (u *TableUsecase) GetAllTables() ([]dto.TableDetail, error) {
 	var details []dto.TableDetail
 	for _, t := range tables {
 		detail := dto.TableDetail{
-			ID:       t.ID,
+			// ID:       t.ID,
 			Row:      t.Row,
 			Col:      t.Col,
 			MaxSeats: t.MaxSeats,
@@ -86,7 +86,7 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 			return nil, fmt.Errorf("failed to get table at index %d: %v", i, err)
 		}
 		tableDetail := dto.TableDetail{
-			ID:  table.ID,
+			// ID:  table.ID,
 			Row: table.Row,
 			Col: table.Col,
 			MaxSeats: table.MaxSeats,

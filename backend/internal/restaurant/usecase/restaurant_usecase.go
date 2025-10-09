@@ -5,15 +5,20 @@ import (
 	"time"
 	"strings"
 	"mime/multipart"
-	"github.com/google/uuid"
+
+	// "github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 
-	"backend/internal/restaurant/interfaces"
-	"backend/internal/restaurant/dto"
-	"backend/internal/utils"
-	"backend/internal/db_model"
-	user "backend/internal/user/dto"
+	"context"
+
+	models "backend/internal/db_model"
 	menuInterfaces "backend/internal/menu/interfaces"
+	"backend/internal/restaurant/dto"
+	"backend/internal/restaurant/interfaces"
+	user "backend/internal/user/dto"
+	"backend/internal/utils"
+
+	"github.com/google/uuid"
 )
 
 type RestaurantUsecase struct {
@@ -61,9 +66,10 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 
 	// Create new restaurant
 	restaurant := models.Restaurant{
-		Username:     username,
-		Email:        request.Email,
-		Password:     hashedPassword,
+
+		Username: username,
+		Email:    request.Email,
+		Password: hashedPassword,
 	}
 	createdRestaurant, err := u.restaurantRepository.Create(&restaurant)
 	if err != nil {
@@ -120,6 +126,7 @@ func (u *RestaurantUsecase) GetAll() ([]dto.RestaurantDetailResponse, error) {
 			PictureURL: r.ProfilePic,
 			Email:      r.Email,
 			Status:     r.Status,
+			Name: 		r.Name,
 		}
 		restaurantDetails = append(restaurantDetails, detail)
 	}
@@ -186,6 +193,52 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 	return nil
 }
 
+func strOrEmpty(p *string) string {
+	if p != nil {
+		return *p
+	}
+	return ""
+}
+
+func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error) {
+	if request == nil {
+		return nil, fmt.Errorf("nil request")
+	}
+	if _, err := u.restaurantRepository.GetByID(restaurantID); err != nil {
+		return nil, err
+	}
+
+	if request.Name != nil || request.MenuType != nil {
+		if _, err := u.restaurantRepository.PartialUpdate(restaurantID, request.Name, request.MenuType); err != nil {
+			return nil, err
+		}
+	}
+	if request.AddOnMenuItem != nil {
+		if err := u.restaurantRepository.ReplaceAddOnMenuItems(restaurantID, request.AddOnMenuItem); err != nil {
+			return nil, err
+		}
+	}
+
+	updated, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	addOns, err := u.restaurantRepository.GetAddOnMenuItems(restaurantID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.EditRestaurantResponse{
+		ID:            updated.ID,
+		Name:          strOrEmpty(updated.Name),
+		MenuType:      strOrEmpty(updated.MenuType),
+		AddOnMenuItem: addOns,
+	}, nil
+}
+
+func (u *RestaurantUsecase) UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error) {
+    return u.restaurantRepository.PartialUpdate(id, &name, nil)
+}
 func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
 	utils.BlacklistToken(token, expiry.Unix())
 	return nil

@@ -10,10 +10,11 @@ import (
 
 type TableReservationHandler interface {
 	CreateTableReservation() gin.HandlerFunc
-	CancelTableReservation() gin.HandlerFunc
+	CancelTableReservationMember() gin.HandlerFunc
 	GetAllTableReservationHistory() gin.HandlerFunc
 	GetTableReservationDetail() gin.HandlerFunc
-	// ConfirmTableReservation() gin.HandlerFunc
+	DeleteTableReservation() gin.HandlerFunc
+	ConfirmTableReservation() gin.HandlerFunc
 }
 
 type TableReservationRepository interface {
@@ -21,6 +22,7 @@ type TableReservationRepository interface {
 	CreateTableReservation(reservation *models.TableReservation) (*models.TableReservation, error)
 	GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 	UpdateTableReservation(reservation *models.TableReservation) error
+	DeleteTableReservation(reservationID uuid.UUID) error
 
 	// Table Reservation Members Repository
 	CreateTableReservationMember(member *models.TableReservationMembers) error
@@ -28,15 +30,19 @@ type TableReservationRepository interface {
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	DeleteReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error)
+	GetTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error)
+	UpdateTableReservationMember(member *models.TableReservationMembers) error
+
 }
 
 type TableReservationUsecase interface {
 	CreateTableReservation(request *dto.CreateTableReservationRequest) (*dto.ReservationDetail, error)
-	CancelTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
 	GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error)
+	DeleteTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	// UpdateTableReservation(reservation *models.TableReservation) error
 	// GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 }
