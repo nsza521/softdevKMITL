@@ -115,9 +115,9 @@ func (s *App) MapHandlers() error {
 
 	// Notification Group
 	notiRepository := notiRepository.NewNotiRepository(s.db)
-	notiUsecase := notiUsecase.NewNotiUsecase(notiRepository)
-	notificationHandler := notiHttp.NewNotiHandler(notiUsecase)
-	notiHttp.MapNotiRoutes(notificationGroup, notificationHandler)
+	notiUsecase := notiUsecase.NewNotificationUsecase(s.db, notiRepository)
+	// notificationHandler := notiHttp.NewNotiHandler(notiUsecase)
+	notiHttp.MapNotiRoutes(notificationGroup, notiUsecase)
 
 	return nil
 }
