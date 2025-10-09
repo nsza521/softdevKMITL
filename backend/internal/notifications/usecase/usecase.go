@@ -6,7 +6,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-	"fmt"
+	// "fmt"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -136,40 +137,111 @@ func randSuffix() string {
 
 func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.CreateEventRequest) (*dto.CreateEventResponse, error) {
 	var title, content, actionURL string
+	var attributes map[string]interface{}
 
 	switch req.Event {
+	// case "reserve_with":
+	// 	d := req.Data.(map[string]interface{}) // ใช้ map ให้ง่าย (หรือ decode เป็น struct)
+	// 	title = "คุณได้รับคำเชิญจาก " + firstString(d["members"]) // หรือ “Username”
+	// 	content = fmt.Sprintf("รายละเอียด\nโต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nสมาชิก:\n%v",
+	// 		d["tableNo"], d["when"], d["restaurant"], strings.Join(toStrings(d["members"]), "\n"))
+	// 	// actionURL = deep link เช่น app://reservation/invite/xxx
+
+	// case "order_finished":
+	// 	d := req.Data.(map[string]interface{})
+	// 	title = "อาหารพร้อมแล้ว !"
+	// 	content = fmt.Sprintf("คุณสามารถรับอาหารได้ที่ร้าน\nโต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nคิว: %v",
+	// 		d["tableNo"], d["when"], d["restaurant"], d["queueNo"])
+
+	// case "order_canceled":
+	// 	d := req.Data.(map[string]interface{})
+	// 	title = "ออเดอร์ถูกยกเลิก"
+	// 	content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nเหตุผล: %v", d["tableNo"], d["when"], d["restaurant"], d["reason"])
+
+	// case "reserve_success":
+	// 	d := req.Data.(map[string]interface{})
+	// 	title = "จองโต๊ะสำเร็จ !"
+	// 	content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nจำนวนที่นั่ง: %v",
+	// 		d["tableNo"], d["when"], d["restaurant"], d["seat"])
+
+	// case "reserve_failed":
+	// 	d := req.Data.(map[string]interface{})
+	// 	title = "จองโต๊ะไม่สำเร็จ"
+	// 	content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v", d["tableNo"], d["when"], d["restaurant"])
+
 	case "reserve_with":
-		d := req.Data.(map[string]interface{}) // ใช้ map ให้ง่าย (หรือ decode เป็น struct)
-		title = "คุณได้รับคำเชิญจาก " + firstString(d["members"]) // หรือ “Username”
-		content = fmt.Sprintf("รายละเอียด\nโต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nสมาชิก:\n%v",
-			d["tableNo"], d["when"], d["restaurant"], strings.Join(toStrings(d["members"]), "\n"))
-		// actionURL = deep link เช่น app://reservation/invite/xxx
+        d := req.Data.(map[string]interface{})
+        title = "คุณได้รับคำเชิญจาก " + firstString(d["members"])
+        content = "คุณได้รับคำเชิญให้เข้าร่วมการจองโต๊ะ"
+        
+        // แยกข้อมูลเป็น attributes
+        attributes = map[string]interface{}{
+            "tableNo":    d["tableNo"],
+            "when":       d["when"],
+            "restaurant": d["restaurant"],
+            "members":    toStrings(d["members"]),
+            "inviter":    firstString(d["members"]),
+        }
 
-	case "order_finished":
-		d := req.Data.(map[string]interface{})
-		title = "อาหารพร้อมแล้ว !"
-		content = fmt.Sprintf("คุณสามารถรับอาหารได้ที่ร้าน\nโต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nคิว: %v",
-			d["tableNo"], d["when"], d["restaurant"], d["queueNo"])
+    case "order_finished":
+        d := req.Data.(map[string]interface{})
+        title = "อาหารพร้อมแล้ว !"
+        content = "คุณสามารถรับอาหารได้ที่ร้าน"
+        
+        attributes = map[string]interface{}{
+            "tableNo":    d["tableNo"],
+            "when":       d["when"],
+            "restaurant": d["restaurant"],
+            "queueNo":    d["queueNo"],
+        }
 
-	case "order_canceled":
-		d := req.Data.(map[string]interface{})
-		title = "ออเดอร์ถูกยกเลิก"
-		content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nเหตุผล: %v", d["tableNo"], d["when"], d["restaurant"], d["reason"])
+    case "order_canceled":
+        d := req.Data.(map[string]interface{})
+        title = "ออเดอร์ถูกยกเลิก"
+        content = "คำสั่งซื้อของคุณถูกยกเลิก"
+        
+        attributes = map[string]interface{}{
+            "tableNo":    d["tableNo"],
+            "when":       d["when"],
+            "restaurant": d["restaurant"],
+            "reason":     d["reason"],
+        }
 
-	case "reserve_success":
-		d := req.Data.(map[string]interface{})
-		title = "จองโต๊ะสำเร็จ !"
-		content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v\nจำนวนที่นั่ง: %v",
-			d["tableNo"], d["when"], d["restaurant"], d["seat"])
+    case "reserve_success":
+        d := req.Data.(map[string]interface{})
+        title = "จองโต๊ะสำเร็จ !"
+        content = "การจองโต๊ะของคุณสำเร็จแล้ว"
+        
+        attributes = map[string]interface{}{
+            "tableNo":    d["tableNo"],
+            "when":       d["when"],
+            "restaurant": d["restaurant"],
+            "seat":       d["seat"],
+        }
 
-	case "reserve_failed":
-		d := req.Data.(map[string]interface{})
-		title = "จองโต๊ะไม่สำเร็จ"
-		content = fmt.Sprintf("โต๊ะที่ %v\nวันที่ %v\nร้าน: %v", d["tableNo"], d["when"], d["restaurant"])
+    case "reserve_failed":
+        d := req.Data.(map[string]interface{})
+        title = "จองโต๊ะไม่สำเร็จ"
+        content = "ไม่สามารถจองโต๊ะได้ในขณะนี้"
+        
+        attributes = map[string]interface{}{
+            "tableNo":    d["tableNo"],
+            "when":       d["when"],
+            "restaurant": d["restaurant"],
+        }
 
 	default:
 		return nil, errors.New("unknown event")
 	}
+
+	// Convert attributes to JSON string for database storage
+    var attributesJSON *string
+    if attributes != nil {
+        if jsonBytes, err := json.Marshal(attributes); err == nil {
+            jsonStr := string(jsonBytes)
+            attributesJSON = &jsonStr
+        }
+    }
 
 	noti := db_model.Notifications{
 		Title:        title,
@@ -179,6 +251,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
 		ReceiverType: req.ReceiverType,
 		IsRead:       false,
 		ActionURL:    strPtrOrNil(actionURL),
+		Attributes: attributesJSON,
 		CreatedAt:    time.Now(),
 	}
 
@@ -190,6 +263,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
 		ID:        noti.ID,
 		Title:     noti.Title,
 		Content:   noti.Content,
+		Attributes: attributes,
 		CreatedAt: noti.CreatedAt,
 	}, nil
 }

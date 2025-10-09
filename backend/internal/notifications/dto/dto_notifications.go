@@ -15,6 +15,8 @@ type Notification struct {
 	ReceiverType string    `json:"receiverType"`
 	IsRead       bool      `json:"isRead"`
 	CreatedAt    time.Time `json:"createdAt"`
+
+	Attributes 	map[string]interface{} `json:"attributes,omitempty"`
 }
 
 type RequestReadAll struct {
@@ -73,6 +75,7 @@ type CreateEventResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
+	Attributes map[string]interface{} `json:"attributes,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 

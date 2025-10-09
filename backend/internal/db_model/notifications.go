@@ -21,6 +21,8 @@ type Notifications struct {
 	ReceiverID 		uuid.UUID 	`gorm:"type:char(36);not null;index:idx_receiver"`
 	ReceiverType 	string 		`gorm:"type:char(32);not null;index:idx_receiver"` // "customer" or "restaurant"
 	IsRead			bool		`gorm:"not null;default:false;index"`
+
+	Attributes		*string		`gorm:"type:text"`
 	CreatedAt		time.Time	`gorm:"index"`
 }
 
