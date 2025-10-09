@@ -49,19 +49,31 @@ func (u *notificationUsecase) List(ctx context.Context, q dto.ListQuery) (*dto.L
 	}
 
 	items := make([]dto.Notification, 0, len(rows))
-	for _, r := range rows {
-		items = append(items, dto.Notification{
-			ID:           r.ID,
-			Title:        r.Title,
-			Content:      r.Content,
-			Type:         string(r.Type),
-			ActionURL:    r.ActionURL,
-			ReceiverID:   r.ReceiverID,
-			ReceiverType: r.ReceiverType,
-			IsRead:       r.IsRead,
-			CreatedAt:    r.CreatedAt,
-		})
-	}
+    for _, r := range rows {
+        notification := dto.Notification{
+            ID:           r.ID,
+            Title:        r.Title,
+            Content:      r.Content,
+            Type:         string(r.Type),
+            ActionURL:    r.ActionURL,
+            ReceiverID:   r.ReceiverID,
+            ReceiverType: r.ReceiverType,
+            IsRead:       r.IsRead,
+            CreatedAt:    r.CreatedAt,
+        }
+
+        // Parse attributes จาก JSON string
+        if r.Attributes != nil && *r.Attributes != "" {
+            var attrs map[string]interface{}
+            if err := json.Unmarshal([]byte(*r.Attributes), &attrs); err == nil {
+                notification.Attributes = attrs
+            }
+        }
+
+        items = append(items, notification)
+    }
+
+	
 
 	totalPages := int((total + int64(q.PageSize) - 1) / int64(q.PageSize))
 	return &dto.ListResponse{
