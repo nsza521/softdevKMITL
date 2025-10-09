@@ -70,7 +70,7 @@ func initMySQL() (*gorm.DB, error) {
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
 		&models.TopupHistory{},
-		
+
 		// Menu
 		&models.MenuType{},
 		&models.MenuItem{},
@@ -80,10 +80,11 @@ func initMySQL() (*gorm.DB, error) {
 		&models.MenuTypeAddOnGroup{},
 		&models.MenuItemAddOnGroup{},
 
-
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
-		&models.FoodOrderHistory{},
+		&models.FoodOrderItemOption{},
+
+		
 		&models.PaymentMethod{},
 		&models.Payment{},
 		&models.Notifications{},

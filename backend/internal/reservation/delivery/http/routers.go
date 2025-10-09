@@ -10,6 +10,7 @@ import (
 func MapTableReservationRoutes(tableReservationGroup *gin.RouterGroup, tableReservationHandler interfaces.TableReservationHandler) {
 	tableReservationGroup.Use(middleware.AuthMiddleware())
 	tableReservationGroup.POST("/create", tableReservationHandler.CreateTableReservation())
-	tableReservationGroup.GET("/history", tableReservationHandler.GetAllReservationHistory())
-	tableReservationGroup.DELETE("/cancel/:reservation_id", tableReservationHandler.CancelTableReservation())
+	tableReservationGroup.GET("/history", tableReservationHandler.GetAllTableReservationHistory())
+	tableReservationGroup.GET("/:reservation_id/detail", tableReservationHandler.GetTableReservationDetail())
+	tableReservationGroup.DELETE("/:reservation_id/cancel", tableReservationHandler.CancelTableReservation())
 }

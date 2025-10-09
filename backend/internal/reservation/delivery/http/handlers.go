@@ -88,7 +88,7 @@ func (h *TableReservationHandler) CancelTableReservation() gin.HandlerFunc {
 	}
 }
 
-func (h *TableReservationHandler) GetAllReservationHistory() gin.HandlerFunc {
+func (h *TableReservationHandler) GetAllTableReservationHistory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		customerID, ok := getCustomerIDAndValidateRole(c)
@@ -96,11 +96,33 @@ func (h *TableReservationHandler) GetAllReservationHistory() gin.HandlerFunc {
 			return
 		}
 
-		reservations, err := h.tableReservationUsecase.GetAllReservationHistory(customerID)
+		reservations, err := h.tableReservationUsecase.GetAllTableReservationHistory(customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(200, gin.H{"reservations": reservations})
+	}
+}
+
+func (h *TableReservationHandler) GetTableReservationDetail() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		reservation, err := h.tableReservationUsecase.GetTableReservationDetail(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"reservation": reservation})
 	}
 }
