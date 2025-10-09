@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type addOnRepository struct {
@@ -42,6 +43,25 @@ func (r *addOnRepository) UpdateGroup(group *models.MenuAddOnGroup) error {
 
 func (r *addOnRepository) DeleteGroup(id uuid.UUID) error {
 	return r.db.Delete(&models.MenuAddOnGroup{}, "id = ?", id).Error
+}
+
+
+func (r *addOnRepository) LinkGroupToTypes(groupID uuid.UUID, typeIDs []uuid.UUID) error {
+	if len(typeIDs) == 0 { return nil }
+	rows := make([]models.MenuTypeAddOnGroup, 0, len(typeIDs))
+	for _, tid := range typeIDs {
+		rows = append(rows, models.MenuTypeAddOnGroup{
+			MenuTypeID:   tid,
+			AddOnGroupID: groupID,
+		})
+	}
+	return r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&rows).Error
+}
+
+func (r *addOnRepository) UnlinkGroupFromType(groupID, typeID uuid.UUID) error {
+	return r.db.
+		Where("menu_type_id = ? AND add_on_group_id = ?", typeID, groupID).
+		Delete(&models.MenuTypeAddOnGroup{}).Error
 }
 
 // Options

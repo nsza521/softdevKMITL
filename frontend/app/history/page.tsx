@@ -1,9 +1,8 @@
 "use client";
 
-import styles from "./transaction.module.css";
+import styles from "./history.module.css";
 import { useState } from "react";
 import { Noto_Sans_Thai } from "next/font/google";
-import Navbar from "@/components/Navbar";
 import TransacDetail from "@/components/TransacDetail";
 
 
@@ -16,17 +15,16 @@ const notoThai = Noto_Sans_Thai({
 const icon = {
     success : "/success.svg",
     food : "/food.svg",
-    wallet : "wallet.svg"
-}
+    wallet : "/wallet.svg",
+};
 
 
 
 
-export default function TransactionPage(){
+export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
     return(
-        <div className={styles.content}>
-            <Navbar title="ประวัติ"/>
+        <div className={`${styles.content} ${notoThai.variable}`}>
             <div className={styles.catagories}>
                 <button className={active === "จองโต๊ะ" ? styles.active : ""} onClick={()=> setActive("จองโต๊ะ")}>
                     จองโต๊ะ

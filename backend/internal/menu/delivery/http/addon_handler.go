@@ -105,6 +105,21 @@ func (h *AddOnHandler) DeleteGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 
+func (h *AddOnHandler) LinkGroupToType(c *gin.Context) {
+    gid, err := uuid.Parse(c.Param("groupID")); if err != nil { c.JSON(400, gin.H{"error":"invalid group id"}); return }
+    tid, err := uuid.Parse(c.Param("typeID"));  if err != nil { c.JSON(400, gin.H{"error":"invalid type id"}); return }
+    if err := h.uc.LinkGroupToTypes(gid, []uuid.UUID{tid}); err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    c.JSON(200, gin.H{"message":"linked"})
+}
+
+func (h *AddOnHandler) UnlinkGroupFromType(c *gin.Context) {
+    gid, err := uuid.Parse(c.Param("groupID")); if err != nil { c.JSON(400, gin.H{"error":"invalid group id"}); return }
+    tid, err := uuid.Parse(c.Param("typeID"));  if err != nil { c.JSON(400, gin.H{"error":"invalid type id"}); return }
+    if err := h.uc.UnlinkGroupFromType(gid, tid); err != nil { c.JSON(500, gin.H{"error": err.Error()}); return }
+    c.JSON(200, gin.H{"message":"unlinked"})
+}
+
+
 // GET /options/:optionID
 func (h *AddOnHandler) GetOption(c *gin.Context) {
     id, err := uuid.Parse(c.Param("optionID"))

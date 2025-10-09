@@ -1,20 +1,19 @@
 package http
 
 import (
-	"github.com/gin-gonic/gin"
 	"backend/internal/middleware"
+	"github.com/gin-gonic/gin"
 )
 
 func MapMenuRoutes(g *gin.RouterGroup, h *MenuHandler) {
-	g.GET("/:restaurantID/items", middleware.AuthMiddleware(),h.ListByRestaurant)
-
+	g.GET("/:restaurantID/items", middleware.AuthMiddleware(), h.ListByRestaurant)
 
 	//	g.GET("/items/:itemID/detail", middleware.AuthMiddleware(), h.GetDetail)
 	g.GET("/:restaurantID/:itemID/detail", middleware.AuthMiddleware(), h.GetDetail)
 
-	g.POST("/:restaurantID/items", middleware.AuthMiddleware(), h.Create) // middleware.RequireRole("restaurant_owner"),
-	g.PATCH("/items/:itemID", middleware.AuthMiddleware(), h.Update)      // middleware.RequireRole("restaurant_owner"),
-	g.DELETE("/items/:itemID", middleware.AuthMiddleware(), h.Delete)    // middleware.RequireRole("restaurant_owner"),
+	g.POST("/:restaurantID/items", middleware.AuthMiddleware(), h.Create)                     // middleware.RequireRole("restaurant_owner"),
+	g.PATCH("/items/:itemID", middleware.AuthMiddleware(), h.Update)                          // middleware.RequireRole("restaurant_owner"),
+	g.DELETE("/items/:itemID", middleware.AuthMiddleware(), h.Delete)                         // middleware.RequireRole("restaurant_owner"),
 	g.POST("/items/:itemID/upload_pic", middleware.AuthMiddleware(), h.UploadMenuItemPicture) // middleware.RequireRole("restaurant_owner"),
 
 }
@@ -40,6 +39,11 @@ func MapAddOnRoutes(g *gin.RouterGroup, h *AddOnHandler) {
 	g.PATCH("/addon-groups/:groupID", middleware.AuthMiddleware(), h.UpdateGroup)
 	g.DELETE("/addon-groups/:groupID", middleware.AuthMiddleware(), h.DeleteGroup)
 
+	// POST   /restaurant/menu/addon-groups/:groupID/types/:typeID   (link)
+	g.POST("/addon-groups/:groupID/types/:typeID", middleware.AuthMiddleware(), h.LinkGroupToType)
+	// DELETE /restaurant/menu/addon-groups/:groupID/types/:typeID   (unlink)
+	g.DELETE("/addon-groups/:groupID/types/:typeID", middleware.AuthMiddleware(), h.UnlinkGroupFromType)
+
 	// ===== AddOnOption =====
 	// Create option โดยอิง groupID
 	g.POST("/addon-groups/:groupID/options", middleware.AuthMiddleware(), h.CreateOption)
@@ -47,7 +51,7 @@ func MapAddOnRoutes(g *gin.RouterGroup, h *AddOnHandler) {
 	// Update/Delete option ใช้ optionID โดยตรง
 	g.PATCH("/options/:optionID", middleware.AuthMiddleware(), h.UpdateOption)
 	g.GET("/addon-groups/:groupID/options", middleware.AuthMiddleware(), h.ListOptions) // ✅
-    g.GET("/options/:optionID", middleware.AuthMiddleware(), h.GetOption)          
+	g.GET("/options/:optionID", middleware.AuthMiddleware(), h.GetOption)
 
 	g.DELETE("/options/:optionID", middleware.AuthMiddleware(), h.DeleteOption)
 }
