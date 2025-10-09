@@ -8,13 +8,11 @@ import (
 
 func InitAllSeedData(db *gorm.DB)  error {
 
-	err := seedCustomers(db)
-	if err != nil {
+	if err := seedCustomers(db); err != nil {
 		return fmt.Errorf("error seeding customers: %v", err)
 	}
 
-	err = seedRestaurants(db)
-	if err != nil {
+	if err := seedRestaurants(db); err != nil {
 		return fmt.Errorf("error seeding restaurants: %v", err)
 	}
 
@@ -22,13 +20,16 @@ func InitAllSeedData(db *gorm.DB)  error {
 		return fmt.Errorf("error seeding menu types & items: %v", err)
 	}
 
-	err = seedTableTimeslots(db)
-	if err != nil {
+	if err := seedTableTimeslots(db); err != nil {
 		return fmt.Errorf("error seeding tables and time slots: %v", err)
 	}
 
+	if err := seedPaymentMethods(db); err != nil {
+		return fmt.Errorf("error seeding payment methods: %v", err)
+	}
+
 	if err := seedFixedForNoodleShop(db); err != nil {
-		return fmt.Errorf("seed noodle shop: %v", err)
+		return fmt.Errorf("error seeding noodle shop: %v", err)
 	}
 
 	return nil
