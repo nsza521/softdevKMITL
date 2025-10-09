@@ -11,9 +11,9 @@ import (
 type TableReservationHandler interface {
 	CreateTableReservation() gin.HandlerFunc
 	CancelTableReservation() gin.HandlerFunc
-	GetAllReservationHistory() gin.HandlerFunc
+	GetAllTableReservationHistory() gin.HandlerFunc
+	GetTableReservationDetail() gin.HandlerFunc
 	// ConfirmTableReservation() gin.HandlerFunc
-	// GetTableReservationByID() gin.HandlerFunc
 }
 
 type TableReservationRepository interface {
@@ -35,7 +35,8 @@ type TableReservationUsecase interface {
 	CancelTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
-	GetAllReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
+	GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
+	GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error)
 	// UpdateTableReservation(reservation *models.TableReservation) error
 	// GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 }

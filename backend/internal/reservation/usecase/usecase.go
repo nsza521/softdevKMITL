@@ -41,7 +41,7 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 	// เช็คว่า reservePeople ไม่เกินจำนวนที่เหลือในโต๊ะไหม
 	// ถ้า random = false ต้องเช็คว่า โต๊ะนี้ว่างไหม
 	// ถ้า random = true ต้องเช็คว่า มีโต๊ะว่างไหม
-	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว
+	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว ??
 
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(request.TableTimeslotID)
 	if err != nil {	
@@ -162,6 +162,39 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 	}, nil
 }
 
+func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error) {
+	err := u.isCustomerinReservation(reservationID, customerID)
+	if err != nil {
+		return nil, err
+	}
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.GetAllMembersByReservationID(reservation.ID)
+	if err != nil {
+		return nil, err
+	}
+	membersDTO := []dto.Username{}
+	for _, member := range members {
+		customer, err := u.customerRepository.GetByID(member.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+		membersDTO = append(membersDTO, dto.Username{Username: customer.Username})
+	}
+
+	return &dto.ReservationDetail{
+		ReservationID:       reservation.ID,
+		TableTimeslotID:     reservation.TableTimeslotID,
+		ReservePeople:       reservation.ReservePeople,
+		Random:           	 reservation.Random,
+		Status:          	 reservation.Status,
+		Members:         	 membersDTO,
+	}, nil
+}
+
 // Table Reservation Members Usecase
 func (u *TableReservationUsecase) isCustomerinReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
 	inReservation, err := u.tableReservationRepository.IsCustomerInReservation(reservationID, customerID)
@@ -203,7 +236,7 @@ func (u *TableReservationUsecase) GetAllMembersByReservationID(reservationID uui
 	return u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
 }
 
-func (u *TableReservationUsecase) GetAllReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
+func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
 	reservationMembers, err := u.tableReservationRepository.GetAllReservationsByCustomerID(customerID)
 	if err != nil {
 		return nil, err
@@ -239,4 +272,21 @@ func (u *TableReservationUsecase) GetAllReservationHistory(customerID uuid.UUID)
 		})
 	}
 	return reservations, nil
+}
+
+func (u *TableReservationUsecase) AddMemberToReservation(reservationID uuid.UUID, username string) (*dto.ReservationMemberDetail, error) {
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.GetAllMembersByReservationID(reservation.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(members) >= reservation.ReservePeople {
+		return nil, fmt.Errorf("Reservation is full")
+	}
+	return nil, nil
 }
