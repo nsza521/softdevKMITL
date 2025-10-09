@@ -12,5 +12,7 @@ func MapTableReservationRoutes(tableReservationGroup *gin.RouterGroup, tableRese
 	tableReservationGroup.POST("/create", tableReservationHandler.CreateTableReservation())
 	tableReservationGroup.GET("/history", tableReservationHandler.GetAllTableReservationHistory())
 	tableReservationGroup.GET("/:reservation_id/detail", tableReservationHandler.GetTableReservationDetail())
-	tableReservationGroup.DELETE("/:reservation_id/cancel", tableReservationHandler.CancelTableReservation())
+	tableReservationGroup.DELETE("/:reservation_id/cancel", tableReservationHandler.CancelTableReservationMember())
+	tableReservationGroup.POST("/:reservation_id/confirm", tableReservationHandler.ConfirmTableReservation())
+	tableReservationGroup.DELETE("/:reservation_id", tableReservationHandler.DeleteTableReservation())
 }
