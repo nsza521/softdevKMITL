@@ -91,7 +91,7 @@ func (r *TableRepository) IsTimeslotAvailable(id uuid.UUID) (bool, error) {
 // TableTimeslot Repository
 func (r *TableRepository) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error) {
 	var tableTimeslots []models.TableTimeslot
-	if err := r.db.Where("timeslot_id = ?", timeslotID).Find(&tableTimeslots).Error; err != nil {
+	if err := r.db.Where("timeslot_id = ?", timeslotID).Order("created_at ASC").Find(&tableTimeslots).Error; err != nil {
 		return nil, err
 	}
 	return tableTimeslots, nil
