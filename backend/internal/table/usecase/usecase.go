@@ -35,8 +35,8 @@ func (u *TableUsecase) GetAllTables() ([]dto.TableDetail, error) {
 	for _, t := range tables {
 		detail := dto.TableDetail{
 			// ID:       t.ID,
-			TableRow:      t.TableRow,
-			TableCol:      t.TableCol,
+			Row:      t.Row,
+			Col:      t.Col,
 			MaxSeats: t.MaxSeats,
 		}
 		details = append(details, detail)
@@ -87,8 +87,8 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 		}
 		tableDetail := dto.TableDetail{
 			// ID:  table.ID,
-			TableRow: table.TableRow,
-			TableCol: table.TableCol,
+			Row: table.Row,
+			Col: table.Col,
 			MaxSeats: table.MaxSeats,
 		}
 
@@ -117,6 +117,30 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 	return details, nil
 }
 
-// func (u *TableUsecase) GetTableByID(id uint) (*models.Table, error) {
-// 	return u.tableRepository.GetTableByID(id)
-// }
+func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error) {
+	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	table, err := u.tableRepository.GetTableByID(tableTimeslot.TableID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table: %v", err)
+	}
+	tableDetail := dto.TableDetail{
+		// ID:  table.ID,
+		TableRow: table.TableRow,
+		TableCol: table.TableCol,
+		MaxSeats: table.MaxSeats,
+	}
+
+	detail := &dto.TableTimeslotDetail{
+		ID:             tableTimeslot.ID,
+		Table:      	tableDetail,
+		Status:       	tableTimeslot.Status,
+		ReservedSeats:  tableTimeslot.ReservedSeats,
+		// MaxSeats:    	table.MaxSeats,
+	}
+
+	return detail, nil
+}
