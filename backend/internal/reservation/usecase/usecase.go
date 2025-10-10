@@ -129,8 +129,8 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 		// Random:           	 createdReservation.Random,
 		Status:          	 createdReservation.Status,
 		Members:         	 request.Members,
-		TableRow:	   		 table.TableRow,
-		TableCol:	   		 table.TableCol,
+		TableRow:	   		 table.Row,
+		TableCol:	   		 table.Col,
 		StartTime:   		 timeslot.StartTime.Format("15:04"),
 		EndTime:     		 timeslot.EndTime.Format("15:04"),
 	}, nil
@@ -236,8 +236,8 @@ func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.U
 		// Random:           	 reservation.Random,
 		Status:          	 reservation.Status,
 		Members:         	 membersDTO,
-		TableRow:	   		 table.TableRow,
-		TableCol:	   		 table.TableCol,
+		TableRow:	   		 table.Row,
+		TableCol:	   		 table.Col,
 		StartTime:   		 timeslot.StartTime.Format("15:04"),
 		EndTime:     		 timeslot.EndTime.Format("15:04"),
 	}, nil
