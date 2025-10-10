@@ -64,13 +64,14 @@ func initMySQL() (*gorm.DB, error) {
 		&models.Customer{},
 		&models.Restaurant{},
 		&models.BankAccount{},
+		&models.RestaurantAddOn{},
 		&models.Table{},
 		&models.Timeslot{},
 		&models.TableTimeslot{},
 		&models.TableReservation{},
 		&models.TableReservationMembers{},
 		&models.TopupHistory{},
-		
+
 		// Menu
 		&models.MenuType{},
 		&models.MenuItem{},
@@ -80,10 +81,11 @@ func initMySQL() (*gorm.DB, error) {
 		&models.MenuTypeAddOnGroup{},
 		&models.MenuItemAddOnGroup{},
 
-
 		&models.FoodOrder{},
 		&models.FoodOrderItem{},
-		&models.FoodOrderHistory{},
+		&models.FoodOrderItemOption{},
+
+		
 		&models.PaymentMethod{},
 		&models.Payment{},
 		&models.Notifications{},

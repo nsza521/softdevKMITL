@@ -8,9 +8,9 @@ import (
 
 type Table struct {
 	Base
-	MaxSeats int `gorm:"not null"`
-	Row	  string `gorm:"not null"` // A B C ...
-	Col	  string `gorm:"not null"` // 1 2 3 ...
+	MaxSeats 	  int `gorm:"not null"`
+	TableRow	  string `gorm:"not null; column:table_row"` // A B C ...
+	TableCol	  string `gorm:"not null; column:table_col"` // 1 2 3 ...
 }
 
 type Timeslot struct {
@@ -42,4 +42,5 @@ type TableReservationMembers struct {
 	Base
 	ReservationID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CustomerID    uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Status        string    `gorm:"not null; default:'pending'"` // e.g., "pending", "confirmed", "canceled"
 }
