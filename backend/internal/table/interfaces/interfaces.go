@@ -14,6 +14,7 @@ type TableHandler interface {
 	CreateTimeslot() gin.HandlerFunc
 	GetAllTimeslots() gin.HandlerFunc
 	GetTableTimeslotByTimeslotID() gin.HandlerFunc
+	GetTableTimeslotByID() gin.HandlerFunc
 	// GetTableByID() gin.HandlerFunc
 }
 
@@ -33,6 +34,7 @@ type TableRepository interface {
 	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 	GetTableTimeslotByID(id uuid.UUID) (*models.TableTimeslot, error)
 	UpdateTableTimeslot(tableTimeslot *models.TableTimeslot) error
+	GetAvailableTableTimeslots(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 }
 
 type TableUsecase interface {
@@ -48,4 +50,5 @@ type TableUsecase interface {
 
 	// TableTimeslot Usecase
 	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto.TableTimeslotDetail, error)
+	GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error)
 }

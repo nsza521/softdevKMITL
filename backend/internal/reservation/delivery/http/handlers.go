@@ -52,12 +52,16 @@ func getReservationID(c *gin.Context) (uuid.UUID, error) {
 
 func (h *TableReservationHandler) CreateTableReservation() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
 		var request dto.CreateTableReservationRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		reservation, err := h.tableReservationUsecase.CreateTableReservation(&request)
+		reservation, err := h.tableReservationUsecase.CreateTableReservation(&request, customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
