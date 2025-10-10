@@ -148,6 +148,30 @@ func (h *CustomerHandler) GetFullnameByUsername() gin.HandlerFunc {
 	}
 }
 
+func (h *CustomerHandler) GetFirstNameByUsername() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		
+		var request *dto.GetFullnameRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		firstname, err := h.customerUsecase.GetFirstnameByUsername(customerID, request)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, firstname)
+	}
+}
+
 func (h *CustomerHandler) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
