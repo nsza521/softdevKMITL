@@ -10,6 +10,7 @@ type CreateFoodOrderReq struct {
 
 type CreateFoodOrderItem struct {
 	MenuItemID uuid.UUID               `json:"menu_item_id" binding:"required"`
+	CustomerID  *uuid.UUID              `json:"customer_id"`
 	Quantity   int                     `json:"quantity" binding:"required,min=1"`
 	Note       *string                 `json:"note"`
 	Selections []CreateFoodOrderSelect `json:"selections"`
