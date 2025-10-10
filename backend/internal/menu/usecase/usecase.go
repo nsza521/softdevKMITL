@@ -265,7 +265,7 @@ func (u *menuUsecase) UploadMenuItemPicture(ctx context.Context, restaurantID uu
 	// Upload to MinIO
 	const bucketName = "restaurant-pictures"
 	const subBucket = "menu-items"
-	filename := restaurantID.String()
+	filename := itemID.String()
 	objectName := fmt.Sprintf("%s/%s", subBucket, filename)
 
 	url, err := utils.UploadImage(fileContent, file, bucketName, objectName, u.minioClient)
