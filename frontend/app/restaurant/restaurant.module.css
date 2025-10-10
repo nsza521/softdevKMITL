@@ -135,11 +135,36 @@
     display: flex;
 }
 .all{
-    flex:1;
+    width: 10%;
     display: flex;
     justify-content: center;
     align-items: center;
+    /* border: 1px solid black; */
 }
+.cate {
+  max-width: 80%;
+  display: flex;
+  align-items: center;
+  border-left: 2px solid #D5D5D5;
+  flex: 9;
+  gap: 16px;
+  padding-left: 16px;
+
+  overflow-x: auto;      /* เลื่อนแนวนอน */
+  overflow-y: hidden;    /* ไม่เลื่อนแนวตั้ง */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.cate::-webkit-scrollbar {
+  display: none;
+}
+
+/* ให้ปุ่มแต่ละอันไม่หดตัว */
+.cate button {
+  flex-shrink: 0;
+}
+
 .all button{
     width: 67px;
     height: 48px;
@@ -156,15 +181,7 @@
 .all button:hover{
     text-decoration: underline;
 }
-.cate{
-    flex:1;
-    display: flex;
-    align-items: center;
-    border-left:2px solid #D5D5D5;
-    flex:9;
-    gap: 16px;
-    padding-left: 16px;
-}
+
 .cate button{
     min-width: 67px;
     padding: 0 28px 0 28px;
@@ -191,6 +208,7 @@
     display: flex;
     padding-left: 2%;
     gap:3%;
+    row-gap: 0%;
 }
 .menu{
     width: 225px;
@@ -461,7 +479,7 @@
 }
 .menuList {
   width: 85%;
-  height: 80%;
+  height: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 3%;
@@ -469,11 +487,116 @@
   overflow-y: scroll;
 }
 .s2_content_detail{
-    margin-top: 3%;
+    margin-top: 2%;
      width: 100%;
     height: 100%;
     /* border :1px solid black; */
     flex-wrap: wrap;
     display: flex;
     justify-content: center;
+}
+.addform{
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+.addform section{
+  flex:1;
+  display: flex;
+  justify-content: center;
+  /* border: 1px solid black; */
+  height: 100%;
+  align-items: start;
+  flex-direction: column;
+  padding-left: 5%;
+}
+.menuadddescriptin{
+  width: 320px;
+  height: 106px;
+  background-color: #E7D5B3;
+  border: none;
+  border: none;
+  outline: none;
+  resize: none;  
+  border-radius: 15px;
+  padding-left: 15px;
+  padding-top: 10px;
+}
+.menunameinput{
+  background-color: #E7D5B3;
+  padding-left: 15px;
+
+    border: none;
+  border: none;
+  outline: none;
+  resize: none;  
+  width: 201px;
+  height: 28px;
+  border-radius: 10px;
+
+}
+.numprice{
+  display: flex;
+  width: 30%;
+  justify-content: space-between;
+}
+.numprice input{
+  padding-left: 12px;
+  background-color: #E7D5B3;
+  width: 50%;
+  height: 26px;
+  border-radius: 10px;
+      border: none;
+  border: none;
+  outline: none;
+  resize: none;  
+  font-size: 12px;
+}
+.numprice input::-webkit-outer-spin-button,
+.numprice input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.sectiongapaddmenu{
+  gap:3%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.Contenthandler{
+  width: 80%;
+   min-height: 40%; 
+  gap:5%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 2px solid         #E4CE8E;
+}
+.submitBTNaddmenu{
+  width: 163px;
+  height: 42px;
+  border-radius:15px ;
+  background-color: #D77948;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  margin-top: 10%;
+}
+.submitBTNaddmenu:hover{
+  opacity: 0.9;
+  text-decoration: underline;
+}
+.addtypeBTN {
+  background: none;      /* ใช้ background แทน background-color:none */
+  cursor: pointer;       /* ให้เหมือนปุ่ม */
+  align-self: center;
+  margin-left: 1%;
+}
+.addtypeBTN:hover {
+  opacity: 0.7;
 }

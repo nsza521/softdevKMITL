@@ -10,10 +10,21 @@ const notoThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
 });
 export default function RestaurantPage() {
-  // state สำหรับเก็บว่าหน้าปัจจุบันคืออะไร
   const [activePage, setActivePage] = useState("order");
   const [username, setUsername] = useState("");
-  // ฟังก์ชันเปลี่ยนหน้า
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.role === "restaurant") {
+        setUsername(payload.username);
+      }
+    } catch {}
+  }, []);
+
   const renderContent = () => {
     switch (activePage) {
       case "order":
@@ -24,24 +35,16 @@ export default function RestaurantPage() {
         return <TotalSales />;
       case "manage":
         return <ManagePage username={username} />;
+      case "addmenu":
+        return <AddmenuPage />;
       default:
         return <OrderMenu />;
     }
   };
-    useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
 
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.role === "restaurant") {
-        setUsername(payload.username);
-      }
-    } catch {}
-  }, []);
   return (
     <div className={`${styles.container} ${notoThai.variable}`}>
-      {/* -------- Sidebar -------- */}
+      {/* Sidebar */}
       <section className={styles.sidebar}>
         <section className={styles.sidebarsection}>
           <h2>{username || "[ชื่อร้านจ้า]"}</h2>
@@ -71,7 +74,6 @@ export default function RestaurantPage() {
         <div className={styles.sidebarsection}>
           <button onClick={() => setActivePage("manage")}>
             <span className="material-symbols-outlined">edit</span>
-            {/* <span className="material-symbols-outlined">info</span> */}
             <span>Manage</span>
           </button>
         </div>
@@ -84,10 +86,14 @@ export default function RestaurantPage() {
         </div>
       </section>
 
-      {/* -------- Main Content -------- */}
+      {/* Main Content */}
       <section className={styles.shopcontent}>{renderContent()}</section>
 
-      <button className={styles.floatingBtn}>
+      {/* ปุ่มลอยสำหรับไปหน้า Add Menu */}
+      <button
+        className={styles.floatingBtn}
+        onClick={() => setActivePage("addmenu")}
+      >
         <span className="material-symbols-outlined">add_2</span>
       </button>
     </div>
@@ -113,31 +119,23 @@ interface MenuType {
   type: string;
 }
 const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem("token"); // ดึง token ที่เก็บไว้ตอน login
-
-      const res = await fetch("http://localhost:8080/user/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ถ้า backend ต้องการ
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Logout failed");
-      }
-
-      // เคลียร์ token ทิ้ง
-      localStorage.removeItem("token");
-
-      alert("ออกจากระบบเรียบร้อย");
-      window.location.href = "/login"; // redirect กลับไปหน้า login
-
-    } catch (err) {
-      console.error("❌ Error:", err);
-      alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
-    }
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:8080/user/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error("Logout failed");
+    localStorage.removeItem("token");
+    alert("ออกจากระบบเรียบร้อย");
+    window.location.href = "/login";
+  } catch (err) {
+    console.error("❌ Error:", err);
+    alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
+  }
 };
 function OrderMenu() {
   const [types, setTypes] = useState<MenuType[]>([]);
@@ -353,7 +351,7 @@ function ManagePage({ username }: { username: string }) {
   const [menuList, setMenuList] = useState<MenuItem[]>([]);
   const [types, setTypes] = useState<MenuType[]>([]);
   const [selectedType, setSelectedType] = useState<string>("All");
-
+  
   // สำหรับ add menu
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number | "">("");
@@ -389,41 +387,115 @@ function ManagePage({ username }: { username: string }) {
 
   const handleAddMenu = async () => {
     if (!name || !price || !timeTaken || selectedTypes.length === 0) {
-      setError("กรอกข้อมูลให้ครบก่อน");
+      setError("กรุณากรอกข้อมูลให้ครบ");
       return;
     }
 
     try {
-      const bodyData = { name, price, time_taken: timeTaken, description, menu_type_ids: selectedTypes };
-      const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/items`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData),
-      });
+      setError("");
+      const body = {
+        name,
+        price,
+        description,
+        time_taken: timeTaken,
+        menu_pic: null,
+        menu_type_ids: selectedTypes,
+      };
+
+      const res = await fetch(
+        `http://localhost:8080/restaurant/menu/${restaurantID}/items`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
 
       if (!res.ok) throw new Error(await res.text());
-      const menuItem = await res.json();
+      const json = await res.json();
+      console.log("✅ Add Menu Response:", json);
 
+      // upload picture if provided
       if (menuPic) {
         const formData = new FormData();
-        formData.append("menu_pic", menuPic);
+        formData.append("menu_item_picture", menuPic);
         await fetch(
-          `http://localhost:8080/restaurant/menu/items/${menuItem.id}/upload_pic`,
+          `http://localhost:8080/restaurant/menu/items/${json.id}/upload_pic`,
           { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
         );
       }
 
-      setSuccess("✅ เพิ่มเมนูสำเร็จ");
-      setError("");
-      setMenuList(prev => [...prev, menuItem]);
-      setName(""); setPrice(""); setTimeTaken(""); setDescription(""); setMenuPic(null); setSelectedTypes([]);
+      setSuccess("เพิ่มเมนูสำเร็จ!");
+      setName("");
+      setPrice("");
+      setTimeTaken("");
+      setDescription("");
+      setMenuPic(null);
+      setSelectedTypes([]);
     } catch (err) {
       console.error(err);
       setError("❌ เพิ่มเมนูไม่สำเร็จ");
-      setSuccess("");
     }
   };
+  const handleAddType = async () => {
+  const newType = prompt("กรอกชื่อประเภทอาหารใหม่:");
+  if (!newType || newType.trim() === "") return ;
 
+  try {
+    const res = await fetch(
+      `http://localhost:8080/restaurant/menu/${restaurantID}/types`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: newType.trim() }),
+      }
+    );
+
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+
+    // อัปเดต state ทันทีโดยไม่ต้อง reload
+    setTypes((prev) => [...prev, json]);
+  } catch (err) {
+    console.error(err);
+  }
+};
+  // ฟังก์ชันลบ type
+  const handleDeleteType = async (typeId: string) => {
+  if (!restaurantID) return;
+  if (!confirm("คุณแน่ใจจะลบประเภทนี้?")) return;
+
+  try {
+    const res = await fetch(
+      `http://localhost:8080/restaurant/menu/types/${typeId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) throw new Error(await res.text());
+
+    // ลบออกจาก state ทันที
+    setTypes(prev => prev.filter(t => t.id !== typeId));
+
+    // ถ้า type ที่ลบเป็น type ที่เลือกอยู่ ก็เปลี่ยนเป็น "All"
+    if (selectedType === types.find(t => t.id === typeId)?.type) {
+      setSelectedType("All");
+    }
+
+    alert("ลบประเภทเรียบร้อยแล้ว");
+  } catch (err) {
+    console.error(err);
+    alert("❌ ลบประเภทไม่สำเร็จ");
+  }
+  };
   const handleEditMenuPic = async (menuItemId: string) => {
     if (!editFile) return alert("กรุณาเลือกไฟล์ก่อน");
     try {
@@ -451,7 +523,6 @@ function ManagePage({ username }: { username: string }) {
       alert("❌ อัปโหลดไม่สำเร็จ");
     }
   };
-
   const filteredItems = menuList.filter(item => {
     if (selectedType === "All") return true;
     return item.types?.some(t => t.type === selectedType);
@@ -475,24 +546,45 @@ function ManagePage({ username }: { username: string }) {
             <button onClick={() => setSelectedType("All")}>All</button>
           </section>
           <section className={styles.cate}>
-            {types.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setSelectedType(t.type)}
-                className={selectedType === t.type ? styles.activeTypeBtn : ""}
-              >
-                {t.type}
-              </button>
-            ))}
-          </section>
+{types.length > 0 ? types.map((type) => (
+  <button
+    key={type.id}
+    className={`${selectedType === type.type ? styles.activeTypeBtn : ""} ${styles.typeBtnWithDelete}`}
+    onClick={() => setSelectedType(type.type)}
+    style={{ position: "relative" }} // ทำให้ span position absolute อยู่บนปุ่มนี้
+  >
+    {type.type}
+    {/* ปุ่มกากบาท */}
+    <span
+      onClick={(e) => {
+        e.stopPropagation(); // ป้องกันการ trigger เลือก type
+        handleDeleteType(type.id);
+      }}
+      style={{
+        position: "absolute",
+        top: "0px",
+        right: "0px",
+        cursor: "pointer",
+        color: "red",
+        fontWeight: "800",  
+        fontSize: "12px",
+      }}
+    >
+      ✕
+    </span>
+  </button>
+)) : <p>ไม่มีประเภทเมนู</p>}
+        </section>
+
+          <span className={`material-symbols-outlined ${styles.addtypeBTN}`} onClick={handleAddType}>add_circle</span>
         </section>
       </div>
 
       {/* ปุ่มเปลี่ยนโหมด */}
-      <div style={{ margin: "20px 0", display: "flex", gap: "10px" }}>
+      {/* <div style={{ margin: "20px 0", display: "flex", gap: "10px" }}>
         <button onClick={() => setMode("manage")}>จัดการเมนูเดิม</button>
         <button onClick={() => setMode("add")}>เพิ่มเมนูใหม่</button>
-      </div>
+      </div> */}
 
       {/* เนื้อหา */}
       <div className={styles.s2_content_detail}>
@@ -552,6 +644,150 @@ function ManagePage({ username }: { username: string }) {
             ))}
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+function AddmenuPage() {
+  const [types, setTypes] = useState<MenuType[]>([]);
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<number | "">("");
+  const [timeTaken, setTimeTaken] = useState<number | "">("");
+  const [description, setDescription] = useState("");
+  const [menuPic, setMenuPic] = useState<File | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const token = localStorage.getItem("token");
+  const restaurantID = token ? JSON.parse(atob(token.split(".")[1])).user_id : null;
+
+  useEffect(() => {
+    if (!restaurantID) return;
+    fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/types`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((json) => setTypes(Array.isArray(json.types) ? json.types : []))
+      .catch(console.error);
+  }, [restaurantID]);
+
+  const handleAddMenu = async () => {
+    if (!name || !price || !timeTaken || selectedTypes.length === 0) {
+      setError("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+
+    try {
+      setError("");
+      const body = {
+        name,
+        price,
+        description,
+        time_taken: timeTaken,
+        menu_pic: null,
+        menu_type_ids: selectedTypes,
+      };
+
+      const res = await fetch(
+        `http://localhost:8080/restaurant/menu/${restaurantID}/items`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      console.log("✅ Add Menu Response:", json);
+
+      // upload picture if provided
+      if (menuPic) {
+        const formData = new FormData();
+        formData.append("menu_item_picture", menuPic);
+        await fetch(
+          `http://localhost:8080/restaurant/menu/items/${json.id}/upload_pic`,
+          { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
+        );
+      }
+
+      setSuccess("เพิ่มเมนูสำเร็จ!");
+      setName("");
+      setPrice("");
+      setTimeTaken("");
+      setDescription("");
+      setMenuPic(null);
+      setSelectedTypes([]);
+    } catch (err) {
+      console.error(err);
+      setError("❌ เพิ่มเมนูไม่สำเร็จ");
+    }
+  };
+
+  return (
+    <section className={styles.shopcontent2}>
+      {/* <h2>เพิ่มเมนูใหม่</h2> */}
+      <div className={styles.addform}>
+        <section>
+          <input type="file"onChange={(e) => e.target.files && setMenuPic(e.target.files[0])}/>
+                  <div>
+          {types.map((t) => (
+            <label key={t.id} style={{ marginRight: "10px" }}>
+              <input
+                type="checkbox"
+                value={t.id}
+                checked={selectedTypes.includes(t.id)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedTypes((prev) =>
+                    prev.includes(id)
+                      ? prev.filter((x) => x !== id)
+                      : [...prev, id]
+                  );
+                }}
+              />
+              {t.type}
+            </label>
+          ))}
+        </div>
+        </section>
+        <section className={styles.sectiongapaddmenu}>
+          <div className={styles.Contenthandler}>
+              <div>
+                <p>ชื่ออาหาร : </p>
+                <input className={styles.menunameinput} placeholder="ชื่อเมนู"value={name}onChange={(e) => setName(e.target.value)}/>
+             </div>
+              <div className={styles.numprice}>
+                  <p>ราคา : </p> <input type="number"value={price}onChange={(e) => {const value = e.target.value;setPrice(value === "" ? "" : Number(value));}}/> <p> บาท </p>
+              </div>
+              <div className={styles.numprice}>
+                  <p>เวลา : </p><input type="number"value={timeTaken}onChange={(e) => {const value = e.target.value;setTimeTaken(value === "" ? "" : Number(value));}}/> <p> นาที </p>
+              </div>
+              <div>
+                    <p>รายละเอียด : </p>
+                    <textarea
+                      className={styles.menuadddescriptin}
+                      placeholder="รายละเอียด"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+              </div>
+          </div>
+          <button className={styles.submitBTNaddmenu} onClick={handleAddMenu}>ยืนยัน</button>
+        </section>
+  
+   
+
+
+
+
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        {success && <p style={{ color: "green" }}>{success}</p>}
       </div>
     </section>
   );
