@@ -98,6 +98,26 @@ func (h *TableHandler) GetTableTimeslotByTimeslotID() gin.HandlerFunc {
 	}
 }
 
-// func (h *TableHandler) GetTableByID(c *gin.Context) {
-// 	// Implementation for getting a table by ID
-// }
+func (h *TableHandler) GetTableTimeslotByID() gin.HandlerFunc {
+	return func (c *gin.Context) {
+
+		tableTimeslotID := c.Param("table_timeslot_id")
+		if tableTimeslotID == "" {
+			c.JSON(400, gin.H{"error": "table timeslot id is required"})
+			return
+		}
+
+		parseTableTimeslotID, err := uuid.Parse(tableTimeslotID)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid table timeslot id"})
+			return
+		}
+
+		tableTimeslot, err := h.tableUsecase.GetTableTimeslotByID(parseTableTimeslotID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"table_timeslot": tableTimeslot})
+	}
+}
