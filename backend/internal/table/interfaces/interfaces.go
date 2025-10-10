@@ -34,6 +34,7 @@ type TableRepository interface {
 	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 	GetTableTimeslotByID(id uuid.UUID) (*models.TableTimeslot, error)
 	UpdateTableTimeslot(tableTimeslot *models.TableTimeslot) error
+	GetAvailableTableTimeslots(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 }
 
 type TableUsecase interface {
