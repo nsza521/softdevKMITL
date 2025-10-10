@@ -12,33 +12,31 @@ type Timeslot = {
 };
 
 export default function ReserveSelectTimePage() {
-    // const slots = ["10:00", "11:00", "12:00", "13:00"];
-
     const [slots, setSlots] = useState<Timeslot[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-      useEffect(() => {
+    useEffect(() => {
         const fetchSlots = async () => {
-        try {
-            const res = await fetch("http://localhost:8080/table/timeslot/all");
-            if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+            try {
+                const res = await fetch("http://localhost:8080/table/timeslot/all");
+                if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
 
-            const json = await res.json();
-            const data: Timeslot[] = Array.isArray(json.timeslots)
+                const json = await res.json();
+                const data: Timeslot[] = Array.isArray(json.timeslots)
                 ? json.timeslots.map((slot: any) => ({
-                    time_slot_id: slot.ID,
-                    start_time: formatTime(slot.StartTime),
-                    end_time: formatTime(slot.EndTime),
+                    time_slot_id: slot.timeslot_id,
+                    start_time: slot.start_time,
+                    end_time: slot.end_time,
                     }))
                 : [];
 
-            setSlots(data);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+                setSlots(data);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchSlots();
     }, []);
@@ -65,51 +63,44 @@ export default function ReserveSelectTimePage() {
 }
 
 function TimeSlot({ slots }: { slots: Timeslot[] }) {
-    if (slots.length === 0) {
-        return <p>ไม่มีช่วงเวลาให้เลือก</p>;
-    }
+  if (slots.length === 0) {
+    return <p>ไม่มีช่วงเวลาให้เลือก</p>;
+  }
 
-    const grouped: Record<string, Timeslot[]> = {};
+  const grouped: Record<string, Timeslot[]> = {};
 
-    slots.forEach((slot) => {
-        const hour = new Date(slot.start_time).getHours();
-        const hourLabel = `${String(hour).padStart(2, "0")}:00`;
-        if (!grouped[hourLabel]) grouped[hourLabel] = [];
-        grouped[hourLabel].push(slot);
-    });
+  slots.forEach((slot) => {
+    const [hour] = slot.start_time.split(":");
+    const hourLabel = `${hour.padStart(2, "0")}:00`;
+    if (!grouped[hourLabel]) grouped[hourLabel] = [];
+    grouped[hourLabel].push(slot);
+  });
 
-    const sortedHours = Object.keys(grouped).sort(
-        (a, b) => Number(a.split(":")[0]) - Number(b.split(":")[0])
-    );
+  const sortedHours = Object.keys(grouped).sort(
+    (a, b) => Number(a.split(":")[0]) - Number(b.split(":")[0])
+  );
 
-    sortedHours.forEach((hour) => {
-        grouped[hour].sort(
-        (a, b) =>
-            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-        );
-    });
-
-    return (
-        <div>
-        {sortedHours.map((hour, i) => (
-            <div
-            key={hour}
-            className={`${i % 2 === 0 ? styles.timeContainer1 : styles.timeContainer2} ${styles.timeContainerBase}`}
-            >
-            <p>{hour} น.</p>
-            <div className={styles.timeBtContainer}>
-                {grouped[hour].map((slot) => (
-                <TimeBt
-                    key={slot.time_slot_id}
-                    timeSlotId={slot.time_slot_id}
-                    time={slot.start_time}
-                />
-                ))}
-            </div>
-            </div>
-        ))}
+  return (
+    <div>
+      {sortedHours.map((hour, i) => (
+        <div
+          key={hour}
+          className={`${i == 0 ? styles.timeContainer1 : styles.timeContainer2} ${styles.timeContainerBase}`}
+        >
+          <p>{hour} น.</p>
+          <div className={styles.timeBtContainer}>
+            {grouped[hour].map((slot) => (
+              <TimeBt
+                key={slot.time_slot_id}
+                timeSlotId={slot.time_slot_id}
+                time={slot.start_time}
+              />
+            ))}
+          </div>
         </div>
-    );
+      ))}
+    </div>
+  );
 }
 
 interface TimeBtProps {
@@ -123,18 +114,9 @@ function TimeBt({ timeSlotId, time }: TimeBtProps) {
   return (
     <button
       className={`${styles.timeBtAvl} ${styles.timeBtBase}`}
-      onClick={() => router.push(`/reserveSelectTable?slot=${encodeURIComponent(timeSlotId)}&time=${encodeURIComponent(time)}`)}
+      onClick={() => router.push(`/reserveSelectTable?timeSlotId=${encodeURIComponent(timeSlotId)}&time=${encodeURIComponent(time)}`)}
     >
       {time}
     </button>
   );
-}
-
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 }
