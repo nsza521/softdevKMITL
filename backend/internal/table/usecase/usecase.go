@@ -129,8 +129,8 @@ func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDet
 	}
 	tableDetail := dto.TableDetail{
 		// ID:  table.ID,
-		TableRow: table.TableRow,
-		TableCol: table.TableCol,
+		Row: table.Row,
+		Col: table.Col,
 		MaxSeats: table.MaxSeats,
 	}
 
