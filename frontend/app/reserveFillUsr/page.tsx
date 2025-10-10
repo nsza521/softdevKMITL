@@ -40,55 +40,20 @@ export default function ReserveFillUsrPage() {
         reserved_seats: 5,
     };
 
-    const [reservation, setReservation] = useState<Reservation[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
     const token = localStorage.getItem("token");
-
-    // useEffect(() => {
-    //     const fetchSlots = async () => {
-    //         try {
-    //             const token = localStorage.getItem("token");
-    //             const res = await fetch(`http://localhost:8080/table/timeslot/${time_slot_id}`, {
-    //                 headers: {
-    //                     "Content-Type": "application/json",
-    //                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    //                 },
-    //             });
-
-    //             if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
-
-    //             const json = await res.json();
-    //             const data: TableTimeSlot[] = Array.isArray(json.table_timeslots)
-    //             ? json.table_timeslots.map((t: any) => ({
-    //                 id: t.id,
-    //                 row: t.table.row,
-    //                 col: t.table.col,
-    //                 max_seats: t.table.max_seats,
-    //                 status: t.status,
-    //                 reserved_seats: t.reserved_seats,
-    //                 }))
-    //             : [];
-
-    //             setTableTimeSlots(data);
-    //         } catch (err: any) {
-    //             setError(err.message);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchSlots();
-    // }, [time_slot_id]);
-
-    // if (loading) return <div className={styles.container}><p>กำลังโหลดข้อมูล...</p></div>;
-    // if (error) return <div className={styles.container}><p>เกิดข้อผิดพลาด: {error}</p></div>;
     
     return (
         <div className={styles.container}>
             <TableInfo table={table} occupied={0}/>
             <Members token="token"/>
+            <div>
+                <img src="/info.svg"/>
+                <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
+            </div>
+            <button>
+                เชิญเพื่อนและเริ่มสั่งอาหาร
+                <img src="/Arrow_Right_MD.svg"/>
+            </button>
         </div>
     );
 }
@@ -185,70 +150,76 @@ function Members({ token }: { token: string }) {
     //     if (!username) return;
 
     //     try {
-    //     const res = await fetch(`http://localhost:8080/profile/${username}`, {
-    //         headers: { Authorization: `Bearer ${token}` },
-    //     });
-    //     if (!res.ok) throw new Error("ไม่พบผู้ใช้");
-    //     const data = await res.json();
+    //         const res = await fetch("http://localhost:8080/customer/firstname", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json", 
+    //                 Authorization: token,   
+    //             },
+    //             body: JSON.stringify({ username }),  
+    //         });
 
-    //     handleChangeMember(index, "first_name", data.first_name || "");
-    //     } catch (err) {
-    //     console.error("fetch username error:", err);
-    //     }
+    //         if (!res.ok) throw new Error("ไม่พบผู้ใช้");
+    //         const data = await res.json();
+
+    //         handleChangeMember(index, "first_name", data.first_name || "");
+    //         } catch (err) {
+    //             console.error("fetch username error:", err);
+    //         }
     // };
 
     // if (error) return <p>เกิดข้อผิดพลาด: {error}</p>;
     // if (!myProfile) return <p>กำลังโหลดข้อมูล...</p>;
 
     return (
-        <div>
-        <h2>สมาชิกที่เข้าร่วม</h2>
-        <label className="section-label">คุณ :</label>
-        <div className="input-row">
-            <input
-            type="text"
-            className="input-field"
-            // value={myProfile.username}
-            disabled
-            />
-            <input
-            type="text"
-            className="input-field name-field"
-            // value={`${myProfile.first_name} ${myProfile.last_name}`}
-            disabled
-            />
-        </div>
-
-        {members.map((m, i) => (
-            <div key={i} className="form-section">
-            <label className="section-label">สมาชิกคนที่ {i + 2}</label>
-            <div className="input-row">
+        <div className={styles.membersCon}>
+            <div className={styles.formTitleWrapper}>
+                <div className={styles.titleLine}></div>
+                <h1>สมาชิกที่เข้าร่วม</h1>
+                <div className={styles.titleLine}></div>
+            </div>
+            <label className={styles.sectionLabel}>คุณ :</label>
+            <div className={styles.inputCon}>
                 <input
                 type="text"
-                className="input-field"
-                placeholder="@username"
-                value={m.username}
-                // onChange={(e) => handleChangeMember(i, "username", e.target.value)}
-                // onBlur={() => handleUsernameBlur(i)}
+                // value={myProfile.username}
+                disabled
                 />
                 <input
                 type="text"
-                className="input-field name-field"
-                placeholder="ชื่อจะถูกกรอกอัตโนมัติ"
-                value={m.first_name}
-                // onChange={(e) => handleChangeMember(i, "first_name", e.target.value)}
+                // value={`${myProfile.first_name} ${myProfile.last_name}`}
+                disabled
                 />
             </div>
-            </div>
-        ))}
 
-        <button
-        className={styles.addUserBt}
-        onClick={() => setMembers([...members, { username: "", first_name: "" }])}
-        >
-            <img src="/add_user.svg"/>
-            เพิ่มสมาชิก
-        </button>
+            {members.map((m, i) => (
+                <div key={i} className={styles.formSection}>
+                    <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
+                    <div className={styles.inputCon}>
+                        <input
+                        type="text"
+                        placeholder="@username"
+                        value={m.username}
+                        // onChange={(e) => handleChangeMember(i, "username", e.target.value)}
+                        // onBlur={() => handleUsernameBlur(i)}
+                        />
+                        <input
+                        type="text"
+                        placeholder="ชื่อจะถูกกรอกอัตโนมัติ"
+                        value={m.first_name}
+                        // onChange={(e) => handleChangeMember(i, "first_name", e.target.value)}
+                        />
+                    </div>
+                </div>
+            ))}
+
+            <button
+            className={styles.addUserBt}
+            onClick={() => setMembers([...members, { username: "", first_name: "" }])}
+            >
+                <img src="/add_user.svg"/>
+                เพิ่มสมาชิก
+            </button>
         </div>
     );
 }
