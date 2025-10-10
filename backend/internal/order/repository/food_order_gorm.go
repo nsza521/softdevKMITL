@@ -13,7 +13,7 @@ import (
 
 // ใช้ guard แบบ scoped โดยผูก reservation กับ restaurant_id เสมอเวลา query
 type Reservation struct {
-	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
+	ReservationID           uuid.UUID `gorm:"type:char(36);primaryKey"`
 	RestaurantID uuid.UUID `gorm:"type:char(36);index;not null"`
 	CustomerID   uuid.UUID `gorm:"type:char(36);index;not null"`
 	Status       string    `gorm:"type:varchar(32);not null"`

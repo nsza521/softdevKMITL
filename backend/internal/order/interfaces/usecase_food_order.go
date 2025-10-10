@@ -86,7 +86,7 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 
 	order := &models.FoodOrder{
 		ID:            uuid.New(),
-		ReservationID: rsv.ID,
+		ReservationID: rsv.ReservationID,
 		// CustomerID:    currentCustomer,
 		Status:        "pending",
 		OrderDate:     u.nowFn(),

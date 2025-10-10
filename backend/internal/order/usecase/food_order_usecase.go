@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	models "backend/internal/db_model" // <— ให้ alias เป็น models ให้ตรงกับการใช้งานด้านล่าง
+	 models "backend/internal/db_model" // <— ให้ alias เป็น models ให้ตรงกับการใช้งานด้านล่าง
 	"backend/internal/order/dto"
 	"backend/internal/order/repository"
 )
@@ -74,6 +74,7 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
 		return dto.CreateFoodOrderResp{}, errors.New("no items")
 	}
 
+	fmt.Printf("CreateFoodOrderReq: %+v\n", req)
 	// 1) โหลด reservation เฉพาะกรณีมี reservation_id ใน body
 	var rsv *repository.Reservation
 	if req.ReservationID != nil {
@@ -83,12 +84,16 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
 		}
 		rsv = rr
 		fmt.Printf("Loaded reservation22: %+v\n", rsv)
+	}else{
+		fmt.Printf("No reservation ID provided, proceeding without reservation.\n")
 	}
+
+	
 
 	order := &models.FoodOrder{
 		ID: uuid.New(),
 		// ReservationID: จะถูกเซ็ตใน repo ถ้ามี rsv (หรือจะเซ็ตเองที่นี่ก็ได้)
-		ReservationID: rsv.ID,
+		ReservationID: rsv.ReservationID,
 		// CustomerID: currentCustomer,
 		Status:     "pending",
 		OrderDate:  u.nowFn(),
