@@ -348,7 +348,6 @@ function TotalSales() {
     </section>
   );
 }
-
 function ManagePage({ username }: { username: string }) {
   const [mode, setMode] = useState<"add" | "manage">("manage");
   const [menuList, setMenuList] = useState<MenuItem[]>([]);
@@ -490,10 +489,10 @@ function ManagePage({ username }: { username: string }) {
       </div>
 
       {/* ปุ่มเปลี่ยนโหมด */}
-      {/* <div style={{ margin: "20px 0", display: "flex", gap: "10px" }}>
+      <div style={{ margin: "20px 0", display: "flex", gap: "10px" }}>
         <button onClick={() => setMode("manage")}>จัดการเมนูเดิม</button>
         <button onClick={() => setMode("add")}>เพิ่มเมนูใหม่</button>
-      </div> */}
+      </div>
 
       {/* เนื้อหา */}
       <div className={styles.s2_content_detail}>
