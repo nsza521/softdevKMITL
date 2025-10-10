@@ -66,7 +66,7 @@ func (h *TableReservationHandler) CreateTableReservation() gin.HandlerFunc {
 	}
 }
 
-func (h *TableReservationHandler) CancelTableReservation() gin.HandlerFunc {
+func (h *TableReservationHandler) CancelTableReservationMember() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		reservationID, err := getReservationID(c)
@@ -79,7 +79,7 @@ func (h *TableReservationHandler) CancelTableReservation() gin.HandlerFunc {
 			return
 		}
 
-		err = h.tableReservationUsecase.CancelTableReservation(reservationID, customerID)
+		err = h.tableReservationUsecase.CancelTableReservationMember(reservationID, customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -124,5 +124,49 @@ func (h *TableReservationHandler) GetTableReservationDetail() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, gin.H{"reservation": reservation})
+	}
+}
+
+func (h *TableReservationHandler) DeleteTableReservation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		err = h.tableReservationUsecase.DeleteTableReservation(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Reservation deleted successfully"})
+	}
+}
+
+func (h *TableReservationHandler) ConfirmTableReservation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		err = h.tableReservationUsecase.ConfirmTableReservation(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Reservation confirmed successfully"})
 	}
 }

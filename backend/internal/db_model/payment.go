@@ -14,6 +14,8 @@ type Payment struct {
 
 type PaymentMethod struct {
 	Base
-	Name        string `gorm:"not null; unique"` // e.g., "credit_card", "wallet", "true_money"
-	Description string
+	Name        string `gorm:"not null; unique"` // e.g., "Promtpay", "KBANK", "SCB", "Wallet"
+	Type        string `gorm:"not null"`        // e.g., for "topup", "paid", "refund", "all"
+	Description string `gorm:"type:text"`
+	ImageURL    *string `gorm:"type:text"`
 }
