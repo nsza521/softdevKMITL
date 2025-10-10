@@ -45,6 +45,13 @@ func (r *TableReservationRepository) UpdateTableReservation(reservation *models.
 	return nil
 }
 
+func (r *TableReservationRepository) DeleteTableReservation(reservationID uuid.UUID) error {
+	if err := r.db.Where("id = ?", reservationID).Delete(&models.TableReservation{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 
 // Table Reservation Members Repository
 func (r *TableReservationRepository) CreateTableReservationMember(member *models.TableReservationMembers) error {
@@ -69,6 +76,14 @@ func (r *TableReservationRepository) IsCustomerInReservation(reservationID uuid.
 	return count > 0, nil
 }
 
+func (r *TableReservationRepository) GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
+	var reservations []models.TableReservationMembers
+	if err := r.db.Where("customer_id = ?", customerID).Find(&reservations).Error; err != nil {
+		return nil, err
+	}
+	return reservations, nil
+}
+
 func (r *TableReservationRepository) DeleteReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error {
 	if err := r.db.Where("reservation_id = ? AND customer_id = ?", reservationID, customerID).Delete(&models.TableReservationMembers{}).Error; err != nil {
 		return err
@@ -76,10 +91,14 @@ func (r *TableReservationRepository) DeleteReservationMember(reservationID uuid.
 	return nil
 }
 
-func (r *TableReservationRepository) GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
-	var reservations []models.TableReservationMembers
-	if err := r.db.Where("customer_id = ?", customerID).Find(&reservations).Error; err != nil {
+func (r *TableReservationRepository) GetTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error) {
+	var reservationMember models.TableReservationMembers
+	if err := r.db.Where("reservation_id = ? AND customer_id = ?", reservationID, customerID).First(&reservationMember).Error; err != nil {
 		return nil, err
 	}
-	return reservations, nil
+	return &reservationMember, nil
+}
+
+func (r *TableReservationRepository) UpdateTableReservationMember(member *models.TableReservationMembers) error {
+	return r.db.Save(member).Error
 }
