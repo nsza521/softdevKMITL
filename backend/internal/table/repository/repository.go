@@ -111,3 +111,11 @@ func (r *TableRepository) UpdateTableTimeslot(tableTimeslot *models.TableTimeslo
 	}
 	return nil
 }
+
+func (r *TableRepository) GetAvailableTableTimeslots(timeslotID uuid.UUID) ([]models.TableTimeslot, error) {
+	var tableTimeslots []models.TableTimeslot
+	if err := r.db.Where("timeslot_id = ? AND (status = 'available' OR status = 'partial')", timeslotID).Order("created_at ASC").Find(&tableTimeslots).Error; err != nil {
+		return nil, err
+	}
+	return tableTimeslots, nil
+}
