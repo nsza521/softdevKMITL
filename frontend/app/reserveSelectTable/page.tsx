@@ -70,7 +70,7 @@ export default function ReserveSelectTablePage() {
             <p className={styles.txt}>หรือ</p>
             <button
                 className={styles.soloBt}
-                onClick={() => router.push("/reserveFillUsr")}
+                onClick={() => router.push(`/reserveFillUsr?random=${encodeURIComponent(true)}`)}
             >
                 Join with Anyone
             </button>
@@ -118,18 +118,16 @@ function TableLayout({ tables }: { tables: TableTimeSlot[] }) {
 function TableIcon({ table }: { table: TableTimeSlot }) {
     const router = useRouter();
     const available = table.status === "available";
-    const occupied = table.reserved_seats;
-    const capacity = table.max_seats;
 
     return (
         <button
         className={`${styles.tableIcon} ${
             available ? styles.tableAvailable : styles.tableUnavailable
         }`}
-        onClick={() => router.push("/reserveFillUsr")}
+        onClick={() => router.push(`/reserveFillUsr?random=${encodeURIComponent(false)}?table_timeslot_id=${encodeURIComponent(table.id)}`)}
         >
             <img src={available ? "./table_layout_aval.svg" : "./table_layout_notaval.svg"}/>
-            <p>{occupied}/{capacity}</p>
+            <p>{table.reserved_seats}/{table.max_seats}</p>
         </button>
     );
 }
