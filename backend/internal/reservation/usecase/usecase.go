@@ -2,12 +2,15 @@ package usecase
 
 import (
 	"fmt"
+	"math"
+	"time"
 
-	customerInterfaces "backend/internal/customer/interfaces"
 	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
+
+	"github.com/google/uuid"
 
 	"github.com/google/uuid"
 )
@@ -137,33 +140,86 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 }
 
 func (u *TableReservationUsecase) createRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
-	// Implement logic for creating a random table reservation
 	if request.Random == false {
 		return nil, fmt.Errorf("Random must be true for random table reservation")
 	}
 
-	if len(request.Members) <= 0 {
-		return nil, fmt.Errorf("Members must be greater than 0")
-	}
 	if len(request.Members) != 1 {
-		return nil, fmt.Errorf("Only one member can be added for random table reservation")
+		return nil, fmt.Errorf("Random reservation allows only 1 member")
 	}
 
-	// หา table timeslot ที่ว่าง
-	// หา table timeslot ที่มีจำนวนที่เหลือพอ
-	// หา table timeslot ที่ไม่หมดอายุ
-	// หา table timeslot ที่มีสถานะ available หรือ partial
-	// หา table timeslot ที่มีจำนวนที่เหลือไม่เกิน 80% ของ maxSeats
-	// ถ้าเจอหลายโต๊ะ ให้เลือกโต๊ะที่มีจำนวนที่เหลือน้อยที่สุดที่ยังพอจองได้
-	// ถ้าไม่เจอโต๊ะที่ว่าง ให้คืน error
+	// 1. หา timeslot ที่ตรงกับเวลาปัจจุบัน
+	now := time.Now()
+	currentTimeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	if err != nil {
+		return nil, err
+	}
+	if currentTimeslot == nil {
+		return nil, fmt.Errorf("No available timeslot right now")
+	}
 
-	// สร้าง table reservation
-	// เพิ่มสมาชิก
-	// อัพเดตสถานะของ table timeslot
+	// 2. หา tabletimeslot ที่ยังว่าง
 
-	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว ??
+	availableTableTimeslot, err := u.tableRepository.GetAvailableTableTimeslot(currentTimeslot.ID)
+	if err != nil {
+		return nil, err
+	}
+	if availableTableTimeslot == nil {
+		return nil, fmt.Errorf("No available tables in this timeslot")
+	}
 
-	return nil, nil
+	// 4. สร้าง reservation
+	reservation := &models.TableReservation{
+		TableTimeslotID: availableTableTimeslot.ID,
+		ReservePeople:   1,
+		Random:          true,
+		Status:          "pending",
+	}
+	createdReservation, err := u.tableReservationRepository.CreateTableReservation(reservation)
+	if err != nil {
+		return nil, err
+	}
+
+	// update reserved seats
+	table, err := u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
+	if err != nil {
+		return nil, err
+	}
+	minLeft := int(math.Ceil(0.8*float64(table.MaxSeats))) - availableTableTimeslot.ReservedSeats
+	if minLeft < 0 {
+		minLeft = 0
+	}
+	if minLeft+availableTableTimeslot.ReservedSeats > table.MaxSeats {
+		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
+	}
+	availableTableTimeslot.ReservedSeats += 1
+	availableTableTimeslot.Status = u.getTableTimeslotStatus(availableTableTimeslot.ReservedSeats, minLeft+availableTableTimeslot.ReservedSeats)
+	if err := u.tableRepository.UpdateTableTimeslot(availableTableTimeslot); err != nil {
+		return nil, err
+	}
+
+	// add member
+	if err := u.CreateTableReservationMember(createdReservation.ID, request.Members[0].Username); err != nil {
+		return nil, err
+	}
+
+	table, err = u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.ReservationDetail{
+		CreateAt:        createdReservation.CreatedAt.Format("02-01-2006 15:04"),
+		ReservationID:   createdReservation.ID,
+		TableTimeslotID: createdReservation.TableTimeslotID,
+		ReservePeople:   createdReservation.ReservePeople,
+		Status:          createdReservation.Status,
+		Members:         request.Members,
+		TableRow:        table.TableRow,
+		TableCol:        table.TableCol,
+		StartTime:       currentTimeslot.StartTime.Format("15:04"),
+		EndTime:         currentTimeslot.EndTime.Format("15:04"),
+	}, nil
 }
 
 func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {

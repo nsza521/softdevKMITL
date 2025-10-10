@@ -9,7 +9,7 @@ import (
 type FoodOrder struct {
 	ID              uuid.UUID       `gorm:"type:char(36);primaryKey"`
 	ReservationID   uuid.UUID       `gorm:"type:char(36);index;not null"`
-	CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
+	// CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
 	Status          string          `gorm:"type:enum('pending','preparing','served','paid','cancelled');default:'pending';not null"`
 	OrderDate       time.Time       `gorm:"not null"`
 	ExpectedReceive *time.Time
@@ -23,6 +23,7 @@ func (FoodOrder) TableName() string { return "food_orders" }
 type FoodOrderItem struct {
 	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
 	FoodOrderID  uuid.UUID `gorm:"type:char(36);index;not null"`
+	CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
 	MenuItemID   uuid.UUID `gorm:"type:char(36);index;not null"`
 
 	// Snapshot จากเมนูตอนสั่ง

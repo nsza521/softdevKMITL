@@ -89,7 +89,7 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
 		ID: uuid.New(),
 		// ReservationID: จะถูกเซ็ตใน repo ถ้ามี rsv (หรือจะเซ็ตเองที่นี่ก็ได้)
 		ReservationID: rsv.ID,
-		CustomerID: currentCustomer,
+		// CustomerID: currentCustomer,
 		Status:     "pending",
 		OrderDate:  u.nowFn(),
 		Note:       req.Note,
@@ -195,6 +195,7 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
 		item := models.FoodOrderItem{
 			ID:           uuid.New(),
 			MenuItemID:   detail.ID,
+			CustomerID:   currentCustomer,
 			MenuName:     detail.Name,
 			UnitPrice:    detail.Price,
 			TimeTakenMin: detail.TimeTaken,
