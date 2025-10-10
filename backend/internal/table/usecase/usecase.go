@@ -117,6 +117,30 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 	return details, nil
 }
 
-// func (u *TableUsecase) GetTableByID(id uint) (*models.Table, error) {
-// 	return u.tableRepository.GetTableByID(id)
-// }
+func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error) {
+	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	table, err := u.tableRepository.GetTableByID(tableTimeslot.TableID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table: %v", err)
+	}
+	tableDetail := dto.TableDetail{
+		// ID:  table.ID,
+		TableRow: table.TableRow,
+		TableCol: table.TableCol,
+		MaxSeats: table.MaxSeats,
+	}
+
+	detail := &dto.TableTimeslotDetail{
+		ID:             tableTimeslot.ID,
+		Table:      	tableDetail,
+		Status:       	tableTimeslot.Status,
+		ReservedSeats:  tableTimeslot.ReservedSeats,
+		// MaxSeats:    	table.MaxSeats,
+	}
+
+	return detail, nil
+}

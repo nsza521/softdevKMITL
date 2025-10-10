@@ -5,6 +5,7 @@ import (
 )
 
 type ReservationDetail struct {
+	CreateAt 	  		string      `json:"create_at"`
 	ReservationID       uuid.UUID 	`json:"reservation_id"`
 	TableTimeslotID     uuid.UUID 	`json:"table_timeslot_id"`
 	ReservePeople       int       	`json:"reserve_people"`
