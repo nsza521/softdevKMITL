@@ -25,3 +25,7 @@ type GetFullnameRequest struct {
 type GetFullnameResponse struct {
 	Fullname string `json:"full_name"`
 }
+
+type GetFirstnameResponse struct {
+	FirstName string `json:"first_name"`
+}

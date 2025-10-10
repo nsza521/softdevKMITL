@@ -15,6 +15,7 @@ func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interface
 	customerGroup.GET("/profile", customerHandler.GetProfile())
 	customerGroup.PATCH("/profile", customerHandler.EditProfile())
 	customerGroup.GET("/fullname", customerHandler.GetFullnameByUsername())
+	customerGroup.GET("/firstname", customerHandler.GetFirstNameByUsername())
 	customerGroup.POST("/logout", customerHandler.Logout())
 	// customerGroup.PUT("/change_password", customerHandler.ChangePassword())
 }
