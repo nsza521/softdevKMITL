@@ -5,12 +5,11 @@ import (
 	"math"
 	"time"
 
+	customerInterfaces "backend/internal/customer/interfaces"
 	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
-
-	"github.com/google/uuid"
 
 	"github.com/google/uuid"
 )
@@ -132,8 +131,8 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 		// Random:           	 createdReservation.Random,
 		Status:    createdReservation.Status,
 		Members:   request.Members,
-		TableRow:  table.Row,
-		TableCol:  table.Col,
+		TableRow:  table.TableRow,
+		TableCol:  table.TableCol,
 		StartTime: timeslot.StartTime.Format("15:04"),
 		EndTime:   timeslot.EndTime.Format("15:04"),
 	}, nil
@@ -292,8 +291,8 @@ func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.U
 		// Random:           	 reservation.Random,
 		Status:    reservation.Status,
 		Members:   membersDTO,
-		TableRow:  table.Row,
-		TableCol:  table.Col,
+		TableRow:  table.TableRow,
+		TableCol:  table.TableCol,
 		StartTime: timeslot.StartTime.Format("15:04"),
 		EndTime:   timeslot.EndTime.Format("15:04"),
 	}, nil

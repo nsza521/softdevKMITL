@@ -123,53 +123,53 @@ function Members({ token }: { token: string }) {
     const [members, setMembers] = useState<MemberInfo[]>([{ username: "", first_name: "" }]);
     const [error, setError] = useState<string | null>(null);
 
-    // useEffect(() => {
-    //     const fetchMyProfile = async () => {
-    //     try {
-    //         const res = await fetch("http://localhost:8080/profile/me", {
-    //         headers: { Authorization: `Bearer ${token}` },
-    //         });
-    //         if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลโปรไฟล์ได้");
-    //         const data = await res.json();
-    //         setMyProfile(data);
-    //     } catch (err: any) {
-    //         setError(err.message);
-    //     }
-    //     };
-    //     fetchMyProfile();
-    // }, [token]);
+    useEffect(() => {
+        const fetchMyProfile = async () => {
+        try {
+            const res = await fetch("http://localhost:8080/profile/me", {
+            headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลโปรไฟล์ได้");
+            const data = await res.json();
+            setMyProfile(data);
+        } catch (err: any) {
+            setError(err.message);
+        }
+        };
+        fetchMyProfile();
+    }, [token]);
 
-    // const handleChangeMember = (index: number, field: keyof MemberInfo, value: string) => {
-    //     const updated = [...members];
-    //     updated[index][field] = value;
-    //     setMembers(updated);
-    // };
+    const handleChangeMember = (index: number, field: keyof MemberInfo, value: string) => {
+        const updated = [...members];
+        updated[index][field] = value;
+        setMembers(updated);
+    };
 
-    // const handleUsernameBlur = async (index: number) => {
-    //     const username = members[index].username.trim();
-    //     if (!username) return;
+    const handleUsernameBlur = async (index: number) => {
+        const username = members[index].username.trim();
+        if (!username) return;
 
-    //     try {
-    //         const res = await fetch("http://localhost:8080/customer/firstname", {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json", 
-    //                 Authorization: token,   
-    //             },
-    //             body: JSON.stringify({ username }),  
-    //         });
+        try {
+            const res = await fetch("http://localhost:8080/customer/firstname", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", 
+                    Authorization: token,   
+                },
+                body: JSON.stringify({ username }),  
+            });
 
-    //         if (!res.ok) throw new Error("ไม่พบผู้ใช้");
-    //         const data = await res.json();
+            if (!res.ok) throw new Error("ไม่พบผู้ใช้");
+            const data = await res.json();
 
-    //         handleChangeMember(index, "first_name", data.first_name || "");
-    //         } catch (err) {
-    //             console.error("fetch username error:", err);
-    //         }
-    // };
+            handleChangeMember(index, "first_name", data.first_name || "");
+            } catch (err) {
+                console.error("fetch username error:", err);
+            }
+    };
 
-    // if (error) return <p>เกิดข้อผิดพลาด: {error}</p>;
-    // if (!myProfile) return <p>กำลังโหลดข้อมูล...</p>;
+    if (error) return <p>เกิดข้อผิดพลาด: {error}</p>;
+    if (!myProfile) return <p>กำลังโหลดข้อมูล...</p>;
 
     return (
         <div className={styles.membersCon}>

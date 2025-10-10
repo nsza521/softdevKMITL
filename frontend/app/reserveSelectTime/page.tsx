@@ -114,7 +114,7 @@ function TimeBt({ timeSlotId, time }: TimeBtProps) {
   return (
     <button
       className={`${styles.timeBtAvl} ${styles.timeBtBase}`}
-      onClick={() => router.push(`/reserveSelectTable?timeSlotId=${encodeURIComponent(timeSlotId)}&time=${encodeURIComponent(time)}`)}
+      onClick={() => router.push(`/reserveSelectTable?timeSlotId=${encodeURIComponent(timeSlotId)}`)}
     >
       {time}
     </button>
