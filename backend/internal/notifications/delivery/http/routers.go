@@ -11,6 +11,7 @@ import (
 
 	"backend/internal/notifications/dto"
 	"backend/internal/notifications/interfaces"
+	"backend/internal/middleware"
 )
 
 // MapNotiRoutes กำหนดเส้นทาง API สำหรับการแจ้งเตือน
@@ -69,7 +70,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 // 	}
 // })
 
-	r.GET("/:receiverId/:page", func(c *gin.Context) {
+	r.GET("/:receiverId/:page", middleware.AuthMiddleware(), func(c *gin.Context) {
         // Parse receiverId from URL parameter
         receiverIdStr := c.Param("receiverId")
         receiverId, err := uuid.Parse(receiverIdStr)
@@ -138,7 +139,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 
 
 	// ✅ POST: Mock create notifications
-	r.POST("/mock", func(c *gin.Context) {
+	r.POST("/mock", middleware.AuthMiddleware(), func(c *gin.Context) {
 		var req dto.MockCreateRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
@@ -152,7 +153,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	// ✅ PATCH: Mark single as read/unread
-	r.PATCH("/:id/read", func(c *gin.Context) {
+	r.PATCH("/:id/read", middleware.AuthMiddleware(), func(c *gin.Context) {
 		id, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid id"})
@@ -176,7 +177,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	// ✅ PATCH: Mark all as read
-	r.PATCH("/read-all", func(c *gin.Context) {
+	r.PATCH("/read-all", middleware.AuthMiddleware(), func(c *gin.Context) {
 	type RequestReadAll struct {
 		ReceiverID   string `json:"receiverId" binding:"required"`
 		ReceiverType string `json:"receiverType" binding:"required"`
@@ -216,7 +217,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 	})
 
-	r.POST("/event", func(c *gin.Context) {
+	r.POST("/event", middleware.AuthMiddleware(), func(c *gin.Context) {
 	var req dto.CreateEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
@@ -231,3 +232,4 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 }
+
