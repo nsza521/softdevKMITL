@@ -86,6 +86,15 @@ func (u *addOnUsecase) DeleteGroup(id uuid.UUID) error {
 	return u.repo.DeleteGroup(id)
 }
 
+
+
+func (u *addOnUsecase) LinkGroupToTypes(groupID uuid.UUID, typeIDs []uuid.UUID) error {
+    return u.repo.LinkGroupToTypes(groupID, typeIDs)
+}
+func (u *addOnUsecase) UnlinkGroupFromType(groupID, typeID uuid.UUID) error {
+    return u.repo.UnlinkGroupFromType(groupID, typeID)
+}
+
 // Option
 
 // usecase/addon_uc.go

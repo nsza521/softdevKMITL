@@ -14,6 +14,8 @@ type AddOnRepository interface {
 	UpdateGroup(group *models.MenuAddOnGroup) error
 	DeleteGroup(id uuid.UUID) error
 
+	LinkGroupToTypes(groupID uuid.UUID, typeIDs []uuid.UUID) error
+	UnlinkGroupFromType(groupID, typeID uuid.UUID) error
 	// Option
 	CreateOption(opt *models.MenuAddOnOption) error
 	GetOptionByID(id uuid.UUID) (*models.MenuAddOnOption, error)

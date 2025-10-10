@@ -2,31 +2,54 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
 type FoodOrder struct {
-	Base
-	ReservationID uuid.UUID `gorm:"type:char(36);constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	// PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	ExpectedTime  time.Time `gorm:"not null"`
-	Status        string    `gorm:"not null;default:'pending'"` // e.g., "pending", "completed", "cancelled"
-	FoodOrderItems []FoodOrderItem `gorm:"foreignKey:FoodOrderID"` // one-to-many
+	ID              uuid.UUID       `gorm:"type:char(36);primaryKey"`
+	ReservationID   uuid.UUID       `gorm:"type:char(36);index;not null"`
+	CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
+	Status          string          `gorm:"type:enum('pending','preparing','served','paid','cancelled');default:'pending';not null"`
+	OrderDate       time.Time       `gorm:"not null"`
+	ExpectedReceive *time.Time
+	TotalAmount     float64         `gorm:"not null;default:0"`
+	Note            *string
+	Items           []FoodOrderItem `gorm:"foreignKey:FoodOrderID"`
 }
+
+func (FoodOrder) TableName() string { return "food_orders" }
 
 type FoodOrderItem struct {
-	Base
-	FoodOrderID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	MenuItemID  uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	AddOnID    *uuid.UUID `gorm:"type:char(36);constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Quantity    int       `gorm:"not null"`
+	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
+	FoodOrderID  uuid.UUID `gorm:"type:char(36);index;not null"`
+	MenuItemID   uuid.UUID `gorm:"type:char(36);index;not null"`
+
+	// Snapshot จากเมนูตอนสั่ง
+	MenuName     string  `gorm:"type:varchar(255);not null"`
+	UnitPrice    float64 `gorm:"not null"`
+	TimeTakenMin int     `gorm:"not null"`
+
+	Quantity int     `gorm:"not null"`
+	Subtotal float64 `gorm:"not null;default:0"`
+	Note     *string
+
+	Options []FoodOrderItemOption `gorm:"foreignKey:FoodOrderItemID"`
 }
 
-type FoodOrderHistory struct {
-	Base
-	CustomerID    uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	RestaurantID  uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	FoodOrderID   uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	PaymentID     uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	TotalAmount   float32   `gorm:"not null"`
+func (FoodOrderItem) TableName() string { return "food_order_items" }
+
+type FoodOrderItemOption struct {
+	ID              uuid.UUID `gorm:"type:char(36);primaryKey"`
+	FoodOrderItemID uuid.UUID `gorm:"type:char(36);index;not null"`
+	AddOnOptionID   uuid.UUID `gorm:"type:char(36);index;not null"`
+
+	// Snapshot
+	GroupID    uuid.UUID `gorm:"type:char(36);index;not null"`
+	GroupName  string    `gorm:"type:varchar(255);not null"`
+	OptionName string    `gorm:"type:varchar(255);not null"`
+	PriceDelta float64   `gorm:"not null"`
+	Qty        int       `gorm:"not null;default:1"`
 }
+
+func (FoodOrderItemOption) TableName() string { return "food_order_item_options" }

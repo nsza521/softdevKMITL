@@ -56,3 +56,5 @@ type MenuUsecase interface {
 	DeleteMenuItem(ctx context.Context, restaurantID, menuItemID uuid.UUID) error
 	UploadMenuItemPicture(ctx context.Context, restaurantID, menuItemID uuid.UUID, file *multipart.FileHeader) (string, error)
 }
+
+

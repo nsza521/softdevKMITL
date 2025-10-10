@@ -10,9 +10,11 @@ import (
 func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interfaces.CustomerHandler) {
 	customerGroup.POST("/register", customerHandler.Register())
 	customerGroup.POST("/login", customerHandler.Login())
-	customerGroup.GET("/profile", middleware.AuthMiddleware(), customerHandler.GetProfile())
-	customerGroup.PATCH("/profile", middleware.AuthMiddleware(), customerHandler.EditProfile())
-	customerGroup.GET("/fullname", middleware.AuthMiddleware(), customerHandler.GetFullnameByUsername())
-	// customerGroup.POST("/logout", middleware.AuthMiddleware(), customerHandler.Logout())
-	// customerGroup.PUT("/change_password", middleware.AuthMiddleware(), customerHandler.ChangePassword())
+
+	customerGroup.Use(middleware.AuthMiddleware())
+	customerGroup.GET("/profile", customerHandler.GetProfile())
+	customerGroup.PATCH("/profile", customerHandler.EditProfile())
+	customerGroup.GET("/fullname", customerHandler.GetFullnameByUsername())
+	customerGroup.POST("/logout", customerHandler.Logout())
+	// customerGroup.PUT("/change_password", customerHandler.ChangePassword())
 }
