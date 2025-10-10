@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -143,4 +144,18 @@ func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDet
 	}
 
 	return detail, nil
+}
+
+func (u *TableUsecase) GetNowTableTimeslots() ([]dto.TableTimeslotDetail, error) {
+
+	now := time.Now()
+
+	timeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	if err != nil {
+		return nil, err
+	}
+	if timeslot == nil {
+		return nil, fmt.Errorf("no active timeslot found")
+	}
+	return u.GetTableTimeslotByTimeslotID(timeslot.ID)
 }

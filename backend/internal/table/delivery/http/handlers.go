@@ -121,3 +121,15 @@ func (h *TableHandler) GetTableTimeslotByID() gin.HandlerFunc {
 		c.JSON(200, gin.H{"table_timeslot": tableTimeslot})
 	}
 }
+
+func (h *TableHandler) GetNowTableTimeslots() gin.HandlerFunc {
+	return func (c *gin.Context) {
+
+		tableTimeslots, err := h.tableUsecase.GetNowTableTimeslots()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"table_timeslots": tableTimeslots})
+	}
+}
