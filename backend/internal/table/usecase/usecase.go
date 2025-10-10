@@ -35,8 +35,8 @@ func (u *TableUsecase) GetAllTables() ([]dto.TableDetail, error) {
 	for _, t := range tables {
 		detail := dto.TableDetail{
 			// ID:       t.ID,
-			TableRow:      t.TableRow,
-			TableCol:      t.TableCol,
+			Row:      t.Row,
+			Col:      t.Col,
 			MaxSeats: t.MaxSeats,
 		}
 		details = append(details, detail)
@@ -87,8 +87,8 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 		}
 		tableDetail := dto.TableDetail{
 			// ID:  table.ID,
-			TableRow: table.TableRow,
-			TableCol: table.TableCol,
+			Row: table.Row,
+			Col: table.Col,
 			MaxSeats: table.MaxSeats,
 		}
 
