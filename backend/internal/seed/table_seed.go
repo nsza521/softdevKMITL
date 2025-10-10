@@ -32,17 +32,23 @@ func seedTableTimeslots(db *gorm.DB) error {
 	now := time.Now().In(loc)
 	baseDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 
-	gap := 1 * time.Minute
-	start := baseDate.Add(10 * time.Hour + gap)   // 10:01 in Thailand
-	end := baseDate.Add(13 * time.Hour)     // 13:00 in Thailand
-	duration := 14 * time.Minute
+	gap := 0 * time.Minute
+	start := baseDate.Add(10 * time.Hour + gap)   // 10:00 in Thailand
+	end := baseDate.Add(15 * time.Hour)     // 15:00 in Thailand
+	duration := 15 * time.Minute
+	
 	var timeSlots []models.Timeslot
-
 	for t := start; t.Before(end); t = t.Add(duration + gap) {
 		timeSlot := models.Timeslot{
 			StartTime: t,
 			EndTime:   t.Add(duration),
 		}
+
+		var existing models.Timeslot
+		if err := db.Where("start_time = ? AND end_time = ?", t, t.Add(duration)).First(&existing).Error; err == nil {
+			continue
+		}
+
 		if err := db.Create(&timeSlot).Error; err != nil {
 			return err
 		}
@@ -55,9 +61,9 @@ func seedTableTimeslots(db *gorm.DB) error {
 		for _, timeSlot := range timeSlots {
 
 			status := "available" // status have "available", "full", "expired", "partial"
-			if timeSlot.StartTime.In(loc).Before(time.Now().In(loc)) {
-				status = "expired"
-			}
+			// if timeSlot.StartTime.In(loc).Before(time.Now().In(loc)) {
+			// 	status = "expired"
+			// }
 
 			tableTimeslot := models.TableTimeslot{
 				TableID:    table.ID,
