@@ -2,18 +2,22 @@
     width: 100vw;
     height: 100vh;
     display: flex;
+    user-select: none;
 }
 .sidebar{
     width: 20%;
-    background-color: #6D6D6D;
+    background-color: #D77948;
     display: flex; 
     flex-direction: column;   
 }
 .sidebarsection{
     height: 12%;
-    background-color: #6D6D6D;
+    background-color: #D77948;
     border-bottom: 2px solid #E6E6E6;
     color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .sidebarsection div{
     width: 100%;
@@ -33,7 +37,7 @@
     transition: all 0.2s ease;
 }
 .sidebarsection button:hover{
-    background-color: white;
+    background-color: #E7D5B3;
     color: black;
 }
 .sidebarsection button span:nth-child(1) {
@@ -77,11 +81,19 @@
 }
 
 .shopcontent{
-    width: 80%;
+    width: 100%;
     height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+.shopcontent2{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
 }
 .shophead{
     padding-top: 20px;
@@ -134,9 +146,15 @@
     border-radius:20px ;
     border: none;
     color: white;
-    background-color: #6D6D6D;
+    background-color: #000;
+    color: white;
+    opacity: 0.8;
     font-size: 14px;
     font-weight: 600;
+    transition: all 0.1s ease;
+}
+.all button:hover{
+    text-decoration: underline;
 }
 .cate{
     flex:1;
@@ -157,6 +175,12 @@
     background-color: #D5D5D5;
     font-size: 14px;
     font-weight: 600;
+    transition: all 0.1s ease;
+}
+.cate button:hover{
+    background-color: #000;
+    color: white;
+    opacity: 0.8;
 }
 .s_content_detail{
     width: 85%;
@@ -170,21 +194,40 @@
 }
 .menu{
     width: 225px;
-    height: 255px;
+    height: 285px;
     /* border :1px solid black; */
 }
 .menuimg{
+    position: relative;       /* จำเป็นสำหรับปุ่ม absolute */
     width: 100%;
     height: 186px;
     background-color: #D5D5D5;
     border-radius: 15px;
+    overflow: hidden;    /* แนวตั้งตรงกลาง */
 
+
+}
+.menuimg img{
+     width: 100%;           /* กันรูปใหญ่เกิน */
+    height: 100%;   
+    object-fit: cover;
+    z-index: 0;
+    
 }
 .menudetail{
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction:column;
     height: 69px;
     /* border :1px solid black; */
+    padding-left: 10px;
+    
+}
+.price{
+    margin-top: 10px;
+    font-weight: 600;
+}
+.description{
+    color: gray;
 }
 .sidebarright {
   width: 24%;
@@ -196,4 +239,241 @@
   border-radius: 8px 0 0 8px; /* มุมซ้ายโค้ง */
   box-shadow: -4px 0 12px rgba(0,0,0,0.1); /* เงาลอย */
   z-index: 1000; /* ทับเนื้อหาอื่น */
+}
+.headerstotalsales{
+    margin-top: 40px;
+}
+.moneyCircle {
+  width: 220px;
+  height: 220px;
+  background-color: #E4CE8E;
+  border-radius: 50%;
+  margin: 20px auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.editBtn {
+  position: absolute;
+  top: 5px;             /* ชิดขอบบน */
+  right: 5px;           /* ชิดขอบขวา */
+  background: rgba(0, 0, 0, 0);
+  color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 4px;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+.editBtn:hover {
+  transform: scale(1.08);          /* ขยายเล็กน้อย */
+}
+.sidebarsection h2{
+    font-size: 20px;
+    text-transform: uppercase;
+
+}
+.restaurantname{
+  text-transform: uppercase;
+}
+/* ยอดเงิน */
+.totalAmount {
+  font-size: 24px;
+  font-weight: bold;
+  color: #3d3d3d;
+  margin: 0;
+  position: absolute;
+  top: 53%;
+  transform: translateY(-50%);
+}
+
+/* ข้อความ "ยอดเงินคงเหลือ" */
+.subText {
+  font-size: 16px;
+  color: #555;
+  margin: 0;
+  position: absolute;
+  top: 72px;
+}
+
+.eyeButton {
+  position: absolute;
+  bottom: 15px;
+  right: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3d3d3d;
+  transition: transform 0.15s ease;
+}
+
+
+.eyeButton:hover {
+  transform: scale(1.15);
+}
+
+.eyeButton span {
+  font-size: 24px;
+}
+.withdrawButton {
+    width: 284px;
+    display: block;
+    font-weight: lighter;
+    padding: 12px 24px;
+    background-color: #393E46;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 200;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.withdrawButton:hover {
+    text-decoration: underline;
+  background-color: #393E46;
+  transform: translateY(-2px);
+}
+.footerSection {
+  margin-top: 40px;
+  width: 100%;
+
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+
+  height: 45%;
+}
+
+/* ปุ่มแท็บ */
+.tabButtons {
+  display: flex;
+  justify-content: space-around;
+  width: 40%;
+
+  height: 16%;
+}
+.sectionofcirclemoney{
+    height: 55%;
+}
+.tabBtn {
+    color: white;
+    background-color: #D77948;
+    border-radius: 20px 20px 0px 0px;
+    flex: 1;    
+    padding: 10px;
+
+    border: none;   
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tabBtn:hover {
+  color: #000;
+}
+
+.activeTab {
+    background-color: #E7D5B3;
+    color: #000;
+    font-weight: 600;
+
+}
+
+/* เนื้อหาในแท็บ */
+.tabContent {
+    background-color: #E7D5B3;
+    text-align: center;
+    color: #444;
+
+    height: 84%;
+}
+.historywithdrawflex{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.historywithdrawflex > div:first-child {
+    flex: 3;
+    padding: 4px 8px;
+    font-size: 14px;
+    color: #000000;
+    display: flex;
+    justify-content: center;
+    padding-top: 80px;
+    height: 100%;
+    font-weight: 600;
+}
+
+.historywithdrawflex > div:last-child {
+    flex: 7;
+    padding: 4px 8px;
+    font-size: 14px;
+    text-align: left;
+    color: #222;
+    
+}
+.ManagePage {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+}
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.imageBox {
+  width: 300px;
+  height: 200px;
+  background: #e0d7c3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.categories span {
+  margin-right: 0.5rem;
+  background: #f0e6d2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+}
+.itemRow {
+  display: flex;
+  gap: 0.5rem;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+.menuList {
+  width: 85%;
+  height: 80%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3%;
+  padding-left: 2%;
+  overflow-y: scroll;
+}
+.s2_content_detail{
+    margin-top: 3%;
+     width: 100%;
+    height: 100%;
+    /* border :1px solid black; */
+    flex-wrap: wrap;
+    display: flex;
+    justify-content: center;
 }
