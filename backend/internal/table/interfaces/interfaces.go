@@ -14,6 +14,7 @@ type TableHandler interface {
 	CreateTimeslot() gin.HandlerFunc
 	GetAllTimeslots() gin.HandlerFunc
 	GetTableTimeslotByTimeslotID() gin.HandlerFunc
+	GetTableTimeslotByID() gin.HandlerFunc
 	// GetTableByID() gin.HandlerFunc
 }
 
@@ -48,4 +49,5 @@ type TableUsecase interface {
 
 	// TableTimeslot Usecase
 	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto.TableTimeslotDetail, error)
+	GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error)
 }
