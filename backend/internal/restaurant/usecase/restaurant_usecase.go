@@ -108,6 +108,7 @@ func (u *RestaurantUsecase) Login(request *user.LoginRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	
 	return token, nil
 
 }
@@ -189,7 +190,7 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 	// Check if restaurant exists
 	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
 	if err != nil {
-		return err
+		return fmt.Errorf("restaurant not found: %v", err)
 	}
 
 	// Update status

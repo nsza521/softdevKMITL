@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -120,7 +121,7 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error) {
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get table timeslot: %v", err)
 	}
 
 	table, err := u.tableRepository.GetTableByID(tableTimeslot.TableID)
@@ -143,4 +144,18 @@ func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDet
 	}
 
 	return detail, nil
+}
+
+func (u *TableUsecase) GetNowTableTimeslots() ([]dto.TableTimeslotDetail, error) {
+
+	now := time.Now()
+
+	timeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active timeslot: %v", err)
+	}
+	if timeslot == nil {
+		return nil, fmt.Errorf("no active timeslot found")
+	}
+	return u.GetTableTimeslotByTimeslotID(timeslot.ID)
 }
