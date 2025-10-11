@@ -130,6 +130,21 @@ func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 	}
 }
 
+func (h *RestaurantHandler) GetProfilePicture() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		restaurant, err := h.restaurantUsecase.GetProfilePicture(restaurantID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"profile_picture": restaurant.ProfilePic})
+	}
+}
+
 func (h *RestaurantHandler) ChangeStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		restaurantID, ok := getRestaurantIDAndValidateRole(c)

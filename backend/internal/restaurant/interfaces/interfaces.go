@@ -20,6 +20,7 @@ type RestaurantHandler interface {
 	Logout() gin.HandlerFunc
 	GetAll() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
+	GetProfilePicture() gin.HandlerFunc
 	ChangeStatus() gin.HandlerFunc
 
 	EditInfo() gin.HandlerFunc
@@ -49,6 +50,8 @@ type RestaurantUsecase interface {
 	Logout(token string, expiry time.Time) error
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
+	GetProfilePicture(restaurantID uuid.UUID) (*models.Restaurant, error)
+	
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
 	EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error)
 	UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error)
