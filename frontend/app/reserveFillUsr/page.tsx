@@ -18,6 +18,81 @@ type Reservation = {
     members: Member[];
 };
 
+export default function ReserveFillUsrPage() {
+    const searchParam = useSearchParams();
+    const random = searchParam.get("random") === "true" || false;
+    const table_id = searchParam.get("table_timeslot_id");
+
+    const [table, setTable] = useState<Table | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedMemberIndex, setSelectedMemberIndex] = useState<number>(3);
+    
+    const reservation: Reservation = {
+        table_timeslot_id: table_id || "",
+        reserve_people: selectedMemberIndex,
+        random: random,
+        members: [],
+    };
+
+    useEffect(() => {
+        const fetchSlots = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`http://localhost:8080/table/tabletimeslot/${table_id}`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            });
+
+            if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+
+            const json = await res.json();
+            const t = json.table_timeslot;
+
+            if (!t) throw new Error("ไม่พบข้อมูลโต๊ะ");
+
+            const data: Table = {
+                id: t.id,
+                row: t.table.table_row,
+                col: t.table.table_col,
+                max_seats: t.table.max_seats,
+                status: t.status,
+                reserved_seats: t.reserved_seats,
+            };
+
+            setTable(data);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+        };
+
+        if (table_id) fetchSlots();
+    }, [table_id]);
+
+    if (loading) return <p>กำลังโหลดข้อมูล...</p>;
+    if (error) return <p style={{ color: "red" }}>เกิดข้อผิดพลาด: {error}</p>;
+    if (!table) return <p>ไม่พบข้อมูลโต๊ะ</p>;
+
+    return (
+        <div className={styles.container}>
+            <TableInfo table={table} selectedMemberIndex={selectedMemberIndex}/>
+            <Members table={table} onSelectMember={setSelectedMemberIndex}/>
+            <div className={styles.infoDiv}>
+                <img src="/info.svg"/>
+                <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
+            </div>
+            <button className={styles.createReserveBt}>
+                เชิญเพื่อนและเริ่มสั่งอาหาร
+                <img src="/Arrow_Right_MD.svg"/>
+            </button>
+        </div>
+    );
+}
+
 type Table = {
     id: UUID;
     row: string;
@@ -27,50 +102,19 @@ type Table = {
     reserved_seats: number;
 };
 
-export default function ReserveFillUsrPage() {
-    const searchParam = useSearchParams();
-    const random = searchParam.get("random");
-    const router = useRouter();
-    const table: Table = {
-        id: "ae7bbca8-4a80-4195-9b4b-ab881426f6f1",
-        row: "A",
-        col: "1",
-        max_seats: 6,
-        status: "available",
-        reserved_seats: 5,
-    };
-
-    const token = localStorage.getItem("token");
-    
-    return (
-        <div className={styles.container}>
-            <TableInfo table={table} occupied={0}/>
-            <Members token="token"/>
-            <div>
-                <img src="/info.svg"/>
-                <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
-            </div>
-            <button>
-                เชิญเพื่อนและเริ่มสั่งอาหาร
-                <img src="/Arrow_Right_MD.svg"/>
-            </button>
-        </div>
-    );
-}
-
-function TableInfo({ table, occupied }: { table: Table; occupied: number }) {
+function TableInfo({ table, selectedMemberIndex }: { table: Table, selectedMemberIndex: number }) {
     const [allowOthers, setAllowOthers] = useState(false);
-    const all_occupied = table.reserved_seats + occupied;
-    const min_allow = table.max_seats * 0.8;
 
-    const canClick = all_occupied >= min_allow;
+    const occupied = selectedMemberIndex;
+    const min_allow = table.max_seats * 0.8;
+    const canClick = occupied >= min_allow;
     const isChecked = !canClick ? true : allowOthers;
 
     return (
         <div>
             <div className={styles.tableInfoCon}>
                 <p>โต๊ะของคุณ : {table.row}{table.col}</p>
-                <TableIcon table={table} occupied={occupied} />
+                <TableIcon table={table} occupied={occupied}/>
             </div>
             <label htmlFor="allow_others_join" className={styles.checkbox}>
                 <input
@@ -89,7 +133,6 @@ function TableInfo({ table, occupied }: { table: Table; occupied: number }) {
 }
 
 function TableIcon({ table, occupied }: { table: Table, occupied: number }) {
-    const router = useRouter();
     const available = table.status === "available";
 
     return (
@@ -99,35 +142,47 @@ function TableIcon({ table, occupied }: { table: Table, occupied: number }) {
         }`}
         >
             <img src={available ? "./table_layout_aval.svg" : "./table_layout_notaval.svg"}/>
-            <p>{table.reserved_seats + occupied}/{table.max_seats}</p>
+            <p>{occupied}/{table.max_seats}</p>
         </div>
     );
 }
-
-type MyProfile = {
-    id: UUID;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    wallet_balance: number;
-};
 
 type MemberInfo = {
     username: string;
     first_name: string;
 };
 
-function Members({ token }: { token: string }) {
-    const [myProfile, setMyProfile] = useState<MyProfile | null>(null);
-    const [members, setMembers] = useState<MemberInfo[]>([{ username: "", first_name: "" }]);
-    const [error, setError] = useState<string | null>(null);
+interface MembersProps {
+    table: Table;
+    onSelectMember: (memberNumber: number) => void;
+}
 
+function Members({ table, onSelectMember }: MembersProps) {
+    const INITIAL_MEMBERS = Array.from({ length: 2 }, () => ({
+        username: "",
+        first_name: "",
+    }));
+
+    const [members, setMembers] = useState<MemberInfo[]>(INITIAL_MEMBERS);
+    const [myProfile, setMyProfile] = useState<MemberInfo | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [token, setToken] = useState<string | null>(null);
+    
     useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const storedToken = localStorage.getItem("token");
+        setToken(storedToken);
+
+        if (!storedToken) {
+        setError("ไม่พบโทเค็น กรุณาเข้าสู่ระบบใหม่");
+        return;
+        }
+
         const fetchMyProfile = async () => {
         try {
-            const res = await fetch("http://localhost:8080/profile/me", {
-            headers: { Authorization: `Bearer ${token}` },
+            const res = await fetch("http://localhost:8080/customer/profile", {
+                headers: { Authorization: `Bearer ${storedToken}` },
             });
             if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลโปรไฟล์ได้");
             const data = await res.json();
@@ -136,8 +191,13 @@ function Members({ token }: { token: string }) {
             setError(err.message);
         }
         };
+
         fetchMyProfile();
-    }, [token]);
+    }, []); 
+
+    const handleRemoveMember = (index: number) => {
+        setMembers((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const handleChangeMember = (index: number, field: keyof MemberInfo, value: string) => {
         const updated = [...members];
@@ -149,23 +209,29 @@ function Members({ token }: { token: string }) {
         const username = members[index].username.trim();
         if (!username) return;
 
+        const isDuplicate = members.some((m, i) => i !== index && m.username === username);
+        if (isDuplicate) {
+            console.log("username ซ้ำ, ไม่ต้องทำอะไร");
+            return;
+        }
+
         try {
-            const res = await fetch("http://localhost:8080/customer/firstname", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json", 
-                    Authorization: token,   
-                },
-                body: JSON.stringify({ username }),  
-            });
+        const res = await fetch("http://localhost:8080/customer/firstname", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ username }),
+        });
 
-            if (!res.ok) throw new Error("ไม่พบผู้ใช้");
-            const data = await res.json();
+        if (!res.ok) throw new Error("ไม่พบผู้ใช้");
+        const data = await res.json();
 
-            handleChangeMember(index, "first_name", data.first_name || "");
-            } catch (err) {
-                console.error("fetch username error:", err);
-            }
+        handleChangeMember(index, "first_name", data.first_name || "");
+        } catch (err) {
+            console.error("fetch username error:", err);
+        }
     };
 
     if (error) return <p>เกิดข้อผิดพลาด: {error}</p>;
@@ -173,53 +239,86 @@ function Members({ token }: { token: string }) {
 
     return (
         <div className={styles.membersCon}>
-            <div className={styles.formTitleWrapper}>
-                <div className={styles.titleLine}></div>
-                <h1>สมาชิกที่เข้าร่วม</h1>
-                <div className={styles.titleLine}></div>
-            </div>
-            <label className={styles.sectionLabel}>คุณ :</label>
-            <div className={styles.inputCon}>
-                <input
-                type="text"
-                // value={myProfile.username}
-                disabled
-                />
-                <input
-                type="text"
-                // value={`${myProfile.first_name} ${myProfile.last_name}`}
-                disabled
-                />
+            <div>
+                <div className={styles.formTitleWrapper}>
+                    <div className={styles.titleLine}></div>
+                    <h1>สมาชิกที่เข้าร่วม</h1>
+                    <div className={styles.titleLine}></div>
+                </div>
+                <label className={styles.sectionLabel}>คุณ :</label>
+                <div className={styles.myInputCon}>
+                    <input
+                    className={styles.disabInput}
+                    type="text"
+                    value={`@ ${myProfile.username}`}
+                    disabled
+                    />
+                    <input
+                    className={styles.disabInput}
+                    type="text"
+                    value={`ชื่อ : ${myProfile.first_name}`}
+                    disabled
+                    />
+                </div>
             </div>
 
             {members.map((m, i) => (
                 <div key={i} className={styles.formSection}>
-                    <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
+                    <div className={styles.labelRow}>
+                        <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
+                        {i >= 2 && (
+                            <button
+                            className={styles.removeUserBt}
+                            onClick={() => {
+                                handleRemoveMember(i);
+                                onSelectMember(members.length);
+                            }}
+                            type="button"
+                            >
+                            ลบ
+                            </button>
+                        )}
+                    </div>
                     <div className={styles.inputCon}>
                         <input
+                        className={styles.usnInput}
                         type="text"
-                        placeholder="@username"
-                        value={m.username}
-                        // onChange={(e) => handleChangeMember(i, "username", e.target.value)}
-                        // onBlur={() => handleUsernameBlur(i)}
+                        placeholder="@ username"
+                        value={m.username ? `@ ${m.username}` : ""}
+                        onChange={(e) => {
+                            const cleanValue = e.target.value.replace(/^@ ?/, "");
+                            handleChangeMember(i, "username", cleanValue);
+                        }}
+                        onBlur={() => handleUsernameBlur(i)}
                         />
                         <input
+                        className={styles.disabInput}
                         type="text"
                         placeholder="ชื่อจะถูกกรอกอัตโนมัติ"
-                        value={m.first_name}
-                        // onChange={(e) => handleChangeMember(i, "first_name", e.target.value)}
+                        value={`ชื่อ : ${m.first_name}`}
+                        onChange={(e) => {
+                            const cleanValue = e.target.value.replace(/^ชื่อ : ?/, "");
+                            handleChangeMember(i, "first_name", cleanValue);
+                        }}
+                        disabled
                         />
                     </div>
-                </div>
+                </div>    
             ))}
 
-            <button
-            className={styles.addUserBt}
-            onClick={() => setMembers([...members, { username: "", first_name: "" }])}
-            >
-                <img src="/add_user.svg"/>
-                เพิ่มสมาชิก
-            </button>
+            {members.length < table.max_seats - 1 && (
+                <button
+                className={styles.addUserBt}
+                onClick={() => {
+                    setMembers([...members, { username: "", first_name: "" }]);
+                    onSelectMember(members.length + 2);
+                    console.log(myProfile);
+                }}
+                >
+                    <img src="/add_user.svg" />
+                    เพิ่มสมาชิก
+                </button>
+            )}
         </div>
     );
 }
