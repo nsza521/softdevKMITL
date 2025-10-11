@@ -41,8 +41,8 @@ export default function ReserveSelectTablePage() {
                 const data: TableTimeSlot[] = Array.isArray(json.table_timeslots)
                 ? json.table_timeslots.map((t: any) => ({
                     id: t.id,
-                    row: t.table.row,
-                    col: t.table.col,
+                    row: t.table.table_row,
+                    col: t.table.table_col,
                     max_seats: t.table.max_seats,
                     status: t.status,
                     reserved_seats: t.reserved_seats,
@@ -99,7 +99,7 @@ function TableLayout({ tables }: { tables: TableTimeSlot[] }) {
                     {cols.map((c) => {
                         const table = tables.find((t) => t.row === r && t.col === c);
                         return table ? (
-                        <TableIcon key={`${r}${c}`} table={table} />
+                        <TableIcon key={table.id} table={table} />
                         ) : (
                         <span key={`${r}${c}`}></span>
                         );
@@ -114,6 +114,7 @@ function TableLayout({ tables }: { tables: TableTimeSlot[] }) {
         </div>
     );
 }
+
 
 function TableIcon({ table }: { table: TableTimeSlot }) {
     const router = useRouter();
