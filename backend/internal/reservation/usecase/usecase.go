@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"fmt"
+	"time"
+	"math"
 	
 	"github.com/google/uuid"
 	"backend/internal/db_model"
@@ -37,27 +39,12 @@ func (u *TableReservationUsecase) getTableTimeslotStatus(reservedSeats int, maxS
 	return "available"
 }
 
-func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTableReservationRequest) (*dto.ReservationDetail, error) {
-	// เช็คว่า table ยังจองได้ไหม
-	// เช็คว่า สมาชิกเกินจำนวนคนในโต๊ะไหม
-	// ถ้าไม่เกินก็จองได้ ถ้าไม่ถึง 80% ของ maxSeats บังคับ random
-	// ถ้าเกิน 80% ของ maxSeats ไม่ต้องบังคับ random
-	// เช็คว่า customer มีสิทธิ์จองไหม
-	// เช็คว่า customer มีการจองใน timeslot นี้อยู่แล้วไหม
-	// เช็คว่า timeslot หมดอายุไหม
-	// เช็คว่า tableTimeslot หมดอายุไหม
-	// เช็คว่า tableTimeslot ยังว่างไหม
-	// เช็คว่า reservePeople มากกว่า 0 ไหม
-	// เช็คว่า reservePeople ไม่เกิน maxSeats ไหม
-	// เช็คว่า reservePeople ไม่เกินจำนวนที่เหลือในโต๊ะไหม
-	// ถ้า random = false ต้องเช็คว่า โต๊ะนี้ว่างไหม
-	// ถ้า random = true ต้องเช็คว่า มีโต๊ะว่างไหม
-	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว ??
-
+func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
+	// Implement logic for creating a non-random table reservation
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(request.TableTimeslotID)
-	if err != nil {	
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
 	status := tableTimeslot.Status
 	if status == "full" || status == "expired" {
@@ -99,21 +86,6 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 		random = true
 	}
 
-	// if request.Random == false {
-	// 	if tableTimeslot.Status != "available" {
-	// 		return fmt.Errorf("Table is not available for non-random reservation")
-	// 	}
-	// } else {
-	// 	available, err := u.tableRepository.IsTimeslotAvailable(request.TableTimeslotID)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if !available {
-	// 		return fmt.Errorf("No tables available for random reservation")
-	// 	}
-	// }
-
-
 	reservation := &models.TableReservation{
 		TableTimeslotID: request.TableTimeslotID,
 		// CustomerID:      request.CustomerID,
@@ -130,11 +102,6 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 	if tableTimeslot.ReservedSeats > table.MaxSeats {
 		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
 	}
-	
-	// อัพเดตสถานะโต๊ะ
-	// ถ้าโต๊ะเต็ม 80% ขึ้นไป = full
-	// ถ้าโต๊ะไม่เต็ม 80% แต่มีคนจอง = partial
-	// ถ้าโต๊ะไม่มีคนจอง = available
 
 	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats)
 
@@ -143,7 +110,7 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 		return nil, err
 	}
 
-	// เพิ่มสมาชิก
+	// Add members
 	for _, member := range request.Members {
 		err := u.CreateTableReservationMember(createdReservation.ID, member.Username)
 		if err != nil {
@@ -157,17 +124,126 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 	}
 
 	return &dto.ReservationDetail{
+		CreateAt: 		 	 createdReservation.CreatedAt.Format("02-01-2006 15:04"),
 		ReservationID:       createdReservation.ID,
 		TableTimeslotID:     createdReservation.TableTimeslotID,
 		ReservePeople:       createdReservation.ReservePeople,
 		// Random:           	 createdReservation.Random,
 		Status:          	 createdReservation.Status,
 		Members:         	 request.Members,
-		TableRow:	   		 table.Row,
-		TableCol:	   		 table.Col,
+		TableRow:	   		 table.TableRow,
+		TableCol:	   		 table.TableCol,
 		StartTime:   		 timeslot.StartTime.Format("15:04"),
 		EndTime:     		 timeslot.EndTime.Format("15:04"),
 	}, nil
+}
+
+func (u *TableReservationUsecase) createRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
+	if request.Random == false {
+		return nil, fmt.Errorf("Random must be true for random table reservation")
+	}
+
+	if len(request.Members) != 1 {
+		return nil, fmt.Errorf("Random reservation allows only 1 member")
+	}
+
+	// 1. หา timeslot ที่ตรงกับเวลาปัจจุบัน
+	now := time.Now()
+	currentTimeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	if err != nil {
+		return nil, err
+	}
+	if currentTimeslot == nil {
+		return nil, fmt.Errorf("No available timeslot right now")
+	}
+
+	// 2. หา tabletimeslot ที่ยังว่าง
+
+	availableTableTimeslot, err := u.tableRepository.GetAvailableTableTimeslot(currentTimeslot.ID)
+	if err != nil {
+		return nil, err
+	}
+	if availableTableTimeslot == nil {
+		return nil, fmt.Errorf("No available tables in this timeslot")
+	}
+
+	// 4. สร้าง reservation
+	reservation := &models.TableReservation{
+		TableTimeslotID: availableTableTimeslot.ID,
+		ReservePeople:   1,
+		Random:          true,
+		Status:          "pending",
+	}
+	createdReservation, err := u.tableReservationRepository.CreateTableReservation(reservation)
+	if err != nil {
+		return nil, err
+	}
+
+	// update reserved seats
+	table, err := u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
+	if err != nil {
+		return nil, err
+	}
+	minLeft := int(math.Ceil(0.8*float64(table.MaxSeats))) - availableTableTimeslot.ReservedSeats
+	if minLeft < 0 {
+		minLeft = 0
+	}
+	if minLeft+availableTableTimeslot.ReservedSeats > table.MaxSeats {
+		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
+	}
+	availableTableTimeslot.ReservedSeats += 1
+	availableTableTimeslot.Status = u.getTableTimeslotStatus(availableTableTimeslot.ReservedSeats, minLeft+availableTableTimeslot.ReservedSeats)
+	if err := u.tableRepository.UpdateTableTimeslot(availableTableTimeslot); err != nil {
+		return nil, err
+	}
+
+	// add member
+	if err := u.CreateTableReservationMember(createdReservation.ID, request.Members[0].Username); err != nil {
+		return nil, err
+	}
+
+	table, err = u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.ReservationDetail{
+		CreateAt:       createdReservation.CreatedAt.Format("02-01-2006 15:04"),
+		ReservationID:  createdReservation.ID,
+		TableTimeslotID: createdReservation.TableTimeslotID,
+		ReservePeople:  createdReservation.ReservePeople,
+		Status:         createdReservation.Status,
+		Members:        request.Members,
+		TableRow:       table.TableRow,
+		TableCol:       table.TableCol,
+		StartTime:      currentTimeslot.StartTime.Format("15:04"),
+		EndTime:        currentTimeslot.EndTime.Format("15:04"),
+	}, nil
+}
+
+
+func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
+	// เช็คว่า table ยังจองได้ไหม
+	// เช็คว่า สมาชิกเกินจำนวนคนในโต๊ะไหม
+	// ถ้าไม่เกินก็จองได้ ถ้าไม่ถึง 80% ของ maxSeats บังคับ random
+	// ถ้าเกิน 80% ของ maxSeats ไม่ต้องบังคับ random
+	// เช็คว่า customer มีสิทธิ์จองไหม
+	// เช็คว่า customer มีการจองใน timeslot นี้อยู่แล้วไหม
+	// เช็คว่า timeslot หมดอายุไหม
+	// เช็คว่า tableTimeslot หมดอายุไหม
+	// เช็คว่า tableTimeslot ยังว่างไหม
+	// เช็คว่า reservePeople มากกว่า 0 ไหม
+	// เช็คว่า reservePeople ไม่เกิน maxSeats ไหม
+	// เช็คว่า reservePeople ไม่เกินจำนวนที่เหลือในโต๊ะไหม
+	// ถ้า random = false ต้องเช็คว่า โต๊ะนี้ว่างไหม
+	// ถ้า random = true ต้องเช็คว่า มีโต๊ะว่างไหม
+	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว ??
+
+	if request.TableTimeslotID != uuid.Nil {
+		return u.createNotRandomTableReservation(request, customerID)
+	} else {
+		return u.createRandomTableReservation(request, customerID)
+	}
 }
 
 func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error) {
@@ -209,14 +285,15 @@ func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.U
 	}
 
 	return &dto.ReservationDetail{
+		CreateAt: 		 	 reservation.CreatedAt.Format("02-01-2006 15:04"),
 		ReservationID:       reservation.ID,
 		TableTimeslotID:     reservation.TableTimeslotID,
 		ReservePeople:       reservation.ReservePeople,
 		// Random:           	 reservation.Random,
 		Status:          	 reservation.Status,
 		Members:         	 membersDTO,
-		TableRow:	   		 table.Row,
-		TableCol:	   		 table.Col,
+		TableRow:	   		 table.TableRow,
+		TableCol:	   		 table.TableCol,
 		StartTime:   		 timeslot.StartTime.Format("15:04"),
 		EndTime:     		 timeslot.EndTime.Format("15:04"),
 	}, nil

@@ -22,4 +22,3 @@ type ReservationMemberDetail struct {
 	ReservationID uuid.UUID `json:"reservation_id"`
 	Members      []Username `json:"members"`
 }
-

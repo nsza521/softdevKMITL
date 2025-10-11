@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -28,12 +29,13 @@ type TableRepository interface {
 	CreateTimeslot(timeslot *models.Timeslot) error
 	GetAllTimeslots() ([]models.Timeslot, error)
 	GetTimeslotByID(id uuid.UUID) (*models.Timeslot, error)
-	IsTimeslotAvailable(id uuid.UUID) (bool, error)
+	GetActiveTimeslot(now time.Time) (*models.Timeslot, error)
 
 	// TableTimeslot Repository
 	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 	GetTableTimeslotByID(id uuid.UUID) (*models.TableTimeslot, error)
 	UpdateTableTimeslot(tableTimeslot *models.TableTimeslot) error
+	GetAvailableTableTimeslot(timeslotID uuid.UUID) (*models.TableTimeslot, error)
 }
 
 type TableUsecase interface {

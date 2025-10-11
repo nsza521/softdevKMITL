@@ -164,3 +164,23 @@ func (u *CustomerUsecase) GetFullnameByUsername(customerID uuid.UUID, request *d
 	return fullName, nil
 }
 
+func (u *CustomerUsecase) GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil {
+		return nil, fmt.Errorf("customer not found")
+	}
+
+	customer, err = u.customerRepository.GetByUsername(request.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	firstName := &dto.GetFirstnameResponse{
+		FirstName: customer.FirstName,
+	}
+
+	return firstName, nil
+}

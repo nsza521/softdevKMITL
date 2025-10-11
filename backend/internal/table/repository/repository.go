@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"time"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -73,20 +74,14 @@ func (r *TableRepository) UpdateTimeslot(timeslot *models.Timeslot) error {
 	return nil
 }
 
-func (r *TableRepository) IsTimeslotAvailable(id uuid.UUID) (bool, error) {
-	
-	tableTimeslots, err := r.GetTableTimeslotByTimeslotID(id)
-	if err != nil {
-		return false, err
+func (r *TableRepository) GetActiveTimeslot(now time.Time) (*models.Timeslot, error) {
+	var t models.Timeslot
+	if err := r.db.Where("start_time <= ? AND end_time > ?", now, now).First(&t).Error; err != nil {
+		return nil, err
 	}
-
-	for _, t := range tableTimeslots {
-		if t.Status == "available" || t.Status == "partial" {
-			return true, nil
-		}
-	}
-	return false, nil
+	return &t, nil
 }
+
 
 // TableTimeslot Repository
 func (r *TableRepository) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error) {
@@ -110,4 +105,12 @@ func (r *TableRepository) UpdateTableTimeslot(tableTimeslot *models.TableTimeslo
 		return err
 	}
 	return nil
+}
+
+func (r *TableRepository) GetAvailableTableTimeslot(timeslotID uuid.UUID) (*models.TableTimeslot, error) {
+	var tableTimeslot *models.TableTimeslot
+	if err := r.db.Where("timeslot_id = ? AND (status = 'available' OR status = 'partial')", timeslotID).Order("created_at ASC").First(&tableTimeslot).Error; err != nil {
+		return nil, err
+	}
+	return tableTimeslot, nil
 }

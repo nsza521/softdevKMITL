@@ -6,7 +6,7 @@ import (
 
 type TableDetail struct {
 	// ID        uuid.UUID `json:"table_id"`
-	Row       string    `json:"row"`
-	Col       string    `json:"col"`
+	TableRow       string    `json:"table_row"`
+	TableCol       string    `json:"table_col"`
 	MaxSeats  int       `json:"max_seats"`
 }
