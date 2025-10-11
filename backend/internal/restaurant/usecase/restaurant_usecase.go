@@ -178,6 +178,14 @@ func (u *RestaurantUsecase) UploadProfilePicture(restaurantID uuid.UUID, file *m
 	return url, nil
 }
 
+func (u *RestaurantUsecase) GetProfilePicture(restaurantID uuid.UUID) (*models.Restaurant, error) {
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	return restaurant, nil
+}
+
 func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error {
 	// Check if restaurant exists
 	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
