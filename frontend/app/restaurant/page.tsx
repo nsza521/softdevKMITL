@@ -16,7 +16,7 @@ export default function RestaurantPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-
+    console.log(token);
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       if (payload.role === "restaurant") {

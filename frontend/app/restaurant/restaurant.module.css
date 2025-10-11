@@ -130,8 +130,8 @@
 }
 
 .category{
-    margin-top: 8px;
-    height: 48px;
+  margin-top: 2%;
+      height: 48px;
     display: flex;
 }
 .all{
@@ -208,7 +208,27 @@
     display: flex;
     padding-left: 2%;
     gap:3%;
-    row-gap: 0%;
+    row-gap: 30px;
+      scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #888 #f1f1f1; /* Firefox: thumb สี #888, track สี #f1f1f1 */
+}
+.s_content_detail::-webkit-scrollbar {
+  width: 8px;
+}
+
+.s_content_detail::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.s_content_detail::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
+.s_content_detail::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
 .menu{
     width: 225px;
@@ -483,8 +503,31 @@
   display: flex;
   flex-wrap: wrap;
   gap: 3%;
+  row-gap: 30px;
   padding-left: 2%;
   overflow-y: scroll;
+
+  scrollbar-width: thin; 
+  scrollbar-color: #888 #f1f1f1; 
+}
+
+.menuList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menuList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.menuList::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
+.menuList::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
 .s2_content_detail{
     margin-top: 2%;
@@ -494,6 +537,7 @@
     flex-wrap: wrap;
     display: flex;
     justify-content: center;
+    overflow-y: scroll;
 }
 .addform{
   display: flex;
