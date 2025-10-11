@@ -24,6 +24,6 @@ func MapTableRoutes(tableGroup *gin.RouterGroup, tableHandler interfaces.TableHa
 	tableGroup.GET("/timeslot/:timeslot_id", tableHandler.GetTableTimeslotByTimeslotID())
 
 	// TableTimeslot routes
-	tableGroup.GET("/tabletimeslot/now", tableHandler.GetNowTableTimeslots())
-	tableGroup.GET("/tabletimeslot/:table_timeslot_id", tableHandler.GetTableTimeslotByID())
+	tableGroup.GET("/table_timeslot/now", tableHandler.GetNowTableTimeslots())
+	tableGroup.GET("/table_timeslot/:table_timeslot_id", tableHandler.GetTableTimeslotByID())
 }

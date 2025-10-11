@@ -16,8 +16,8 @@ func seedTableTimeslots(db *gorm.DB) error {
 		for row := 1; row <= 6; row++ {
 			table := models.Table{
 				MaxSeats: 6,
-				TableRow:      fmt.Sprintf("%c", 'A'+(row-1)),
-				TableCol:      fmt.Sprintf("%d", col),
+				TableRow: fmt.Sprintf("%c", 'A'+(row-1)),
+				TableCol: fmt.Sprintf("%d", col),
 			}
 			if err := db.Where("table_row = ? AND table_col = ?", table.TableRow, table.TableCol).
 				FirstOrCreate(&table).Error; err != nil {

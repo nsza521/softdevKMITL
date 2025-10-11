@@ -71,7 +71,7 @@ func (u *TableUsecase) GetAllTimeslots() ([]dto.TimeslotDetail, error) {
 }
 
 // TableTimeslot Usecase
-func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto.TableTimeslotDetail, error) {
+func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) (*dto.TableTimeslotResponse, error) {
 
 	tableTimeslots, err := u.tableRepository.GetTableTimeslotByTimeslotID(timeslotID)
 	if err != nil {
@@ -86,28 +86,18 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 		if err != nil {
 			return nil, fmt.Errorf("failed to get table at index %d: %v", i, err)
 		}
-		tableDetail := dto.TableDetail{
-			// ID:  table.ID,
-			TableRow: table.TableRow,
-			TableCol: table.TableCol,
-			MaxSeats: table.MaxSeats,
-		}
-
-		// timeslot, err := u.tableRepository.GetTimeslotByID(t.TimeslotID)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to get timeslot at index %d: %v", i, err)
-		// }
-		// timeslotDetail := dto.TimeslotDetail{
-		// 	ID:        timeslot.ID,
-		// 	StartTime: timeslot.StartTime.Format("15:04"),
-		// 	EndTime:   timeslot.EndTime.Format("15:04"),
+		// tableDetail := dto.TableDetail{
+		// 	// ID:  table.ID,
+		// 	TableRow: table.TableRow,
+		// 	TableCol: table.TableCol,
+		// 	MaxSeats: table.MaxSeats,
 		// }
 
 		detail := dto.TableTimeslotDetail{
 			ID:             t.ID,
-			Table:      	tableDetail,
-			// TimeslotID:   	t.TimeslotID,
-			// Timeslot:   	timeslotDetail,
+			TableRow: 		table.TableRow,
+			TableCol: 		table.TableCol,
+			MaxSeats: 		table.MaxSeats,
 			Status:       	t.Status,
 			ReservedSeats:  t.ReservedSeats,
 			// MaxSeats:    	table.MaxSeats,
@@ -115,7 +105,16 @@ func (u *TableUsecase) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto
 		details = append(details, detail)
 	}
 
-	return details, nil
+	timeslot, err := u.tableRepository.GetTimeslotByID(timeslotID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get timeslot: %v", err)
+	}
+
+	return &dto.TableTimeslotResponse{
+		StartTime:   timeslot.StartTime.Format("15:04"),
+		EndTime:     timeslot.EndTime.Format("15:04"),
+		TableTimeslots: details,
+	}, nil
 }
 
 func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error) {
@@ -128,25 +127,20 @@ func (u *TableUsecase) GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDet
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table: %v", err)
 	}
-	tableDetail := dto.TableDetail{
-		// ID:  table.ID,
-		TableRow: table.TableRow,
-		TableCol: table.TableCol,
-		MaxSeats: table.MaxSeats,
-	}
 
 	detail := &dto.TableTimeslotDetail{
 		ID:             tableTimeslot.ID,
-		Table:      	tableDetail,
 		Status:       	tableTimeslot.Status,
 		ReservedSeats:  tableTimeslot.ReservedSeats,
-		// MaxSeats:    	table.MaxSeats,
+		TableRow: 		table.TableRow,
+		TableCol: 		table.TableCol,
+		MaxSeats: 		table.MaxSeats,
 	}
 
 	return detail, nil
 }
 
-func (u *TableUsecase) GetNowTableTimeslots() ([]dto.TableTimeslotDetail, error) {
+func (u *TableUsecase) GetNowTableTimeslots() (*dto.TableTimeslotResponse, error) {
 
 	now := time.Now()
 
@@ -157,5 +151,11 @@ func (u *TableUsecase) GetNowTableTimeslots() ([]dto.TableTimeslotDetail, error)
 	if timeslot == nil {
 		return nil, fmt.Errorf("no active timeslot found")
 	}
-	return u.GetTableTimeslotByTimeslotID(timeslot.ID)
+
+	response, err := u.GetTableTimeslotByTimeslotID(timeslot.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table timeslots for active timeslot: %v", err)
+	}
+
+	return response, nil
 }

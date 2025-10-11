@@ -50,7 +50,7 @@ type TableUsecase interface {
 	// IsTimeslotAvailable(id uuid.UUID) (bool, error)
 
 	// TableTimeslot Usecase
-	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]dto.TableTimeslotDetail, error)
+	GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) (*dto.TableTimeslotResponse, error)
 	GetTableTimeslotByID(id uuid.UUID) (*dto.TableTimeslotDetail, error)
-	GetNowTableTimeslots() ([]dto.TableTimeslotDetail, error)
+	GetNowTableTimeslots() (*dto.TableTimeslotResponse, error)
 }
