@@ -126,6 +126,7 @@ export default function RestaurantPage() {
    เนื้อหาของแต่ละหน้า
 -------------------------- */
 interface MenuItem {
+  time_taken:number;
   id: string;
   name: string;
   price: number;
@@ -417,7 +418,6 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
   
   const token = localStorage.getItem("token");
@@ -426,6 +426,15 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
   const [editingRestaurant, setEditingRestaurant] = useState(false);
 
   const [restaurantPic, setRestaurantPic] = useState<string>("");
+
+  //Popup edit 
+  const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState<number | "">("");
+  const [editTimeTaken, setEditTimeTaken] = useState<number | "">("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editSelectedTypes, setEditSelectedTypes] = useState<string[]>([]);
+  const [editMenuPic, setEditMenuPic] = useState<File | null>(null);
   useEffect(() => {
     if (!restaurantID) return;
 
@@ -566,33 +575,7 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
     alert("❌ ลบประเภทไม่สำเร็จ");
   }
   };
-  const handleEditMenuPic = async (menuItemId: string) => {
-    if (!editFile) return alert("กรุณาเลือกไฟล์ก่อน");
-    try {
-      const formData = new FormData();
-      formData.append("menu_item_picture", editFile);
 
-      const res = await fetch(
-        `http://localhost:8080/restaurant/menu/items/${menuItemId}/upload_pic`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
-      );
-      if (!res.ok) throw new Error(await res.text());
-
-      alert("อัปโหลดรูปเรียบร้อย!");
-      setEditFile(null);
-      setEditingItemId(null);
-
-      // refresh list
-      const newRes = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/items`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await newRes.json();
-      setMenuList(json.items || []);
-    } catch (err) {
-      console.error(err);
-      alert("❌ อัปโหลดไม่สำเร็จ");
-    }
-  };
   const filteredItems = menuList.filter(item => {
     if (selectedType === "All") return true;
     return item.types?.some(t => t.type === selectedType);
@@ -622,6 +605,71 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
     console.error(err);
   }
   };
+  const openEditPopup = (item: MenuItem) => {
+    setEditingMenu(item);
+    setEditName(item.name);
+    setEditPrice(item.price);
+    setEditTimeTaken(item.time_taken || "");
+    setEditDescription(item.description);
+    setEditSelectedTypes(item.types?.map(t => t.id) || []);
+    setEditMenuPic(null);
+  };
+  const handleEditMenuSubmit = async () => {
+  if (!editingMenu) return;
+
+  try {
+    const body = {
+      name: editName,
+      price: editPrice,
+      description: editDescription,
+      time_taken: editTimeTaken,
+      menu_type_ids: editSelectedTypes,
+    };
+
+    // PATCH menu item
+    const res = await fetch(
+      `http://localhost:8080/restaurant/menu/items/${editingMenu.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+
+    // upload picture ถ้ามี
+    if (editMenuPic) {
+      const formData = new FormData();
+      formData.append("menu_item_picture", editMenuPic);
+      const picRes = await fetch(
+        `http://localhost:8080/restaurant/menu/items/${editingMenu.id}/upload_pic`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      if (!picRes.ok) throw new Error(await picRes.text());
+    }
+
+    alert("แก้ไขเมนูเรียบร้อย!");
+    setEditingMenu(null);
+
+    // refresh list
+    const newRes = await fetch(
+      `http://localhost:8080/restaurant/menu/${restaurantID}/items`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const json = await newRes.json();
+    setMenuList(json.items || []);
+  } catch (err) {
+    console.error(err);
+    alert("❌ แก้ไขเมนูไม่สำเร็จ");
+  }
+};
   return (
     <section className={styles.shopcontent2}>
       {/* header เหมือน order */}
@@ -744,7 +792,7 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
               <div key={item.id} className={styles.menu}>
                 <div className={styles.menuimg}>
                   {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-                  <button className={styles.editBtn} onClick={() => setEditingItemId(item.id)}>
+                  <button className={styles.editBtn} onClick={() => openEditPopup(item)}>
                     <span className="material-symbols-outlined">edit</span>
                   </button>
                 </div>
@@ -753,12 +801,39 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
                   <p>{item.name}</p>
                   <p className={styles.description}>{item.description}</p>
                 </div>
+                {editingMenu && (
+                  <div className={styles.popupOverlay}>
+                    <div className={styles.popupForm}>
+                      <h3>แก้ไขเมนู</h3>
+                      <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="ชื่อเมนู" />
+                      <input type="number" value={editPrice} onChange={e => setEditPrice(Number(e.target.value))} placeholder="ราคา" />
+                      <input type="number" value={editTimeTaken} onChange={e => setEditTimeTaken(Number(e.target.value))} placeholder="เวลา (นาที)" />
+                      <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="รายละเอียด" />
 
-                {editingItemId === item.id && (
-                  <div className={styles.editSection}>
-                    <input type="file" onChange={e => e.target.files && setEditFile(e.target.files[0])} />
-                    <button onClick={() => handleEditMenuPic(item.id)}>อัปโหลด</button>
-                    <button onClick={() => setEditingItemId(null)}>ยกเลิก</button>
+                      <div>
+                        {types.map(t => (
+                          <label key={t.id} style={{ marginRight: "10px" }}>
+                            <input
+                              type="checkbox"
+                              value={t.id}
+                              checked={editSelectedTypes.includes(t.id)}
+                              onChange={e => {
+                                const id = e.target.value;
+                                setEditSelectedTypes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+                              }}
+                            />
+                            {t.type}
+                          </label>
+                        ))}
+                      </div>
+
+                      <input type="file" onChange={e => e.target.files && setEditMenuPic(e.target.files[0])} />
+
+                      <div className={styles.popupActions}>
+                        <button onClick={handleEditMenuSubmit}>บันทึก</button>
+                        <button onClick={() => setEditingMenu(null)}>ยกเลิก</button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

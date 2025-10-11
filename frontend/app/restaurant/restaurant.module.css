@@ -722,3 +722,104 @@
 .switch input:checked + .slider:before {
   transform: translateX(18px);
 }
+/* Overlay มืดเล็ก ๆ แบบธีม */
+.popupOverlay {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0, 0, 0, 0.1); /* เพิ่มความเข้มให้เด่น */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  animation: fadeIn 0.03s ease-in-out;
+}
+
+/* Popup Form หลัก */
+.popupForm {
+  background: #E7D5B3; /* ธีมสีหลักของมึง */
+  padding: 30px 25px;
+  border-radius: 20px; /* มุมโค้งสวย */
+  width: 420px;
+  max-width: 90%;
+  box-shadow: 5px 3px 3px rgba(49, 49, 49, 0.1);
+  animation: slideDown 0.03s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  position: relative;
+}
+
+/* Header / Title ของ Popup */
+.popupForm h3  {
+  margin: 0;
+  font-size: 22px;
+  color: #D77948; /* ใช้สีเข้มของธีม */
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Input / Textarea */
+.popupForm input,
+.popupForm textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background-color: #fff5e6;
+  transition: all 0.03s ease;
+}
+
+.popupForm input:focus,
+.popupForm textarea:focus {
+  box-shadow: 0 0 5px #D77948;
+}
+
+/* ปุ่ม Actions */
+.popupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.popupActions button {
+  padding: 8px 18px;
+  border-radius: 15px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.03s ease;
+}
+
+.popupActions .cancelBtn {
+  background-color: #888;
+  color: white;
+}
+
+.popupActions .cancelBtn:hover {
+  background-color: #555;
+}
+
+.popupActions .confirmBtn {
+  background-color: #D77948;
+  color: white;
+}
+
+.popupActions .confirmBtn:hover {
+  background-color: #E4CE8E;
+  color: #000;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
