@@ -600,3 +600,81 @@
 .addtypeBTN:hover {
   opacity: 0.7;
 }
+/* จุดสถานะ */
+.statusdot {
+  position: relative;
+  bottom: -30px;        /* ระยะจากขอบล่าง */
+  right: 15px;         /* ระยะจากขอบขวา */
+  width: 16px;        /* ขนาดจุด */
+  height: 16px;
+  background-color: #22c55e; /* สีเขียว */
+  border: 2px solid white;   /* ขอบแยกจากรูป */
+  border-radius: 50%;        /* ทำให้เป็นวงกลม */
+}
+.statusdotoff {
+  position: relative;
+  bottom: -30px;        /* ระยะจากขอบล่าง */
+  right: 15px;         /* ระยะจากขอบขวา */
+  width: 16px;        /* ขนาดจุด */
+  height: 16px;
+  background-color:gray; /* สีเขียว */
+  border: 2px solid white;   /* ขอบแยกจากรูป */
+  border-radius: 50%;        /* ทำให้เป็นวงกลม */
+}
+.online{
+  color:#22c55e;
+  font-size: 16px;
+}
+.offline {
+  color: gray; /* สีออฟไลน์ */
+  font-size: 16px;
+}
+.restaurantname img {
+  border-radius: 50%;      /* วงกลม */
+  width: 90px;             /* กำหนดขนาด */
+  height: 90px;
+  object-fit: cover;       /* ครอบรูปเต็มวงกลมโดยไม่บิด */
+  margin-left: 5%;
+}
+.switch {
+  margin-left: 5%;
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background-color: #22c55e;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(18px);
+}
