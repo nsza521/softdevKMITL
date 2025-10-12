@@ -70,157 +70,173 @@ func NewOrderUsecase(repo repository.OrderRepository, menu MenuReadService) Orde
 }
 
 func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error) {
-	if len(req.Items) == 0 {
-		return dto.CreateFoodOrderResp{}, errors.New("no items")
-	}
+    if len(req.Items) == 0 {
+        return dto.CreateFoodOrderResp{}, errors.New("no items")
+    }
 
-	// 1) โหลด reservation เฉพาะกรณีมี reservation_id ใน body
-	var rsv *repository.Reservation
-	if req.ReservationID != nil {
-		rr, err := u.repo.LoadReservationForCustomer(ctx, *req.ReservationID, currentCustomer)
-		if err != nil {
-			return dto.CreateFoodOrderResp{}, err
-		}
-		rsv = rr
-		fmt.Printf("Loaded reservation22: %+v\n", rsv)
-	}
+    // 1) โหลด reservation ถ้ามี
+    var rsv *repository.Reservation
+    if req.ReservationID != nil {
+        rr, err := u.repo.LoadReservationForCustomer(ctx, *req.ReservationID, currentCustomer)
+        if err != nil {
+            return dto.CreateFoodOrderResp{}, err
+        }
+        rsv = rr
+    }
 
-	order := &models.FoodOrder{
-		ID: uuid.New(),
-		// ReservationID: จะถูกเซ็ตใน repo ถ้ามี rsv (หรือจะเซ็ตเองที่นี่ก็ได้)
-		ReservationID: rsv.ID,
-		// CustomerID: currentCustomer,
-		Status:     "pending",
-		OrderDate:  u.nowFn(),
-		Note:       req.Note,
-	}
+    // 2) เตรียม pointer สำหรับ ReservationID
+    var reservationIDPtr uuid.UUID
+    if rsv != nil {
+        reservationIDPtr = rsv.ReservationID
+    }
 
-	var orderItems []models.FoodOrderItem
-	var orderOpts []models.FoodOrderItemOption
-	var total float64
+    // 3) เตรียม pointer สำหรับ CustomerID (walk-in => nil)
+    var customerPtr uuid.UUID
+    if currentCustomer != uuid.Nil {
+        customerPtr = currentCustomer
+    }
 
-	// ป้องกัน cross-tenant: รวม restaurant ของทุกรายการ
-	var restID *uuid.UUID
+    // 4) Channel
+    channel := "walk_in"
+    if reservationIDPtr != uuid.Nil {
+        channel = "reservation"
+    }
 
-	for _, it := range req.Items {
-		if it.Quantity <= 0 {
-			return dto.CreateFoodOrderResp{}, errors.New("quantity must be >= 1")
-		}
-		// 2) โหลด menu detail (already merged type∪item)
-		detail, err := u.menu.GetMenuDetail(ctx, it.MenuItemID)
-		if err != nil {
-			return dto.CreateFoodOrderResp{}, err
-		}
+    order := &models.FoodOrder{
+        ID:             uuid.New(),
+        ReservationID:  reservationIDPtr, // ← nil ได้
+        CustomerID:     customerPtr,      // ← nil ได้ (ถ้าเก็บระดับ order)
+        Status:         "pending",
+        OrderDate:      u.nowFn(),
+        Note:           req.Note,
+        Channel:        channel,
+        // CreatedByUserID: <--- ใส่ actor จาก JWT ฝั่ง handler ก่อนเรียก usecase (ควรมี)
+    }
 
-		// (Guard) ทุก item ต้องเป็นร้านเดียวกัน
-		if restID == nil {
-			rid := detail.RestaurantID
-			restID = &rid
-		} else if *restID != detail.RestaurantID {
-			return dto.CreateFoodOrderResp{}, errors.New("items belong to multiple restaurants")
-		}
+    var orderItems []models.FoodOrderItem
+    var orderOpts  []models.FoodOrderItemOption
+    var total      float64
 
-		// 3) ทำ map group/option
-		type groupCtx struct {
-			group AddOnGroup
-			opts  map[uuid.UUID]AddOption
-			picks int // จำนวน selections ใน group (นับเป็นรายการ ไม่ใช่ qty)
-		}
-		groups := map[uuid.UUID]*groupCtx{}
-		for _, g := range detail.AddOns {
-			m := map[uuid.UUID]AddOption{}
-			for _, op := range g.Options {
-				m[op.ID] = op
-			}
-			cp := g
-			groups[g.ID] = &groupCtx{group: cp, opts: m}
-		}
+    var restID *uuid.UUID
 
-		// 4) validate selections + คำนวณ addon subtotal
-		addonSubtotal := 0.0
-		var itemOpts []models.FoodOrderItemOption
+    for _, it := range req.Items {
+        if it.Quantity <= 0 {
+            return dto.CreateFoodOrderResp{}, errors.New("quantity must be >= 1")
+        }
 
-		for _, sel := range it.Selections {
-			gc, ok := groups[sel.GroupID]
-			if !ok {
-				return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: unknown group (%s)", sel.GroupID)
-			}
-			op, ok := gc.opts[sel.OptionID]
-			if !ok {
-				return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: option not in group (%s)", sel.OptionID)
-			}
-			qty := sel.Qty
-			if !gc.group.AllowQty {
-				qty = 1
-			} else {
-				if qty <= 0 {
-					return dto.CreateFoodOrderResp{}, errors.New("qty must be > 0 for allow_qty group")
-				}
-				if op.MaxQty != nil && qty > *op.MaxQty {
-					return dto.CreateFoodOrderResp{}, errors.New("qty exceeds max_qty")
-				}
-			}
-			gc.picks++
+        // โหลด read-model ของเมนู
+        detail, err := u.menu.GetMenuDetail(ctx, it.MenuItemID)
+        if err != nil {
+            return dto.CreateFoodOrderResp{}, err
+        }
 
-			addonSubtotal += float64(qty) * op.PriceDelta
-			itemOpts = append(itemOpts, models.FoodOrderItemOption{
-				ID:            uuid.New(),
-				AddOnOptionID: op.ID,
-				GroupID:       gc.group.ID,
-				GroupName:     gc.group.Name,
-				OptionName:    op.Name,
-				PriceDelta:    op.PriceDelta,
-				Qty:           qty,
-			})
-		}
+        // กัน cross-tenant
+        if restID == nil {
+            rid := detail.RestaurantID
+            restID = &rid
+        } else if *restID != detail.RestaurantID {
+            return dto.CreateFoodOrderResp{}, errors.New("items belong to multiple restaurants")
+        }
 
-		// 5) ตรวจ min/max per group
-		for _, gc := range groups {
-			if gc.group.Required && gc.picks == 0 {
-				return dto.CreateFoodOrderResp{}, fmt.Errorf("required group not selected: %s", gc.group.Name)
-			}
-			if gc.picks > 0 {
-				if gc.picks < gc.group.MinSelect {
-					return dto.CreateFoodOrderResp{}, fmt.Errorf("min_select not met for group: %s", gc.group.Name)
-				}
-				if gc.group.MaxSelect > 0 && gc.picks > gc.group.MaxSelect {
-					return dto.CreateFoodOrderResp{}, fmt.Errorf("max_select exceeded for group: %s", gc.group.Name)
-				}
-			}
-		}
+        // สร้าง map ของ addon groups/options
+        type groupCtx struct {
+            group AddOnGroup
+            opts  map[uuid.UUID]AddOption
+            picks int
+        }
+        groups := map[uuid.UUID]*groupCtx{}
+        for _, g := range detail.AddOns {
+            m := map[uuid.UUID]AddOption{}
+            for _, op := range g.Options {
+                m[op.ID] = op
+            }
+            cp := g
+            groups[g.ID] = &groupCtx{group: cp, opts: m}
+        }
 
-		lineBase := detail.Price
-		lineSubtotal := (lineBase + addonSubtotal) * float64(it.Quantity)
+        // validate selections + คำนวณ addon subtotal
+        addonSubtotal := 0.0
+        var itemOpts []models.FoodOrderItemOption
 
-		item := models.FoodOrderItem{
-			ID:           uuid.New(),
-			MenuItemID:   detail.ID,
-			CustomerID:   currentCustomer,
-			MenuName:     detail.Name,
-			UnitPrice:    detail.Price,
-			TimeTakenMin: detail.TimeTaken,
-			Quantity:     it.Quantity,
-			Subtotal:     lineSubtotal,
-			Note:         it.Note,
-		}
-		for i := range itemOpts {
-			itemOpts[i].FoodOrderItemID = item.ID
-		}
-		orderItems = append(orderItems, item)
-		orderOpts = append(orderOpts, itemOpts...)
-		total += lineSubtotal
-	}
+        for _, sel := range it.Selections {
+            gc, ok := groups[sel.GroupID]
+            if !ok { return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: unknown group (%s)", sel.GroupID) }
+            op, ok := gc.opts[sel.OptionID]
+            if !ok { return dto.CreateFoodOrderResp{}, fmt.Errorf("invalid selection: option not in group (%s)", sel.OptionID) }
 
-	order.TotalAmount = total
+            qty := sel.Qty
+            if !gc.group.AllowQty {
+                qty = 1
+            } else {
+                if qty <= 0 { return dto.CreateFoodOrderResp{}, errors.New("qty must be > 0 for allow_qty group") }
+                if op.MaxQty != nil && qty > *op.MaxQty {
+                    return dto.CreateFoodOrderResp{}, errors.New("qty exceeds max_qty")
+                }
+            }
+            gc.picks++
+            addonSubtotal += float64(qty) * op.PriceDelta
 
-	// 6) persist (transaction) — repo จะ set ReservationID ให้ถ้ามี rsv
-	if err := u.repo.CreateOrderTx(ctx, order, orderItems, orderOpts); err != nil {
-		return dto.CreateFoodOrderResp{}, err
-	}
+            itemOpts = append(itemOpts, models.FoodOrderItemOption{
+                ID:            uuid.New(),
+                AddOnOptionID: op.ID,
+                GroupID:       gc.group.ID,
+                GroupName:     gc.group.Name,
+                OptionName:    op.Name,
+                PriceDelta:    op.PriceDelta,
+                Qty:           qty,
+            })
+        }
 
-	return dto.CreateFoodOrderResp{
-		OrderID:     order.ID,
-		TotalAmount: order.TotalAmount,
-		Status:      order.Status,
-	}, nil
+        // ตรวจ min/max
+        for _, gc := range groups {
+            if gc.group.Required && gc.picks == 0 {
+                return dto.CreateFoodOrderResp{}, fmt.Errorf("required group not selected: %s", gc.group.Name)
+            }
+            if gc.picks > 0 {
+                if gc.picks < gc.group.MinSelect {
+                    return dto.CreateFoodOrderResp{}, fmt.Errorf("min_select not met for group: %s", gc.group.Name)
+                }
+                if gc.group.MaxSelect > 0 && gc.picks > gc.group.MaxSelect {
+                    return dto.CreateFoodOrderResp{}, fmt.Errorf("max_select exceeded for group: %s", gc.group.Name)
+                }
+            }
+        }
+
+        lineBase := detail.Price
+        lineSubtotal := (lineBase + addonSubtotal) * float64(it.Quantity)
+
+        // สร้างรายการไอเท็ม (CustomerID เป็น pointer)
+        item := models.FoodOrderItem{
+            ID:           uuid.New(),
+            MenuItemID:   detail.ID,
+            CustomerID:   customerPtr, // ← nil เมื่อ walk-in
+            MenuName:     detail.Name,
+            UnitPrice:    detail.Price,
+            TimeTakenMin: detail.TimeTaken,
+            Quantity:     it.Quantity,
+            Subtotal:     lineSubtotal,
+            Note:         it.Note,
+        }
+
+        for i := range itemOpts {
+            itemOpts[i].FoodOrderItemID = item.ID
+        }
+
+        orderItems = append(orderItems, item)
+        orderOpts   = append(orderOpts, itemOpts...)
+        total      += lineSubtotal
+    }
+
+    order.TotalAmount = total
+
+    // 6) persist
+    if err := u.repo.CreateOrderTx(ctx, order, orderItems, orderOpts); err != nil {
+        return dto.CreateFoodOrderResp{}, err
+    }
+
+    return dto.CreateFoodOrderResp{
+        OrderID:     order.ID,
+        TotalAmount: order.TotalAmount,
+        Status:      order.Status,
+    }, nil
 }
