@@ -55,9 +55,9 @@ export default function ReserveFillUsrPage() {
 
             const data: Table = {
                 id: t.id,
-                row: t.table.table_row,
-                col: t.table.table_col,
-                max_seats: t.table.max_seats,
+                row: t.table_row,
+                col: t.table_col,
+                max_seats: t.max_seats,
                 status: t.status,
                 reserved_seats: t.reserved_seats,
             };
