@@ -11,12 +11,13 @@ func MapRestaurantRoutes(restaurantGroup *gin.RouterGroup, restaurantHandler int
 	restaurantGroup.POST("/register", restaurantHandler.Register())
 	restaurantGroup.POST("/login", restaurantHandler.Login())
 
-	restaurantGroup.GET("/all", middleware.AuthMiddleware(), restaurantHandler.GetAll())
-	restaurantGroup.POST("/upload_pic", middleware.AuthMiddleware(), restaurantHandler.UploadProfilePicture())
-	restaurantGroup.GET("/get_pic", middleware.AuthMiddleware(), restaurantHandler.GetProfilePicture())
+	restaurantGroup.Use(middleware.AuthMiddleware())
+	restaurantGroup.GET("/all", restaurantHandler.GetAll())
+	restaurantGroup.GET("/get_pic", restaurantHandler.GetProfilePicture())
+	restaurantGroup.POST("/upload_pic", restaurantHandler.UploadProfilePicture())
 	restaurantGroup.PATCH("/status", restaurantHandler.ChangeStatus())
 	restaurantGroup.POST("/logout", restaurantHandler.Logout())
-	restaurantGroup.PUT("/edit/:id", middleware.AuthMiddleware(), restaurantHandler.EditInfo())
-	restaurantGroup.PATCH("/editname/:id", middleware.AuthMiddleware(), restaurantHandler.UpdateName())
+	restaurantGroup.PUT("/edit/:id", restaurantHandler.EditInfo())
+	restaurantGroup.PATCH("/editname/:id", restaurantHandler.UpdateName())
 }
 

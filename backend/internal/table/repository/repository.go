@@ -46,6 +46,10 @@ func (r *TableRepository) UpdateTable(table *models.Table) error {
 	return nil
 }
 
+func (r *TableRepository) DeleteTable(table *models.Table) error {
+	return r.db.Delete(table).Error
+}
+
 // Timeslot Repository
 func (r *TableRepository) CreateTimeslot(timeslot *models.Timeslot) error {
 	return r.db.Create(timeslot).Error
@@ -74,6 +78,10 @@ func (r *TableRepository) UpdateTimeslot(timeslot *models.Timeslot) error {
 	return nil
 }
 
+func (r *TableRepository) DeleteTimeslot(timeslot *models.Timeslot) error {
+	return r.db.Delete(timeslot).Error
+}
+
 func (r *TableRepository) GetActiveTimeslot(now time.Time) (*models.Timeslot, error) {
 	var t models.Timeslot
 	if err := r.db.Where("start_time <= ? AND end_time > ?", now, now).First(&t).Error; err != nil {
@@ -84,6 +92,10 @@ func (r *TableRepository) GetActiveTimeslot(now time.Time) (*models.Timeslot, er
 
 
 // TableTimeslot Repository
+func (r *TableRepository) CreateTableTimeslot(tableTimeslot *models.TableTimeslot) error {
+	return r.db.Create(tableTimeslot).Error
+}
+
 func (r *TableRepository) GetTableTimeslotByTimeslotID(timeslotID uuid.UUID) ([]models.TableTimeslot, error) {
 	var tableTimeslots []models.TableTimeslot
 	if err := r.db.Where("timeslot_id = ?", timeslotID).Order("created_at ASC").Find(&tableTimeslots).Error; err != nil {
@@ -105,6 +117,10 @@ func (r *TableRepository) UpdateTableTimeslot(tableTimeslot *models.TableTimeslo
 		return err
 	}
 	return nil
+}
+
+func (r *TableRepository) DeleteTableTimeslotByTimeslotID(timeslotID uuid.UUID) error {
+	return r.db.Where("timeslot_id = ?", timeslotID).Delete(&models.TableTimeslot{}).Error
 }
 
 func (r *TableRepository) GetAvailableTableTimeslot(timeslotID uuid.UUID) (*models.TableTimeslot, error) {
