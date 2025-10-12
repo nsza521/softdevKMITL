@@ -27,13 +27,7 @@ export default function ReserveFillUsrPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedMemberIndex, setSelectedMemberIndex] = useState<number>(3);
-    
-    const reservation: Reservation = {
-        table_timeslot_id: table_id || "",
-        reserve_people: selectedMemberIndex,
-        random: random,
-        members: [],
-    };
+    const [members, setMembers] = useState<Member[]>([]);
 
     useEffect(() => {
         const fetchSlots = async () => {
@@ -77,15 +71,83 @@ export default function ReserveFillUsrPage() {
     if (error) return <p style={{ color: "red" }}>เกิดข้อผิดพลาด: {error}</p>;
     if (!table) return <p>ไม่พบข้อมูลโต๊ะ</p>;
 
+    const handleSubmit = async () => {
+        // error checks begin
+        if (members.length < 3) {
+            alert("กรุณาใส่สมาชิกอย่างน้อย 3 คน");
+            return;
+        }
+
+        if (members.length != selectedMemberIndex) {
+            alert("กรุณาใส่สมาชิกให้ครบตามจำนวนที่เลือก");
+            return;
+        }
+
+        const usernames = members.map((m) => m.username.trim());
+        const hasDuplicate = usernames.some(
+            (username, i) => usernames.indexOf(username) !== i
+        );
+
+        if (hasDuplicate) {
+            alert("มีผู้ใช้ซ้ำ กรุณาตรวจสอบใหม่");
+            return;
+        }
+        // error checks end
+
+        try {
+            const token = localStorage.getItem("token");
+            for (let username of usernames) {
+                const res = await fetch("http://localhost:8080/customer/firstname", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify({ username }),
+                });
+                if (!res.ok) {
+                    alert(`ไม่พบผู้ใช้: ${username}`);
+                    return;
+                }
+            }
+
+            const reservation: Reservation = {
+                table_timeslot_id: table_id || "",
+                reserve_people: selectedMemberIndex,
+                random: random,
+                members: members,
+            };
+
+            const resp = await fetch("http://localhost:8080/table/reservation/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(reservation),
+            });
+
+            if (!resp.ok) throw new Error("Failed to create reservation");
+
+            const result = await resp.json();
+        } catch (err) {
+            console.error("Error:", err);
+        }
+    };
+
     return (
         <div className={styles.container}>
             <TableInfo table={table} selectedMemberIndex={selectedMemberIndex}/>
-            <Members table={table} onSelectMember={setSelectedMemberIndex}/>
+            <Members 
+                table={table} 
+                onSelectMember={setSelectedMemberIndex}
+                onMembersChange={setMembers}
+            />
             <div className={styles.infoDiv}>
                 <img src="/info.svg"/>
                 <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
             </div>
-            <button className={styles.createReserveBt}>
+            <button className={styles.createReserveBt} onClick={handleSubmit}>
                 เชิญเพื่อนและเริ่มสั่งอาหาร
                 <img src="/Arrow_Right_MD.svg"/>
             </button>
@@ -107,8 +169,8 @@ function TableInfo({ table, selectedMemberIndex }: { table: Table, selectedMembe
 
     const occupied = selectedMemberIndex;
     const min_allow = table.max_seats * 0.8;
-    const canClick = occupied >= min_allow;
-    const isChecked = !canClick ? true : allowOthers;
+    const canClick = occupied >= min_allow && occupied < table.max_seats;
+    const isChecked = occupied < min_allow ? true : allowOthers;
 
     return (
         <div>
@@ -155,9 +217,10 @@ type MemberInfo = {
 interface MembersProps {
     table: Table;
     onSelectMember: (memberNumber: number) => void;
+    onMembersChange: (members: Member[]) => void;
 }
 
-function Members({ table, onSelectMember }: MembersProps) {
+function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
     const INITIAL_MEMBERS = Array.from({ length: 2 }, () => ({
         username: "",
         first_name: "",
@@ -195,6 +258,19 @@ function Members({ table, onSelectMember }: MembersProps) {
         fetchMyProfile();
     }, []); 
 
+    useEffect(() => {
+        if (!myProfile) return;
+        // รวม myProfile + สมาชิกอื่น ๆ
+        const allMembers = [
+        { username: myProfile.username },
+        ...members
+            .filter((m) => m.username.trim() !== "")
+            .map((m) => ({ username: m.username.trim() })),
+        ];
+
+        onMembersChange(allMembers);
+    }, [myProfile, members, onMembersChange]);
+
     const handleRemoveMember = (index: number) => {
         setMembers((prev) => prev.filter((_, i) => i !== index));
     };
@@ -207,13 +283,19 @@ function Members({ table, onSelectMember }: MembersProps) {
 
     const handleUsernameBlur = async (index: number) => {
         const username = members[index].username.trim();
+        // error checks begin
         if (!username) return;
 
-        const isDuplicate = members.some((m, i) => i !== index && m.username === username);
-        if (isDuplicate) {
-            console.log("username ซ้ำ, ไม่ต้องทำอะไร");
+        if (
+            members.some(
+                (m, i) => i !== index && m.username.trim() === username
+            ) || myProfile?.username === username
+            ) {
+            alert("ชื่อผู้ใช้นี้มีอยู่แล้ว");
+            handleChangeMember(index, "username", "");
             return;
         }
+        // error checks end
 
         try {
         const res = await fetch("http://localhost:8080/customer/firstname", {
@@ -225,7 +307,11 @@ function Members({ table, onSelectMember }: MembersProps) {
             body: JSON.stringify({ username }),
         });
 
-        if (!res.ok) throw new Error("ไม่พบผู้ใช้");
+        if (!res.ok) {
+            alert("ไม่พบผู้ใช้");
+            // throw new Error("ไม่พบผู้ใช้");
+        }
+
         const data = await res.json();
 
         handleChangeMember(index, "first_name", data.first_name || "");
@@ -312,7 +398,6 @@ function Members({ table, onSelectMember }: MembersProps) {
                 onClick={() => {
                     setMembers([...members, { username: "", first_name: "" }]);
                     onSelectMember(members.length + 2);
-                    console.log(myProfile);
                 }}
                 >
                     <img src="/add_user.svg" />
