@@ -39,7 +39,7 @@ export default function ReserveFillUsrPage() {
         const fetchSlots = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:8080/table/tabletimeslot/${table_id}`, {
+            const res = await fetch(`http://localhost:8080/table/table_timeslot/${table_id}`, {
             headers: {
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
