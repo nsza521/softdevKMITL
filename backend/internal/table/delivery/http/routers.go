@@ -23,7 +23,7 @@ func MapTableRoutes(tableGroup *gin.RouterGroup, tableHandler interfaces.TableHa
 	tableGroup.DELETE("/timeslot/:timeslot_id", tableHandler.DeleteTimeslot())
 
 	// TableTimeslot routes
-	tableGroup.GET("/timeslot/:timeslot_id", tableHandler.GetTableTimeslotByTimeslotID()) // will be change to GET /table_timeslot/:timeslot_id/all
+	tableGroup.GET("/table_timeslot/all/:timeslot_id", tableHandler.GetTableTimeslotByTimeslotID())
 
 
 	tableGroup.Use(middleware.AuthMiddleware())
