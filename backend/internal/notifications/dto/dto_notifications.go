@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"time"
+	// "time"
 	"github.com/google/uuid"
 )
 
@@ -14,7 +14,7 @@ type Notification struct {
 	ReceiverID   uuid.UUID `json:"receiverId"`
 	ReceiverType string    `json:"receiverType"`
 	IsRead       bool      `json:"isRead"`
-	CreatedAt    time.Time `json:"createdAt"`
+	CreatedAt    string `json:"createdAt"`
 
 	Attributes 	map[string]interface{} `json:"attributes,omitempty"`
 }
@@ -78,7 +78,7 @@ type CreateEventResponse struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // ---- payload เฉพาะเหตุการณ์ ----
