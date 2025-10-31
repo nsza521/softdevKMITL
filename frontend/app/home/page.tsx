@@ -43,7 +43,7 @@ export default function HomePage() {
     try {
       const token = localStorage.getItem("token"); // ดึง token ที่เก็บไว้ตอน login
 
-      const res = await fetch("http://localhost:8080/user/logout", {
+      const res = await fetch("http://localhost:8080/customer/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
