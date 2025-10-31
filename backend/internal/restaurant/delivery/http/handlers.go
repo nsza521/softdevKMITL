@@ -99,6 +99,21 @@ func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 	}
 }
 
+func (h *RestaurantHandler) GetByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		detail, err := h.restaurantUsecase.GetByID(restaurantID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"restaurant_detail": detail})
+	}
+}
+
 func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
