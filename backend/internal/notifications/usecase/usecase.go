@@ -59,7 +59,7 @@ func (u *notificationUsecase) List(ctx context.Context, q dto.ListQuery) (*dto.L
             ReceiverID:   r.ReceiverID,
             ReceiverType: r.ReceiverType,
             IsRead:       r.IsRead,
-            CreatedAt:    r.CreatedAt,
+            CreatedAt:    r.CreatedAt.Format("02-01-2006 15:04"),
         }
 
         // Parse attributes จาก JSON string
@@ -246,6 +246,11 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
 	// Convert attributes to JSON string for database storage
     var attributesJSON *string
     if attributes != nil {
+
+		if whenVal, ok := attributes["when"]; ok {
+			attributes["when"] = formatWhen(whenVal)
+		}
+
         if jsonBytes, err := json.Marshal(attributes); err == nil {
             jsonStr := string(jsonBytes)
             attributesJSON = &jsonStr
@@ -273,7 +278,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
 		Title:     noti.Title,
 		Content:   noti.Content,
 		Attributes: attributes,
-		CreatedAt: noti.CreatedAt,
+		CreatedAt: noti.CreatedAt.Format("02-01-2006 15:04"),
 	}, nil
 }
 
@@ -293,3 +298,39 @@ func toStrings(v interface{}) []string {
 	return out
 }
 func strPtrOrNil(s string) *string { if s == "" { return nil }; return &s }
+
+// formatWhen พยายาม parse ค่าวันเวลาแล้วคืนเป็น "02-01-2006 15:04"
+// ถา้ parse ไม่ได้ จะคืนค่าเดิม (string)
+func formatWhen(v interface{}) string {
+    // รองรับ time.Time
+    if t, ok := v.(time.Time); ok {
+        return t.Format("02-01-2006 15:04")
+    }
+    // รองรับ string
+    s, ok := v.(string)
+    if !ok {
+        // ถ้าไม่ใช่ string ให้คืนค่าที่เป็น string โดยตรง
+        return ""
+    }
+
+    layouts := []string{
+        time.RFC3339,
+        "2006-01-02 15:04:05",
+        "2006-01-02 15:04",
+        "02-01-2006 15:04",
+        "02/01/2006 15:04",
+        "02 Jan 2006 15:04",
+        "02 Jan 2006, 15:04",
+        "02 Jan 2006",
+        "02 Jan 2006 15:04:05",
+    }
+
+    for _, l := range layouts {
+        if tt, err := time.Parse(l, s); err == nil {
+            return tt.Format("02-01-2006 15:04")
+        }
+    }
+
+    // ถ้า parse ไม่ได้ คืน string เดิม (fallback)
+    return s
+}
