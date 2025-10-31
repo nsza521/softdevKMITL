@@ -8,9 +8,12 @@ import (
 
 type FoodOrder struct {
 	ID              uuid.UUID       `gorm:"type:char(36);primaryKey"`
-	ReservationID   uuid.UUID       `gorm:"type:char(36);index;not null"`
-	CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
+	ReservationID   uuid.UUID       `gorm:"type:char(36);index;"` // อนุญาตให้ null ได้
+	CustomerID      uuid.UUID       `gorm:"type:char(36);index;"`
+	// Customer   *Customer `gorm:"foreignKey:CustomerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	CreatedByUserID uuid.UUID       `gorm:"type:char(36);not null;index"`
 	Status          string          `gorm:"type:enum('pending','preparing','served','paid','cancelled');default:'pending';not null"`
+	Channel         string     		`gorm:"type:enum('walk_in','reservation','delivery');not null;default:'walk_in'"`
 	OrderDate       time.Time       `gorm:"not null"`
 	ExpectedReceive *time.Time
 	TotalAmount     float64         `gorm:"not null;default:0"`
@@ -18,11 +21,14 @@ type FoodOrder struct {
 	Items           []FoodOrderItem `gorm:"foreignKey:FoodOrderID"`
 }
 
+
+
 func (FoodOrder) TableName() string { return "food_orders" }
 
 type FoodOrderItem struct {
 	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
 	FoodOrderID  uuid.UUID `gorm:"type:char(36);index;not null"`
+	CustomerID      uuid.UUID       `gorm:"type:char(36);index;not null"`
 	MenuItemID   uuid.UUID `gorm:"type:char(36);index;not null"`
 
 	// Snapshot จากเมนูตอนสั่ง

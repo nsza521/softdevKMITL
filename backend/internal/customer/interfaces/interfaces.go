@@ -18,6 +18,7 @@ type CustomerHandler interface {
 	GetProfile() gin.HandlerFunc
 	EditProfile() gin.HandlerFunc
 	GetFullnameByUsername() gin.HandlerFunc
+	GetFirstNameByUsername() gin.HandlerFunc
 }
 
 type CustomerRepository interface {
@@ -34,5 +35,6 @@ type CustomerUsecase interface {
 	GetProfile(customerID uuid.UUID) (*dto.ProfileResponse, error)
 	EditProfile(customerID uuid.UUID, request *dto.EditProfileRequest) error
 	GetFullnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFullnameResponse, error)
+	GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error)
 	Logout(token string, expiry time.Time) error
 }
