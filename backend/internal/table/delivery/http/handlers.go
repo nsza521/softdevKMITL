@@ -220,19 +220,17 @@ func (h *TableHandler) DeleteTimeslot() gin.HandlerFunc {
 func (h *TableHandler) GetTableTimeslotByTimeslotID() gin.HandlerFunc {
 	return func (c *gin.Context) {
 
-		timeslotID := c.Param("timeslot_id")
-		if timeslotID == "" {
+		timeslotID, err := parseTableTimeslotID(c, "timeslot_id")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		if timeslotID == uuid.Nil {
 			c.JSON(400, gin.H{"error": "timeslot id is required"})
 			return
 		}
 
-		parseTimeslotID, err := uuid.Parse(timeslotID)
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid timeslot id"})
-			return
-		}
-
-		response, err := h.tableUsecase.GetTableTimeslotByTimeslotID(parseTimeslotID)
+		response, err := h.tableUsecase.GetTableTimeslotByTimeslotID(timeslotID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -244,19 +242,17 @@ func (h *TableHandler) GetTableTimeslotByTimeslotID() gin.HandlerFunc {
 func (h *TableHandler) GetTableTimeslotByID() gin.HandlerFunc {
 	return func (c *gin.Context) {
 
-		tableTimeslotID := c.Param("table_timeslot_id")
-		if tableTimeslotID == "" {
+		tableTimeslotID, err := parseTableTimeslotID(c, "table_timeslot_id")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		if tableTimeslotID == uuid.Nil {
 			c.JSON(400, gin.H{"error": "table timeslot id is required"})
 			return
 		}
 
-		parseTableTimeslotID, err := uuid.Parse(tableTimeslotID)
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid table timeslot id"})
-			return
-		}
-
-		tableTimeslot, err := h.tableUsecase.GetTableTimeslotByID(parseTableTimeslotID)
+		tableTimeslot, err := h.tableUsecase.GetTableTimeslotByID(tableTimeslotID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

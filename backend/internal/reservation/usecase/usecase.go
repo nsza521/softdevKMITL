@@ -147,7 +147,7 @@ func (u *TableReservationUsecase) createRandomTableReservation(request *dto.Crea
 		return nil, fmt.Errorf("Random reservation allows only 1 member")
 	}
 
-	// 1. หา timeslot ที่ตรงกับเวลาปัจจุบัน
+	// find current active timeslot
 	now := time.Now()
 	currentTimeslot, err := u.tableRepository.GetActiveTimeslot(now)
 	if err != nil {
@@ -157,8 +157,7 @@ func (u *TableReservationUsecase) createRandomTableReservation(request *dto.Crea
 		return nil, fmt.Errorf("No available timeslot right now")
 	}
 
-	// 2. หา tabletimeslot ที่ยังว่าง
-
+	// find available tableTimeslot
 	availableTableTimeslot, err := u.tableRepository.GetAvailableTableTimeslot(currentTimeslot.ID)
 	if err != nil {
 		return nil, err
@@ -167,7 +166,7 @@ func (u *TableReservationUsecase) createRandomTableReservation(request *dto.Crea
 		return nil, fmt.Errorf("No available tables in this timeslot")
 	}
 
-	// 4. สร้าง reservation
+	// create reservation
 	reservation := &models.TableReservation{
 		TableTimeslotID: availableTableTimeslot.ID,
 		ReservePeople:   1,
@@ -184,10 +183,7 @@ func (u *TableReservationUsecase) createRandomTableReservation(request *dto.Crea
 	if err != nil {
 		return nil, err
 	}
-	minLeft := int(math.Ceil(0.8*float64(table.MaxSeats))) - availableTableTimeslot.ReservedSeats
-	if minLeft < 0 {
-		minLeft = 0
-	}
+	minLeft := max(int(math.Ceil(0.8*float64(table.MaxSeats))) - availableTableTimeslot.ReservedSeats, 0)
 	if minLeft+availableTableTimeslot.ReservedSeats > table.MaxSeats {
 		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
 	}
