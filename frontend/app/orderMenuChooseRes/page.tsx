@@ -1,60 +1,70 @@
 "use client";
 
-import { stat } from "fs";
-import styles from "./orderMenuChooseRes.module.css"
+import React from "react";
+import { useRouter } from "next/navigation";
+import styles from "./orderMenuChooseRes.module.css";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
+interface allRestaurant {
+  id: string;
+  username: string;
+  status: string;
+  picture_url: string;
+}
 
-const mockUpUser = [
-    {
-        id: 1,
-        Restaurant: "ชื่อร้านค้า",
-        Foodtype: ["foodtype1","foodtype2","foodtype3"],
-        Status: "Open"
-    },
-    {
-        id: 2,  
-        Restaurant: "ชื่อร้านค้า",
-        Foodtype: ["foodtype1","foodtype2","foodtype3"],
-        Status: "Closed"
-    },
-];
+export default function OrderMenuChooseRes() {
+  const router = useRouter();
+  const [restaurant, setRestaurant] = useState<allRestaurant[]>([]);
 
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:8080/restaurant/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setRestaurant(data.restaurants);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchRestaurant();
+  }, []);
 
-
-
-export default function orderMenuChooseRes(){
-    const [status, setStatus] = useState("");
-
-    return(
-        <div className={styles.container}>
-                {mockUpUser.map((Rstr) => (
-            <Link className={styles.blog_item} key={Rstr.id} 
-            href={
-                {
-                    pathname : '/orderMenuChooseMenu/[id]',
-                    query :{id: Rstr.id},
-                }} as={`/orderMenuChooseMenu/${encodeURIComponent(Rstr.id)}`}> 
-                <div className={styles.image}>
-                    <img src="./Rectangle.svg" alt="ResPicture" />
-                </div>              
-                <div className={styles.content}>
-                    <h3>ชื่อร้านค้า</h3>
-                    <ul>
-                        <li>foodtype,</li>
-                        <li>foodtype,</li>
-                        <li>foodtype,</li>
-                    </ul>
-                    {Rstr.Status === "Open" &&(
-                        <p className={styles.status}>Open</p>
-                    )}
-                    {Rstr.Status === "Closed" &&(
-                        <p className={styles.status}>Closed</p>
-                    )}
+  return (
+    <div className={styles.container}>
+      {restaurant.map((Rstr) => (
+        <div
+          key={Rstr.id}
+          className={styles.blog_item}
+          onClick={() =>{
+              if (Rstr.status === "open"){
+                  router.push(`/orderMenuChooseMenu?id=${encodeURIComponent(Rstr.id)}`);
+                }
+            }
+          }
+          style={{ cursor: Rstr.status === "open" ? "pointer" : "not-allowed", opacity: Rstr.status === "open" ? 1 : 0.5 }}
+        >
+          <div className={styles.image}>
+            <img src={Rstr.picture_url || "./Rectangle.svg"} alt="ResPicture" />
+          </div>
+          <div className={styles.content}>
+            <h3>{Rstr.username}</h3>
+            {Rstr.status === "closed" && (
+                <div className={styles.closedStatus}>
+                    <p>{Rstr.status}</p>
                 </div>
-            </Link>
-                ))}
+            )}
+            {Rstr.status === "open" && (
+                <div className={styles.openStatus}>
+                    <p>{Rstr.status}</p>
+                </div>
+            )}
+
+          </div>
         </div>
-    )
+      ))}
+    </div>
+  );
 }

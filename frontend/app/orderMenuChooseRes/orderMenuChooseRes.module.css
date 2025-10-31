@@ -1,7 +1,13 @@
+
+
 .container{
-    margin-top: 58px;
+    margin-top: 48px;
     padding: 0;
     box-sizing: border-box;
+    height: 87vh;
+    overflow: scroll;
+    scrollbar-width: none;
+    background-color: var(--color5);
 }
 
 .blog_item{
@@ -9,8 +15,12 @@
     /* justify-content: center; */
     gap: 10px;
     overflow: hidden;
-    align-items: center;
-    margin: 0 20px;
+    /* align-items: center; */
+    margin: 10px 20px;
+}
+
+.blog_item:hover{
+    cursor: pointer;
 }
 
 .content {
@@ -28,5 +38,19 @@
         background-color: aliceblue;
         padding: 5px 10px;
         border-radius: 20px;
+    }
+}
+
+.closedStatus{
+    p {
+        background-color: rgb(255, 69, 69);
+        color: #ffffff;
+    }
+}
+
+.openStatus {
+    p{
+        background-color: rgb(98, 255, 101);
+        color: #ffffff;
     }
 }
