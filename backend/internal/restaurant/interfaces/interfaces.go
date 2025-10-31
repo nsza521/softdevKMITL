@@ -11,7 +11,6 @@ import (
 
 	"backend/internal/restaurant/dto"
 	"backend/internal/db_model"
-	user "backend/internal/user/dto"
 )
 
 type RestaurantHandler interface {
@@ -46,7 +45,7 @@ type RestaurantRepository interface {
 
 type RestaurantUsecase interface {
 	Register(request *dto.RegisterRestaurantRequest) error
-	Login(request *user.LoginRequest) (string, error)
+	Login(request *dto.LoginRequest) (string, error)
 	Logout(token string, expiry time.Time) error
 	GetAll() ([]dto.RestaurantDetailResponse, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)

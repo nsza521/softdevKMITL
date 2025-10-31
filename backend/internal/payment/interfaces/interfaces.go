@@ -14,7 +14,9 @@ type PaymentHandler interface {
 }
 
 type PaymentRepository interface {
-	GetTopupPaymentMethods() ([]models.PaymentMethod, error)
+	CreateTransaction(transaction *models.Transaction) error
+	GetPaymentMethodByID(paymentMethodID uuid.UUID) (*models.PaymentMethod, error)
+	GetPaymentMethods(methodType string) ([]models.PaymentMethod, error)
 }
 
 type PaymentUsecase interface {

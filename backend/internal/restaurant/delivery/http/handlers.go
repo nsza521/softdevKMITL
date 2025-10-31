@@ -8,7 +8,6 @@ import (
 
 	"backend/internal/restaurant/dto"
 	"backend/internal/restaurant/interfaces"
-	user "backend/internal/user/dto"
 )
 
 type RestaurantHandler struct {
@@ -62,7 +61,7 @@ func (h *RestaurantHandler) Register() gin.HandlerFunc {
 func (h *RestaurantHandler) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var request user.LoginRequest
+		var request dto.LoginRequest
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})

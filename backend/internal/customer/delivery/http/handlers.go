@@ -9,7 +9,7 @@ import (
 
 	"backend/internal/customer/interfaces"
 	"backend/internal/customer/dto"
-	user "backend/internal/user/dto"
+	// user "backend/internal/user/dto"
 )
 
 type CustomerHandler struct {
@@ -67,7 +67,7 @@ func (h *CustomerHandler) Register() gin.HandlerFunc {
 func (h *CustomerHandler) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var request *user.LoginRequest
+		var request *dto.LoginRequest
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -169,6 +169,24 @@ func (h *CustomerHandler) GetFirstNameByUsername() gin.HandlerFunc {
 		}
 
 		c.JSON(200, firstname)
+	}
+}
+
+func (h *CustomerHandler) GetQRCode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		qrCodeURL, err := h.customerUsecase.GetQRCode(customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"qrcode_url": qrCodeURL})
 	}
 }
 
