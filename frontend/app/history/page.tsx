@@ -1,9 +1,12 @@
 "use client";
 
 import styles from "./history.module.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Noto_Sans_Thai } from "next/font/google";
 import TransacDetail from "@/components/TransacDetail";
+import { table } from "console";
+import { create } from "domain";
+
 
 
 const notoThai = Noto_Sans_Thai({
@@ -18,11 +21,39 @@ const icon = {
     wallet : "/wallet.svg",
 };
 
+interface Histroy {
+    reservation_id : string;
+    table_row : string;
+    table_col : string;
+    create_at : string;
+}
+
 
 
 
 export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
+    const [history, setHistroy] = useState<Histroy[]>([]);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchHistory = async () =>{
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch("http://localhost:8080/table/reservation/history",{
+                    headers:{"Authorization": `Bearer ${token}`,},
+                })
+
+                const data = await res.json();
+                setHistroy(data.reservations);
+            }catch (err) {
+                console.error(err);
+                setError("โหลดข้อมูลไม่สำเร็จ");
+            }
+        }
+        fetchHistory();
+},[]);
+
     return(
         <div className={`${styles.content} ${notoThai.variable}`}>
             <div className={styles.catagories}>
@@ -36,14 +67,15 @@ export default function HistoryPage(){
                     การเติมเงิน
                 </button>
             </div>
+    
 
             {active === "จองโต๊ะ" &&(
                 <div className={styles.detail_container}>
-                    {Array.from({ length: 10 }).map((_, index) => (
+                    {history.map((n) => (
                         <TransacDetail
-                            key={index} // key ต้องไม่ซ้ำ
-                            head={`โต๊ะ 3`}
-                            date="19 ส.ค. 2025"
+                            key={n.reservation_id}  
+                            head={"โต๊ะ " + n.table_row + n.table_col}
+                            date={n.create_at}
                             imgsrc={icon.success}
                         />
                         ))}
