@@ -243,8 +243,8 @@ function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
         setToken(storedToken);
 
         if (!storedToken) {
-        setError("ไม่พบโทเค็น กรุณาเข้าสู่ระบบใหม่");
-        return;
+            setError("ไม่พบโทเค็น กรุณาเข้าสู่ระบบใหม่");
+            return;
         }
 
         const fetchMyProfile = async () => {
