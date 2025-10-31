@@ -314,10 +314,82 @@ function OrderMenu({ isOnline, onToggleStatus }: any) {
   );
 }
 function QueuePage() {
+  const totalQueues = 20;
+  const visibleQueues = 7;
+  const [current, setCurrent] = useState(0); // index เริ่มจาก 0
+
+  const half = Math.floor(visibleQueues / 2);
+  const queues = Array.from({ length: totalQueues }, (_, i) => i + 1);
+
+  // สร้าง array แสดงผลพร้อมช่องว่างถ้าเลยขอบ
+  const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
+    const index = current - half + i;
+    if (index < 0 || index >= totalQueues) return null; // ถ้าไม่มีคิว
+    return queues[index];
+  });
+
+  const handleClick = (index: number) => {
+    setCurrent(index);
+  };
+
   return (
-    <div>
-      <h2>⭐ Queue</h2>
-      <p>แสดงคิวของลูกค้าในร้าน</p>
+    <div className={styles.queuepagemanagement}>
+      <div className={styles.headerqueue}>
+        <button className={styles.activebtn}>Walk - in</button>
+        <button className={styles.noactivebtn}>Table</button>
+      </div>
+
+      <div className={styles.queueall}>
+        <div className={styles.queueno}>
+          {displayQueues.map((q, i) =>
+            q ? (
+              <button
+                key={q}
+                className={q === current + 1 ? styles.activeQueue : ""}
+                onClick={() => handleClick(q - 1)}
+              >
+                คิวที่ {String(q).padStart(3, "0")}
+              </button>
+            ) : (
+              <button key={`empty-${i}`} className={styles.emptyBtn} disabled>
+                {/* ช่องว่าง */}
+              </button>
+            )
+          )}
+        </div>
+
+        <div className={styles.queuesectiondetail}>
+          {/* ปุ่มย้อนกลับ */}
+          <div
+            className={styles.sliderclickleft}
+            onClick={() => setCurrent(prev => Math.max(prev - 1, 0))}
+          >
+            <span className="material-symbols-outlined">arrow_back_ios</span>
+          </div>
+
+          {/* แสดงคิวกลาง */}
+          <div className={styles.therealmenudetailed}>
+            <div className={styles.order_n}>
+              <div className={styles.imageorderholder}>
+                  <img src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg" alt="" />
+              </div>
+              <div className={styles.detailoforder}> </div>
+            </div>
+            {/* {displayQueues[Math.floor(displayQueues.length / 2)]
+              ? `คิวที่ ${String(displayQueues[Math.floor(displayQueues.length / 2)]).padStart(3,"0")}`
+              : ""} */}
+
+          </div>
+
+          {/* ปุ่มเลื่อนข้างหน้า */}
+          <div
+            className={styles.sliderclickright}
+            onClick={() => setCurrent(prev => Math.min(prev + 1, totalQueues - 1))}
+          >
+            <span className="material-symbols-outlined">arrow_forward_ios</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

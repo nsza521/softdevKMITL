@@ -823,3 +823,161 @@
   from { transform: translateY(-10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+.queuepagemanagement{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.headerqueue{
+  flex:1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+  width: 85%;
+  border-bottom: 1px solid #acacac;
+}
+
+.headerqueue .activebtn{
+  width: 160px;
+  height: 42px;
+  font-size: 16px;
+  border-radius: 24px;
+  color: white;
+  background-color: #D77948;
+  font-weight: bold;
+}
+.headerqueue .noactivebtn{
+  width: 160px;
+  height: 42px;
+  font-size: 16px;
+  border-radius: 24px;
+  color: rgb(0, 0, 0);
+  background-color:#e4ce8e;
+  font-weight: bold;
+}
+.queueall{
+  /* border: 1px solid black; */
+  flex:9;
+  width: 90%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.queueno{
+  width: 100%;
+  /* border: 1px solid black; */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* สำคัญมาก! */
+}
+.queueno button {
+  width: 170px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  background-color: transparent;
+  border: none;
+  transition: transform 0.1s, color 0.3s;
+}
+
+.activeQueue {
+  color: #d77948;
+  transform: scale(1.3);
+  position: relative;
+  bottom: 5px;
+}
+
+.emptyBtn {
+  width: 150px;
+  height: 40px;
+  background-color: transparent;
+  border: none;
+}
+.queuesectiondetail{
+  width: 100%;
+  /* border: 1px solid black; */
+  flex: 7;
+  display: flex;
+  justify-content: center;
+}
+.sliderclickleft{
+  flex:1;
+  /* border:1px solid black; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  bottom: 85px;
+  color: #d77948;
+  font-weight: bold;
+}
+.sliderclickright{
+  flex:1;
+  /* border:1px solid black; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  bottom: 85px;
+  color: #d77948;
+  font-weight: bold;
+}
+@keyframes arrowSlideleft {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(7px); } /* ขยับไปข้างขวา 5px */
+}
+@keyframes arrowSlideright {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-7px); } /* ขยับไปข้างขวา 5px */
+}
+
+.sliderclickleft span{
+  display: inline-block;
+  animation: arrowSlideleft 1.5s ease-in-out infinite;
+  font-size: 40px;
+}
+.sliderclickright span{
+  display: inline-block;
+  animation: arrowSlideright 1.5s ease-in-out infinite;
+  font-size: 40px;
+}
+.therealmenudetailed{
+  flex:8;
+  /* border:1px solid black; */
+    display: flex;
+  justify-content: center;
+}
+.order_n{
+  border:1px solid black;
+  margin-top: 10px;
+  width: 80%;
+  height: 186px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.imageorderholder{
+  height: 170px;
+  width: 200px;
+  border-radius: 15px;
+  overflow: hidden; 
+  box-shadow: 4px 4px 4px rgba(0,0,0,0.3); /* เงาเล็ก ๆ */ 
+}
+.imageorderholder img{
+     width: 100%;          
+    height: 100%;   
+    object-fit: cover;
+    z-index: 0;
+    
+}
+.detailoforder{
+  height: 100%;
+  width: 420px;
+  border:1px solid black;
+}
