@@ -25,10 +25,10 @@ import (
 	paymentRepository "backend/internal/payment/repository"
 	paymentUsecase "backend/internal/payment/usecase"
 
+	foodOrderAdapter "backend/internal/order/adapter"
 	foodOrderHttp "backend/internal/order/delivery/http"
 	foodOrderRepository "backend/internal/order/repository"
 	foodOrderUsecase "backend/internal/order/usecase"
-	foodOrderAdapter "backend/internal/order/adapter"
 
 	notiHttp "backend/internal/notifications/delivery/http"
 	notiRepository "backend/internal/notifications/repository"
@@ -107,10 +107,19 @@ func (s *App) MapHandlers() error {
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
 
 	// Food Order Group
-	foodOrderRepository := foodOrderRepository.NewOrderRepository(s.db)
+	// foodOrderRepository := foodOrderRepository.NewOrderRepository(s.db)
+	// menuRead := foodOrderAdapter.NewMenuReadAdapter(mUC)
+	// foodOrderUsecase := foodOrderUsecase.NewOrderUsecase(foodOrderRepository, menuRead)
+	// foodOrderHandler := foodOrderHttp.NewOrderHandler(foodOrderUsecase)
+	// foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
+
+	// --- Repo ชั้นล่าง ---
+	orderRepo := foodOrderRepository.NewOrderRepository(s.db)
+	queueRepo := foodOrderRepository.NewQueueRepository(s.db)
 	menuRead := foodOrderAdapter.NewMenuReadAdapter(mUC)
-	foodOrderUsecase := foodOrderUsecase.NewOrderUsecase(foodOrderRepository, menuRead)
-	foodOrderHandler := foodOrderHttp.NewOrderHandler(foodOrderUsecase)
+	orderUC := foodOrderUsecase.NewOrderUsecase(orderRepo, menuRead)
+	queueUC := foodOrderUsecase.NewQueueUsecase(queueRepo)
+	foodOrderHandler := foodOrderHttp.NewOrderHandler(orderUC, queueUC)
 	foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
 
 	// Notification Group
