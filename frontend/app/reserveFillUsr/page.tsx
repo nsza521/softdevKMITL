@@ -21,6 +21,7 @@ export default function ReserveFillUsrPage() {
     const router = useRouter();
     const searchParam = useSearchParams();
     const random = searchParam.get("random") === "true" || false;
+    const reservation_id = searchParam.get("reservation_id") || "";
     const table_id = searchParam.get("table_timeslot_id");
 
     const [table, setTable] = useState<Table | null>(null);
@@ -31,41 +32,76 @@ export default function ReserveFillUsrPage() {
 
     useEffect(() => {
         const fetchSlots = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(`http://localhost:8080/table/table_timeslot/${table_id}`, {
-            headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            });
+            try {
+                const token = localStorage.getItem("token");
 
-            if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+                if (random) {
+                    const res = await fetch(`http://localhost:8080/table/reservation/random`, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    });
 
-            const json = await res.json();
-            const t = json.table_timeslot;
+                    if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลการจองแบบสุ่มได้");
 
-            if (!t) throw new Error("ไม่พบข้อมูลโต๊ะ");
+                    const json = await res.json();
+                    const t = json.table_timeslot;
 
-            const data: Table = {
-                id: t.id,
-                row: t.table_row,
-                col: t.table_col,
-                max_seats: t.max_seats,
-                status: t.status,
-                reserved_seats: t.reserved_seats,
-            };
+                    if (!t) throw new Error("ไม่พบข้อมูลโต๊ะจากการสุ่ม");
 
-            setTable(data);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+                    const data: Table = {
+                        id: t.id,
+                        row: t.table_row,
+                        col: t.table_col,
+                        max_seats: t.max_seats,
+                        status: t.status,
+                        reserved_seats: t.reserved_seats,
+                    };
+
+                    setTable(data);
+
+                    if (json.members) {
+                        setMembers(json.members);
+                        setSelectedMemberIndex(json.members.length);
+                    }
+
+                } else if (table_id) {
+                    const res = await fetch(`http://localhost:8080/table/table_timeslot/${table_id}`, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    });
+
+                    if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+
+                    const json = await res.json();
+                    const t = json.table_timeslot;
+
+                    if (!t) throw new Error("ไม่พบข้อมูลโต๊ะ");
+
+                    const data: Table = {
+                        id: t.id,
+                        row: t.table_row,
+                        col: t.table_col,
+                        max_seats: t.max_seats,
+                        status: t.status,
+                        reserved_seats: t.reserved_seats,
+                    };
+
+                    setTable(data);
+                }
+
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        if (table_id) fetchSlots();
-    }, [table_id]);
+        fetchSlots();
+    }, [table_id, random]);
 
     if (loading) return <p>กำลังโหลดข้อมูล...</p>;
     if (error) return <p style={{ color: "red" }}>เกิดข้อผิดพลาด: {error}</p>;
@@ -130,11 +166,11 @@ export default function ReserveFillUsrPage() {
             if (!resp.ok) throw new Error("Failed to create reservation");
 
             if (resp.ok) {
+                // const result = await resp.json();
+                // console.log(result)
                 router.push("/orderMenuChooseRes");
-                // router.push("/orderMenuChooseMenu");
             }
 
-            // const result = await resp.json();
         } catch (err) {
             console.error("Error:", err);
         }
@@ -147,6 +183,7 @@ export default function ReserveFillUsrPage() {
                 table={table} 
                 onSelectMember={setSelectedMemberIndex}
                 onMembersChange={setMembers}
+                readOnly={random}
             />
             <div className={styles.infoDiv}>
                 <img src="/info.svg"/>
@@ -221,11 +258,12 @@ type MemberInfo = {
 
 interface MembersProps {
     table: Table;
-    onSelectMember: (memberNumber: number) => void;
+    onSelectMember: (num: number) => void;
     onMembersChange: (members: Member[]) => void;
+    readOnly?: boolean; // เพิ่ม prop สำหรับ random mode
 }
 
-function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
+function Members({ table, onSelectMember, onMembersChange, readOnly = false }: MembersProps) {
     const INITIAL_MEMBERS = Array.from({ length: 2 }, () => ({
         username: "",
         first_name: "",
@@ -265,61 +303,60 @@ function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
 
     useEffect(() => {
         if (!myProfile) return;
-        // รวม myProfile + สมาชิกอื่น ๆ
         const allMembers = [
-        { username: myProfile.username },
-        ...members
-            .filter((m) => m.username.trim() !== "")
-            .map((m) => ({ username: m.username.trim() })),
+            { username: myProfile.username },
+            ...members
+                .filter((m) => m.username.trim() !== "")
+                .map((m) => ({ username: m.username.trim() })),
         ];
 
         onMembersChange(allMembers);
     }, [myProfile, members, onMembersChange]);
 
     const handleRemoveMember = (index: number) => {
+        if (readOnly) return; // lock การลบใน random mode
         setMembers((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleChangeMember = (index: number, field: keyof MemberInfo, value: string) => {
+        if (readOnly) return; // lock การแก้ไขใน random mode
         const updated = [...members];
         updated[index][field] = value;
         setMembers(updated);
     };
 
     const handleUsernameBlur = async (index: number) => {
+        if (readOnly) return; // lock การตรวจสอบ/แก้ไข
         const username = members[index].username.trim();
-        // error checks begin
         if (!username) return;
 
         if (
             members.some(
                 (m, i) => i !== index && m.username.trim() === username
             ) || myProfile?.username === username
-            ) {
+        ) {
             alert("ชื่อผู้ใช้นี้มีอยู่แล้ว");
             handleChangeMember(index, "username", "");
             return;
         }
-        // error checks end
 
         try {
-        const res = await fetch("http://localhost:8080/customer/firstname", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({ username }),
-        });
+            const res = await fetch("http://localhost:8080/customer/firstname", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ username }),
+            });
 
-        if (!res.ok) {
-            alert("ไม่พบผู้ใช้");
-            // throw new Error("ไม่พบผู้ใช้");
-        }
+            if (!res.ok) {
+                alert("ไม่พบผู้ใช้");
+                return;
+            }
 
-        const data = await res.json();
-
-        handleChangeMember(index, "first_name", data.first_name || "");
+            const data = await res.json();
+            handleChangeMember(index, "first_name", data.first_name || "");
         } catch (err) {
             console.error("fetch username error:", err);
         }
@@ -339,16 +376,16 @@ function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
                 <label className={styles.sectionLabel}>คุณ :</label>
                 <div className={styles.myInputCon}>
                     <input
-                    className={styles.disabInput}
-                    type="text"
-                    value={`@ ${myProfile.username}`}
-                    disabled
+                        className={styles.disabInput}
+                        type="text"
+                        value={`@ ${myProfile.username}`}
+                        disabled
                     />
                     <input
-                    className={styles.disabInput}
-                    type="text"
-                    value={`ชื่อ : ${myProfile.first_name}`}
-                    disabled
+                        className={styles.disabInput}
+                        type="text"
+                        value={`ชื่อ : ${myProfile.first_name}`}
+                        disabled
                     />
                 </div>
             </div>
@@ -357,53 +394,51 @@ function Members({ table, onSelectMember, onMembersChange }: MembersProps) {
                 <div key={i} className={styles.formSection}>
                     <div className={styles.labelRow}>
                         <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
-                        {i >= 2 && (
+                        {i >= 2 && !readOnly && (
                             <button
-                            className={styles.removeUserBt}
-                            onClick={() => {
-                                handleRemoveMember(i);
-                                onSelectMember(members.length);
-                            }}
-                            type="button"
+                                className={styles.removeUserBt}
+                                onClick={() => {
+                                    handleRemoveMember(i);
+                                    onSelectMember(members.length);
+                                }}
+                                type="button"
                             >
-                            ลบ
+                                ลบ
                             </button>
                         )}
                     </div>
                     <div className={styles.inputCon}>
                         <input
-                        className={styles.usnInput}
-                        type="text"
-                        placeholder="@ username"
-                        value={m.username ? `@ ${m.username}` : ""}
-                        onChange={(e) => {
-                            const cleanValue = e.target.value.replace(/^@ ?/, "");
-                            handleChangeMember(i, "username", cleanValue);
-                        }}
-                        onBlur={() => handleUsernameBlur(i)}
+                            className={styles.usnInput}
+                            type="text"
+                            placeholder="@ username"
+                            value={m.username ? `@ ${m.username}` : ""}
+                            onChange={(e) => {
+                                if (readOnly) return;
+                                const cleanValue = e.target.value.replace(/^@ ?/, "");
+                                handleChangeMember(i, "username", cleanValue);
+                            }}
+                            onBlur={() => handleUsernameBlur(i)}
+                            disabled={readOnly} // lock input
                         />
                         <input
-                        className={styles.disabInput}
-                        type="text"
-                        placeholder="ชื่อจะถูกกรอกอัตโนมัติ"
-                        value={`ชื่อ : ${m.first_name}`}
-                        onChange={(e) => {
-                            const cleanValue = e.target.value.replace(/^ชื่อ : ?/, "");
-                            handleChangeMember(i, "first_name", cleanValue);
-                        }}
-                        disabled
+                            className={styles.disabInput}
+                            type="text"
+                            placeholder="ชื่อจะถูกกรอกอัตโนมัติ"
+                            value={`ชื่อ : ${m.first_name}`}
+                            disabled
                         />
                     </div>
                 </div>    
             ))}
 
-            {members.length < table.max_seats - 1 && (
+            {!readOnly && members.length < table.max_seats - 1 && (
                 <button
-                className={styles.addUserBt}
-                onClick={() => {
-                    setMembers([...members, { username: "", first_name: "" }]);
-                    onSelectMember(members.length + 2);
-                }}
+                    className={styles.addUserBt}
+                    onClick={() => {
+                        setMembers([...members, { username: "", first_name: "" }]);
+                        onSelectMember(members.length + 2);
+                    }}
                 >
                     <img src="/add_user.svg" />
                     เพิ่มสมาชิก

@@ -60,6 +60,41 @@ export default function ReserveSelectTablePage() {
         fetchSlots();
     }, [time_slot_id]);
 
+    const handleSoloJoin = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Token not found");
+            return;
+        }
+
+        try {
+            const res = await fetch(`http://localhost:8080/reservation/join_random/${time_slot_id}`,
+                {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!res.ok) {
+                console.error("Join random reservation failed");
+                alert("ไม่สามารถเข้าร่วมโต๊ะสุ่มได้");
+                return;
+            }
+
+            const resp = await res.json();
+
+            router.push( `/reserveFillUsr?random=${encodeURIComponent(true)}&reservation_id=${encodeURIComponent(resp.reservation_id)}`);
+
+        } catch (err) {
+            console.error(err);
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+        }
+    };
+
+
     if (loading) return <div className={styles.container}><p>กำลังโหลดข้อมูล...</p></div>;
     if (error) return <div className={styles.container}><p>เกิดข้อผิดพลาด: {error}</p></div>;
 
@@ -70,7 +105,7 @@ export default function ReserveSelectTablePage() {
             <p className={styles.txt}>หรือ</p>
             <button
                 className={styles.soloBt}
-                onClick={() => router.push(`/reserveFillUsr?random=${encodeURIComponent(true)}`)}
+                onClick={handleSoloJoin}
             >
                 Join with Anyone
             </button>

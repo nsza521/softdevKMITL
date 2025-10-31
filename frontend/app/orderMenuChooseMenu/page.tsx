@@ -85,12 +85,13 @@ export default function MenuPage() {
         return [...prev, { item, quantity, selectedAddons }]
       }
     })
+    // console.log("Cart updated:", cart);
   }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Welcome to [ชื่อร้าน]</h1>
+        <h1>Welcome to </h1>
       </header>
 
       <FilterGroup onFilterChange={(type) => setActiveFilter(type)} />
@@ -189,12 +190,18 @@ function FilterGroup({ onFilterChange }: { onFilterChange: (type: string) => voi
   }, []);
 
   const handleClick = (index: number) => {
-    setActiveIndex(index);
+    let newIndex = index;
 
-    if (index === 0) {
+    if (activeIndex === index) {
+      newIndex = 0;
+    }
+
+    setActiveIndex(newIndex);
+
+    if (newIndex === 0) {
       onFilterChange("All");
     } else {
-      onFilterChange(otherButtons[index - 1]); // index - 1 เพราะปุ่มแรกคือ All
+      onFilterChange(otherButtons[newIndex - 1]);
     }
   };
 
@@ -451,32 +458,87 @@ interface CartProps {
 }
 
 function Cart({ cart }: CartProps) {
-  if (cart.length === 0) return null
+  const router = useRouter();
 
-  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0)
+  if (cart.length === 0) return null;
 
+  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0);
   const itemCost = cart.reduce((sum, ci) => {
-    const basePrice = parseFloat(ci.item.price)
+    const basePrice = parseFloat(ci.item.price);
 
     const addonTotal = ci.selectedAddons?.reduce((addonSum, addon) => {
       const optionTotal = addon.options.reduce((optSum, opt) => {
-        return optSum + parseFloat(opt.price_delta)
-      }, 0)
-      return addonSum + optionTotal
-    }, 0) ?? 0
+        return optSum + parseFloat(opt.price_delta);
+      }, 0);
+      return addonSum + optionTotal;
+    }, 0) ?? 0;
 
-    const finalItemPrice = (basePrice + addonTotal) * ci.quantity
-    return sum + finalItemPrice
-  }, 0)
+    return sum + (basePrice + addonTotal) * ci.quantity;
+  }, 0);
+
+  const handleCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Token not found");
+      return;
+    }
+
+    const reservation_id = "76c77c40-f2d3-4994-a593-640610ccfbea";
+    const note = "ถึง 12:30";
+
+    const items = cart.map(ci => ({
+      menu_item_id: ci.item.id,
+      quantity: ci.quantity,
+      selections: ci.selectedAddons.flatMap(addon =>
+        addon.options.map(opt => ({
+          group_id: addon.id,
+          option_id: opt.id,
+          // qty: opt.max_qty ? opt.max_qty : undefined
+        }))
+      )
+    }));
+
+    const body = {
+      reservation_id,
+      note,
+      items
+    };
+
+    try {
+      const res = await fetch("http://localhost:8080/restaurant/order", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        alert("ส่งคำสั่งซื้อไม่สำเร็จ");
+        return;
+      }
+
+      const resp = await res.json();
+      console.log("Order response:", resp);
+
+      // router.push(`/orderMenuSummary${}`);
+
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
 
   return (
-    <div className={styles.cartCon}>
+    <button className={styles.cartCon} onClick={handleCheckout}>
       <div className={styles.cartItemCon}>
         <img src="/Shopping_Cart_Black.svg" />
         <span>{itemNum}</span>
       </div>
       <span>ตะกร้าของฉัน</span>
       <span>฿ {itemCost}</span>
-    </div>
-  )
+    </button>
+  );
 }
