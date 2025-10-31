@@ -12,5 +12,7 @@ func MapFoodOrderRoutes(g *gin.RouterGroup, h *OrderHandler) {
 	// เปิดออร์เดอร์ใหม่ (ลูกค้าหรือร้านสร้าง)
 	g.POST("", middleware.AuthMiddleware(), h.Create)
 	g.GET("/:orderID/detail", middleware.AuthMiddleware(), h.GetDetailForRestaurant)
+	// ===== Queue =====
+	g.GET("/queue", middleware.AuthMiddleware(), h.GetQueue)
 
 }

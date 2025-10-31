@@ -32,6 +32,10 @@ func InitAllSeedData(db *gorm.DB)  error {
 		return fmt.Errorf("error seeding noodle shop: %v", err)
 	}
 
+	if err := RunSeedOrders(db); err != nil {
+		return fmt.Errorf("error seeding orders: %v", err)
+	}
+
 	return nil
 }
 
