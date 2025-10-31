@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"time"
+	// "time"
 	"github.com/google/uuid"
 )
 
@@ -14,13 +14,13 @@ type Notification struct {
 	ReceiverID   uuid.UUID `json:"receiverId"`
 	ReceiverType string    `json:"receiverType"`
 	IsRead       bool      `json:"isRead"`
-	CreatedAt    time.Time `json:"createdAt"`
+	CreatedAt    string `json:"createdAt"`
 
 	Attributes 	map[string]interface{} `json:"attributes,omitempty"`
 }
 
 type RequestReadAll struct {
-	ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
+	// ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
 	ReceiverType string    `json:"receiverType" binding:"required"`
 }
 
@@ -66,9 +66,11 @@ type ListFilter struct {
 
 type CreateEventRequest struct {
 	Event        string      `json:"event" binding:"required"` // reserve_with | order_finished | order_canceled | reserve_success | reserve_failed
-	ReceiverID   uuid.UUID   `json:"receiverId" binding:"required"`
+	ReceiverID   uuid.UUID   `json:"receiverId,omitempty"`
 	ReceiverType string      `json:"receiverType" binding:"required,oneof=customer restaurant"`
 	Data         interface{} `json:"data" binding:"required"` // payload เฉพาะแต่ละ event (struct ด้านล่าง)
+
+	ReceiverUsername string `json:"receiverUsername,omitempty"`
 }
 
 type CreateEventResponse struct {
@@ -76,7 +78,7 @@ type CreateEventResponse struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // ---- payload เฉพาะเหตุการณ์ ----

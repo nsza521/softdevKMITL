@@ -12,7 +12,7 @@ type Restaurant struct {
 	Email         string    `gorm:"not null;unique"`
 	// OpenTime      time.Time `gorm:"not null"`
 	// CloseTime     time.Time `gorm:"not null"`
-	Status 	  	  string    `gorm:"default:'closed'"` // e.g., "open", "closed", "renovation"
+	Status 	  	  string    `gorm:"default:'open'"` // e.g., "open", "closed", "renovation"
 	WalletBalance float32   `gorm:"default:0"`
 	ProfilePic    *string   `gorm:"type:text"`
 

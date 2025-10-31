@@ -20,7 +20,7 @@ func (h *OrderHandler) GetDetailForRestaurant(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.uc.GetDetailForRestaurant(
+	resp, err := h.orderUC.GetDetailForRestaurant(
 		c.Request.Context(),
 		usecase.GetDetailForRestaurantInput{
 			OrderID:      orderID,

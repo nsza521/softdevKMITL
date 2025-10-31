@@ -3,6 +3,7 @@
 import styles from "./noti.module.css"
 import TransacDetail from "@/components/TransacDetail";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 
 const icon = {
@@ -15,73 +16,54 @@ const icon = {
     unsuccess : "/unsuccess.svg",
 };
 
-const mockUsers = [
-  {
-    id: 1,
-    head: "คุณได้จองโต๊ะร่วมกับ Username",
-    date: "19 ส.ค. 2025",
-    imgsrc: "/mail.svg",
-  },
-  {
-    id: 2,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
-   {
-    id: 3,
-    head: "อาหารพร้อมแล้ว! คุณสามารถรับอาหารได้ที่ร้านค้า",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/food.svg",
-  },
-   {
-    id: 4,
-    head: "อาหารที่คุณสั่งถูกยกเลิก",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/orderchange.svg",
-  },
-   {
-    id: 5,
-    head: "คุณสร้างคำสั่งการจองโต๊ะ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/create.svg",
-  },
-   {
-    id: 6,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
-
-  {
-    id: 7,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
-];
 
 
-
-function getViewDetail(head:string): string {
-  if (head === "จองโต๊ะสำเร็จ") return "กดยืนยัน";
-  else if (head === "จองโต๊ะไม่สำเร็จ") return "ดูรายละเอียด";
-  else if (head === "กำลังตรวจสอบ") return "รอการยืนยัน";
-  else return "ไม่ทราบสถานะ";
+interface allNoti {
+  id : string;
+  content : string;
+  type : string;
+  isRead : boolean;
+  createdAt : string;
 }
 
-export default function NotificationPage() {
+function getType(type:string) {
+  if (type === "PAYMENT") return icon.wallet;
+  else if (type === "BOOKING") return icon.success;
+  else return icon.mail
+}
 
+
+
+export default function NotificationPage() {
+  const [noti, setNoti] = useState<allNoti[]>([]);
+
+  useEffect(() => {
+    const fetchNoti = async() => {
+      try{
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:8080/notification/1",{
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json();
+        setNoti(data.items);
+      }
+      catch(err){
+        console.error(err);
+      }
+    }
+    fetchNoti();
+  },[])
     return(
         <div className={styles.container}>
             <div className={styles.content}>
-                              {mockUsers.map((user) => (
+                              {noti.map((user) => (
                 <Link key={user.id} href={`/noti/${user.id}`} className={styles.link}>
                   <TransacDetail
-                    head={user.head}
-                    date={user.date}
-                    viewdetail={getViewDetail(user.head)}
-                    imgsrc={user.imgsrc}
+                    head={user.content}
+                    date={user.createdAt}
+                    viewdetail={'ดูรายละเอียด'}
+                    imgsrc={getType(user.type)}
                   />
                 </Link>
             ))}

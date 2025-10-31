@@ -104,6 +104,8 @@ func initMySQL() (*gorm.DB, error) {
 	return db, nil
 }
 
+
+
 func initMinIO() (*minio.Client, error) {
 
 	endpoint := os.Getenv("MINIO_INTERNAL_ENDPOINT")
@@ -126,6 +128,17 @@ func initMinIO() (*minio.Client, error) {
 		return nil, fmt.Errorf("error initializing MinIO client: %v", err)
 	}
 	log.Println("MinIO client initialized successfully")
+
+	// Create buckets and sub-buckets
+	roles := []string{"restaurant", "customer"}
+	for _, role := range roles {
+		bucketName, subBuckets := utils.GetBucketAndSubBuckets(role)
+		err = utils.CreateBucketAndSubBuckets(minioClient, bucketName[0], subBuckets)
+		if err != nil {
+			return nil, fmt.Errorf("error setting up buckets for role %s: %v", role, err)
+		}
+		log.Printf("Buckets for role %s are set up", role)
+	}
 
 	return minioClient, nil
 }
