@@ -15,6 +15,7 @@ type TableReservationHandler interface {
 	GetTableReservationDetail() gin.HandlerFunc
 	DeleteTableReservation() gin.HandlerFunc
 	ConfirmTableReservation() gin.HandlerFunc
+	ConfirmMemberInTableReservation() gin.HandlerFunc
 }
 
 type TableReservationRepository interface {
@@ -37,8 +38,11 @@ type TableReservationRepository interface {
 
 type TableReservationUsecase interface {
 	CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
+	CreateNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
+	CreateRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
 	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
 	GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error)

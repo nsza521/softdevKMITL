@@ -174,3 +174,25 @@ func (h *TableReservationHandler) ConfirmTableReservation() gin.HandlerFunc {
 		c.JSON(200, gin.H{"message": "Reservation confirmed successfully"})
 	}
 }
+
+func (h *TableReservationHandler) ConfirmMemberInTableReservation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		err = h.tableReservationUsecase.ConfirmMemberInTableReservation(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Member confirmed in reservation successfully"})
+	}
+}
