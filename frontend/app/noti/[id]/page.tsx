@@ -1,12 +1,9 @@
 "use client";
 
 
-import Navbar from "@/components/Navbar";
 import styles from "./[id].module.css"
 import { title } from "process";
-
 import { useParams } from "next/navigation";
-
 
 const mockUsers = [
   {
@@ -54,7 +51,6 @@ const mockUsers = [
   },
 ];
 
-
 export default function NotificationDetailPage (){
   const params = useParams();
   const id = Number(params.id);
@@ -69,7 +65,6 @@ export default function NotificationDetailPage (){
   if (!user) return <p>ไม่พบ notification</p>;
   return (
     <div>
-      <Navbar title="รายการแจ้งเตือน" />
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
