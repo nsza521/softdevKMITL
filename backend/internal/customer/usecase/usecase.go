@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
 
 	"backend/internal/customer/dto"
 	"backend/internal/customer/interfaces"
@@ -164,3 +165,44 @@ func (u *CustomerUsecase) GetFullnameByUsername(customerID uuid.UUID, request *d
 	return fullName, nil
 }
 
+func (u *CustomerUsecase) GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil {
+		return nil, fmt.Errorf("customer not found")
+	}
+
+	customer, err = u.customerRepository.GetByUsername(request.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	firstName := &dto.GetFirstnameResponse{
+		FirstName: customer.FirstName,
+	}
+
+	return firstName, nil
+}
+
+func (u *CustomerUsecase) GenerateCustomerQRCode(customerID uuid.UUID, size int) ([]byte, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil {
+		return nil, fmt.Errorf("customer not found")
+	}
+
+	// prepare data for QR code
+	qrData := fmt.Sprintf("username:%s", customer.Username)
+
+	// สร้างเป็น PNG []byte
+	png, err := qrcode.Encode(qrData, qrcode.Medium, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return png, nil
+}

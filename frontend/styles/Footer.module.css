@@ -2,14 +2,14 @@
   width: 100%;
   max-width: 440px; 
   height: 6%;
-  background-color:#6D6D6D;
-  border-top: 1px gray solid;
+  background-color: var(--color2);
+  /* border-top: 1px gray solid; */
   text-align: center;
   position: fixed;
   bottom: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 2px 2px 2px rgb(68, 68, 68); 
+  /* box-shadow: 2px 2px 2px 2px rgb(68, 68, 68);  */
   z-index: 1000;
 }
 :global(button) {
@@ -17,7 +17,7 @@
 }
 /* ถ้าอยากให้ footer อยู่ด้านล่าง viewport ตลอด */
 .footer-fixed {
-  background-color:#6D6D6D;
+  background-color:var(--color2);
 }
 
 .footercontent {
@@ -36,7 +36,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color:#6D6D6D;
+  background-color:var(--color2);
   color:white;
   font-size: 10px;
 }
@@ -50,5 +50,5 @@
   'opsz' 24
 }
 .active{
-  color: black;
+  color: var(--color1);
 }

@@ -82,16 +82,18 @@ func (u *orderUsecase) Create(ctx context.Context, reservationID uuid.UUID, req 
 		fmt.Printf("Failed to load reservation: %v\n", err)
 		return dto.CreateFoodOrderResp{}, err
 	}
+
 	fmt.Printf("Loaded reservation: %+v\n", rsv)
 
 	order := &models.FoodOrder{
 		ID:            uuid.New(),
-		ReservationID: rsv.ID,
-		CustomerID:    currentCustomer,
+		ReservationID: rsv.ReservationID,
+		// CustomerID:    currentCustomer,
 		Status:        "pending",
 		OrderDate:     u.nowFn(),
 		Note:          req.Note,
 	}
+
 	var orderItems []models.FoodOrderItem
 	var orderOpts  []models.FoodOrderItemOption
 

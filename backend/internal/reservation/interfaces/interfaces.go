@@ -36,7 +36,7 @@ type TableReservationRepository interface {
 }
 
 type TableReservationUsecase interface {
-	CreateTableReservation(request *dto.CreateTableReservationRequest) (*dto.ReservationDetail, error)
+	CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
 	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)

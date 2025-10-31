@@ -1,5 +1,5 @@
 .nav{
-    background-color: #6D6D6D;
+    background-color: var(--color2);
     width: 100%;
     max-width: 440px; 
     height: 48px;
