@@ -15,7 +15,6 @@ import (
 	menuInterfaces "backend/internal/menu/interfaces"
 	"backend/internal/restaurant/dto"
 	"backend/internal/restaurant/interfaces"
-	user "backend/internal/user/dto"
 	"backend/internal/utils"
 
 	"github.com/google/uuid"
@@ -91,7 +90,7 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 	return nil
 }
 
-func (u *RestaurantUsecase) Login(request *user.LoginRequest) (string, error) {
+func (u *RestaurantUsecase) Login(request *dto.LoginRequest) (string, error) {
 	restaurant, err := u.restaurantRepository.GetByUsername(request.Username)
 	if err != nil {
 		return "", err

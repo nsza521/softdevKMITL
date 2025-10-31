@@ -8,7 +8,7 @@ import (
 
 	"backend/internal/db_model"
 	"backend/internal/customer/dto"
-	user "backend/internal/user/dto"
+	// user "backend/internal/user/dto"
 )
 
 type CustomerHandler interface {
@@ -19,6 +19,7 @@ type CustomerHandler interface {
 	EditProfile() gin.HandlerFunc
 	GetFullnameByUsername() gin.HandlerFunc
 	GetFirstNameByUsername() gin.HandlerFunc
+	GetQRCode() gin.HandlerFunc
 }
 
 type CustomerRepository interface {
@@ -31,10 +32,11 @@ type CustomerRepository interface {
 
 type CustomerUsecase interface {
 	Register(request *dto.RegisterCustomerRequest) error
-	Login(request *user.LoginRequest) (string, error)
+	Login(request *dto.LoginRequest) (string, error)
 	GetProfile(customerID uuid.UUID) (*dto.ProfileResponse, error)
 	EditProfile(customerID uuid.UUID, request *dto.EditProfileRequest) error
 	GetFullnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFullnameResponse, error)
 	GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error)
+	GetQRCode(customerID uuid.UUID) (string, error)
 	Logout(token string, expiry time.Time) error
 }
