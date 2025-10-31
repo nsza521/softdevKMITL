@@ -411,7 +411,21 @@ function Cart({ cart }: CartProps) {
   if (cart.length === 0) return null
 
   const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0)
-  const itemCost = cart.reduce((sum, ci) => sum + parseFloat(ci.item.price) * ci.quantity, 0)
+
+  const itemCost = cart.reduce((sum, ci) => {
+    const basePrice = parseFloat(ci.item.price)
+
+    // ✅ รวมราคา addon (option ทั้งหมด)
+    const addonTotal = ci.selectedAddons?.reduce((addonSum, addon) => {
+      const optionTotal = addon.options.reduce((optSum, opt) => {
+        return optSum + parseFloat(opt.price_delta)
+      }, 0)
+      return addonSum + optionTotal
+    }, 0) ?? 0
+
+    const finalItemPrice = (basePrice + addonTotal) * ci.quantity
+    return sum + finalItemPrice
+  }, 0)
 
   return (
     <div className={styles.cartCon}>
