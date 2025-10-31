@@ -20,7 +20,7 @@ type Notification struct {
 }
 
 type RequestReadAll struct {
-	ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
+	// ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
 	ReceiverType string    `json:"receiverType" binding:"required"`
 }
 
