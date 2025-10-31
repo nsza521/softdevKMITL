@@ -14,6 +14,29 @@ import (
 	"backend/internal/middleware"
 )
 
+func getCustomerIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return uuid.Nil, false
+	}
+
+	role, exist := c.Get("role")
+	if !exist || role.(string) != "customer" {
+		c.JSON(401, gin.H{"error": "customer unauthorized"})
+		return uuid.Nil, false
+	}
+
+	customerID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(500, gin.H{"error": "invalid user id"})
+		return uuid.Nil, false
+	}
+
+	return customerID, true
+}
+
+
 // MapNotiRoutes กำหนดเส้นทาง API สำหรับการแจ้งเตือน
 func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	// ✅ GET: List notifications
