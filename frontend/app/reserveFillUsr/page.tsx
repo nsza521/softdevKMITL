@@ -1,5 +1,4 @@
 "use client";
-import { table } from "console";
 import styles from "./reserveFillUsr.module.css";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -19,6 +18,7 @@ type Reservation = {
 };
 
 export default function ReserveFillUsrPage() {
+    const router = useRouter();
     const searchParam = useSearchParams();
     const random = searchParam.get("random") === "true" || false;
     const table_id = searchParam.get("table_timeslot_id");
@@ -129,7 +129,12 @@ export default function ReserveFillUsrPage() {
 
             if (!resp.ok) throw new Error("Failed to create reservation");
 
-            const result = await resp.json();
+            if (resp.ok) {
+                router.push("/orderMenuChooseRes");
+                // router.push("/orderMenuChooseMenu");
+            }
+
+            // const result = await resp.json();
         } catch (err) {
             console.error("Error:", err);
         }

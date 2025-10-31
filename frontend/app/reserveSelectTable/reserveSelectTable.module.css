@@ -68,6 +68,11 @@
     margin: 0;
     font-size: 14px;
 }
+
+.tableUnavailable {
+    cursor: not-allowed;
+}
+
 .tableUnavailable p{
     color: var(--color3);
 }

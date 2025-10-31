@@ -125,7 +125,13 @@ function TableIcon({ table }: { table: TableTimeSlot }) {
         className={`${styles.tableIcon} ${
             available ? styles.tableAvailable : styles.tableUnavailable
         }`}
-        onClick={() => router.push(`/reserveFillUsr?random=${encodeURIComponent(false)}&table_timeslot_id=${encodeURIComponent(table.id)}`)}
+        onClick={() =>
+            available &&
+            router.push(
+            `/reserveFillUsr?random=${encodeURIComponent(false)}&table_timeslot_id=${encodeURIComponent(table.id)}`
+            )
+        }
+        disabled={!available}
         >
             <img src={available ? "./table_layout_aval.svg" : "./table_layout_notaval.svg"}/>
             <p>{table.reserved_seats}/{table.max_seats}</p>
