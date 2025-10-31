@@ -6,6 +6,6 @@ import (
 
 type PaymentMethodDetail struct {
 	PaymentMethodID uuid.UUID `json:"payment_method_id"`
-	Method          string    `json:"method"`
-	ImageURL        *string   `json:"image_url"`
+	Name          	string    `json:"name"`
+	// ImageURL        *string   `json:"image_url"`
 }

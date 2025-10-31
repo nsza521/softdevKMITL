@@ -20,7 +20,7 @@ type Notification struct {
 }
 
 type RequestReadAll struct {
-	ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
+	// ReceiverID uuid.UUID 	`json:"receiverId" binding:"required"`
 	ReceiverType string    `json:"receiverType" binding:"required"`
 }
 
@@ -66,9 +66,11 @@ type ListFilter struct {
 
 type CreateEventRequest struct {
 	Event        string      `json:"event" binding:"required"` // reserve_with | order_finished | order_canceled | reserve_success | reserve_failed
-	ReceiverID   uuid.UUID   `json:"receiverId" binding:"required"`
+	ReceiverID   uuid.UUID   `json:"receiverId,omitempty"`
 	ReceiverType string      `json:"receiverType" binding:"required,oneof=customer restaurant"`
 	Data         interface{} `json:"data" binding:"required"` // payload เฉพาะแต่ละ event (struct ด้านล่าง)
+
+	ReceiverUsername string `json:"receiverUsername,omitempty"`
 }
 
 type CreateEventResponse struct {
