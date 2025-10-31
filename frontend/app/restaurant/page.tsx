@@ -145,7 +145,7 @@ interface MenuType {
 const handleLogout = async () => {
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:8080/user/logout", {
+    const res = await fetch("http://localhost:8080/restaurant/logout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
