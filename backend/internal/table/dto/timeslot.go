@@ -9,3 +9,13 @@ type TimeslotDetail struct {
 	StartTime string    `json:"start_time"`
 	EndTime   string    `json:"end_time"`
 }
+
+type CreateTimeslotRequest struct {
+	StartTime string `json:"start_time" binding:"required"`
+	EndTime   string `json:"end_time" binding:"required"`
+}
+
+type EditTimeslotRequest struct {
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}

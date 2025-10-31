@@ -6,21 +6,25 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
+	"github.com/minio/minio-go/v7"
 
 	"backend/internal/customer/dto"
 	"backend/internal/customer/interfaces"
 	"backend/internal/utils"
 	"backend/internal/db_model"
-	user "backend/internal/user/dto"
+	// user "backend/internal/user/dto"
 )
 
 type CustomerUsecase struct {
 	customerRepository interfaces.CustomerRepository
+	minioClient       *minio.Client
 }
 
-func NewCustomerUsecase(customerRepository interfaces.CustomerRepository) interfaces.CustomerUsecase {
+func NewCustomerUsecase(customerRepository interfaces.CustomerRepository, minioClient *minio.Client) interfaces.CustomerUsecase {
 	return &CustomerUsecase{
 		customerRepository: customerRepository,
+		minioClient:       minioClient,
 	}
 }
 
@@ -67,7 +71,7 @@ func (u *CustomerUsecase) Register(request *dto.RegisterCustomerRequest) error {
 	return  u.customerRepository.Create(&customer)
 }
 
-func (u *CustomerUsecase) Login(request *user.LoginRequest) (string, error) {
+func (u *CustomerUsecase) Login(request *dto.LoginRequest) (string, error) {
 	customer, err := u.customerRepository.GetByUsername(request.Username)
 	if err != nil {
 		return "", err
@@ -164,3 +168,56 @@ func (u *CustomerUsecase) GetFullnameByUsername(customerID uuid.UUID, request *d
 	return fullName, nil
 }
 
+func (u *CustomerUsecase) GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil {
+		return nil, fmt.Errorf("customer not found")
+	}
+
+	customer, err = u.customerRepository.GetByUsername(request.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	firstName := &dto.GetFirstnameResponse{
+		FirstName: customer.FirstName,
+	}
+
+	return firstName, nil
+}
+
+func (u *CustomerUsecase) GetQRCode(customerID uuid.UUID) (string, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return "", err
+	}
+	if customer == nil {
+		return "", fmt.Errorf("customer not found")
+	}
+
+	// prepare data for QR code
+	qrData := fmt.Sprintf("username: %s", customer.Username)
+	
+	// generate QR code
+	qr, err := qrcode.New(qrData, qrcode.Medium)
+	if err != nil {
+		return "", err
+	}
+	qr.DisableBorder = false
+	
+	const size = 256
+	png, err := qr.PNG(size)
+	if err != nil {
+		return "", err
+	}
+	url, err := utils.UploadBytes(
+		png, "customer-pictures", 
+		fmt.Sprintf("qr-codes/%s.png", customer.ID), 
+		u.minioClient, 
+		"image/png")
+
+	return url, nil
+}

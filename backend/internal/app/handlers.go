@@ -1,9 +1,9 @@
 package app
 
 import (
-	userHttp "backend/internal/user/delivery/http"
-	userRepository "backend/internal/user/repository"
-	userUsecase "backend/internal/user/usecase"
+	// userHttp "backend/internal/user/delivery/http"
+	// userRepository "backend/internal/user/repository"
+	// userUsecase "backend/internal/user/usecase"
 
 	customerHttp "backend/internal/customer/delivery/http"
 	customerRepository "backend/internal/customer/repository"
@@ -41,7 +41,7 @@ import (
 
 func (s *App) MapHandlers() error {
 
-	userGroup := s.gin.Group("/user")
+	// userGroup := s.gin.Group("/user")
 	customerGroup := s.gin.Group("/customer")
 	restaurantGroup := s.gin.Group("/restaurant")
 	menuGroup := s.gin.Group("/restaurant/menu")
@@ -53,7 +53,7 @@ func (s *App) MapHandlers() error {
 
 	// Customer Group
 	customerRepository := customerRepository.NewCustomerRepository(s.db)
-	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepository)
+	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepository, s.minio)
 	customerHandler := customerHttp.NewCustomerHandler(customerUsecase)
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
@@ -82,11 +82,11 @@ func (s *App) MapHandlers() error {
 	restaurantHttp.MapRestaurantRoutes(restaurantGroup, restaurantHandler)
 
 	// User Group
-	userRepository := userRepository.NewUserRepository(s.db)
-	// userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
-	userUsecase := userUsecase.NewUserUsecase(userRepository)
-	userHandler := userHttp.NewUserHandler(userUsecase, customerUsecase, restaurantUsecase)
-	userHttp.MapUserRoutes(userGroup, userHandler)
+	// userRepository := userRepository.NewUserRepository(s.db)
+	// // userUsecase := userUsecase.NewUserUsecase(userRepository, customerUsecase, restaurantUsecase)
+	// userUsecase := userUsecase.NewUserUsecase(userRepository)
+	// userHandler := userHttp.NewUserHandler(userUsecase, customerUsecase, restaurantUsecase)
+	// userHttp.MapUserRoutes(userGroup, userHandler)
 
 	// Table Group
 	tableRepository := tableRepository.NewTableRepository(s.db)

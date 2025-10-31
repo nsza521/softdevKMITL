@@ -15,7 +15,6 @@ import (
 	menuInterfaces "backend/internal/menu/interfaces"
 	"backend/internal/restaurant/dto"
 	"backend/internal/restaurant/interfaces"
-	user "backend/internal/user/dto"
 	"backend/internal/utils"
 
 	"github.com/google/uuid"
@@ -91,7 +90,7 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 	return nil
 }
 
-func (u *RestaurantUsecase) Login(request *user.LoginRequest) (string, error) {
+func (u *RestaurantUsecase) Login(request *dto.LoginRequest) (string, error) {
 	restaurant, err := u.restaurantRepository.GetByUsername(request.Username)
 	if err != nil {
 		return "", err
@@ -108,6 +107,7 @@ func (u *RestaurantUsecase) Login(request *user.LoginRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	
 	return token, nil
 
 }
@@ -177,11 +177,19 @@ func (u *RestaurantUsecase) UploadProfilePicture(restaurantID uuid.UUID, file *m
 	return url, nil
 }
 
+func (u *RestaurantUsecase) GetProfilePicture(restaurantID uuid.UUID) (*models.Restaurant, error) {
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	return restaurant, nil
+}
+
 func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error {
 	// Check if restaurant exists
 	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
 	if err != nil {
-		return err
+		return fmt.Errorf("restaurant not found: %v", err)
 	}
 
 	// Update status

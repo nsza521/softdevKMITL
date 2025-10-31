@@ -8,7 +8,6 @@ import (
 
 	"backend/internal/restaurant/dto"
 	"backend/internal/restaurant/interfaces"
-	user "backend/internal/user/dto"
 )
 
 type RestaurantHandler struct {
@@ -62,7 +61,7 @@ func (h *RestaurantHandler) Register() gin.HandlerFunc {
 func (h *RestaurantHandler) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var request user.LoginRequest
+		var request dto.LoginRequest
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -127,6 +126,21 @@ func (h *RestaurantHandler) UploadProfilePicture() gin.HandlerFunc {
 		}
 
 		c.JSON(200, gin.H{"message": "restaurant profile picture uploaded successfully", "url": url})
+	}
+}
+
+func (h *RestaurantHandler) GetProfilePicture() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		restaurant, err := h.restaurantUsecase.GetProfilePicture(restaurantID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"profile_picture": restaurant.ProfilePic})
 	}
 }
 

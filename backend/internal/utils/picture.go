@@ -4,31 +4,31 @@ import (
 	"context"
 	"fmt"
 	"log"
-	// "net/url"
-	// "time"
-	"os"
+	"bytes"
 	"mime/multipart"
 
 	"github.com/minio/minio-go/v7"
 	// "github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-var publicEndpoint = os.Getenv("MINIO_PUBLIC_ENDPOINT")
-
 func UploadImage(file multipart.File, fileHeader *multipart.FileHeader, bucketName, objectName string, minioClient *minio.Client) (string, error) {
 
 	ctx := context.Background()
 
 	// Check if the bucket exists
-	exists, err := minioClient.BucketExists(ctx, bucketName)
+	// exists, err := minioClient.BucketExists(ctx, bucketName)
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to check bucket: %w", err)
+	// }
+	// if !exists {
+	// 	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	// 	if err != nil {
+	// 		return "", fmt.Errorf("failed to create bucket: %w", err)
+	// 	}
+	// }
+	err := IsBucketExists(ctx, minioClient, bucketName)
 	if err != nil {
-		return "", fmt.Errorf("failed to check bucket: %w", err)
-	}
-	if !exists {
-		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-		if err != nil {
-			return "", fmt.Errorf("failed to create bucket: %w", err)
-		}
+		return "", err
 	}
 
 	// Upload the file
@@ -41,7 +41,7 @@ func UploadImage(file multipart.File, fileHeader *multipart.FileHeader, bucketNa
 	log.Printf("Successfully uploaded %s of size %d\n", uploadInfo.Key, uploadInfo.Size)
 
 	// Make the bucket public
-	err = makeBucketPublic(minioClient, bucketName)
+	err = MakeBucketPublic(minioClient, bucketName)
 	if err != nil {
 		return "", fmt.Errorf("failed to make bucket public: %w", err)
 	}
@@ -52,44 +52,36 @@ func UploadImage(file multipart.File, fileHeader *multipart.FileHeader, bucketNa
 	return url, nil
 }
 
-func makeBucketPublic(minioClient *minio.Client, bucketName string) error {
+func UploadBytes(data []byte, bucketName, objectName string, minioClient *minio.Client, contentType string) (string, error) {
+	ctx := context.Background()
 
-    ctx := context.Background()
+	// Check if the bucket exists
+	err := IsBucketExists(ctx, minioClient, bucketName)
+	if err != nil {
+		return "", err
+	}
 
-    // Check if the bucket exists
-    exists, err := minioClient.BucketExists(ctx, bucketName)
-    if err != nil {
-        return fmt.Errorf("failed to check bucket: %w", err)
-    }
+	// Prepare the data as a reader
+	reader := bytes.NewReader(data)
+	size := int64(len(data))
 
-    if !exists {
-        err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-        if err != nil {
-            return fmt.Errorf("failed to create bucket: %w", err)
-        }
-    }
+	// Upload
+	uploadInfo, err := minioClient.PutObject(ctx, bucketName, objectName, reader, size,
+		minio.PutObjectOptions{ContentType: contentType})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload: %w", err)
+	}
 
-    // Create a policy to make the bucket public
-    policy := fmt.Sprintf(`
-	{
-	"Version":"2012-10-17",
-	"Statement":[
-		{
-		"Effect":"Allow",
-		"Principal": {"AWS":["*"]},
-		"Action":["s3:GetObject"],
-		"Resource":["arn:aws:s3:::%s/*"]
-		}
-	]
-	}`, 
-	bucketName)
+	log.Printf("Successfully uploaded %s of size %d\n", uploadInfo.Key, uploadInfo.Size)
 
-    err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
-    if err != nil {
-        return fmt.Errorf("failed to set bucket policy: %w", err)
-    }
+	// Make the bucket public
+	err = MakeBucketPublic(minioClient, bucketName)
+	if err != nil {
+		return "", fmt.Errorf("failed to make bucket public: %w", err)
+	}
 
-    return nil
+	url := fmt.Sprintf("http://%s/%s/%s", publicEndpoint, bucketName, objectName)
+	return url, nil
 }
 
 

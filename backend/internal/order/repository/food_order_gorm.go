@@ -3,17 +3,20 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
 	// "fmt"
 	"gorm.io/gorm"
 
-	"github.com/google/uuid"
 	"backend/internal/db_model"
+
+	"github.com/google/uuid"
 )
 
 // ใช้ guard แบบ scoped โดยผูก reservation กับ restaurant_id เสมอเวลา query
 type Reservation struct {
-	ID           uuid.UUID `gorm:"type:char(36);primaryKey"`
+	ReservationID           uuid.UUID `gorm:"type:char(36);primaryKey"`
 	RestaurantID uuid.UUID `gorm:"type:char(36);index;not null"`
 	CustomerID   uuid.UUID `gorm:"type:char(36);index;not null"`
 	Status       string    `gorm:"type:varchar(32);not null"`
@@ -37,6 +40,9 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error) {
 	var res Reservation
 	// โหลด reservation
+
+	fmt.Printf("Loading reservation ID: %s for customer ID: %s\n", reservationID, customerID)
+
 	if err := r.db.Debug().WithContext(ctx).
 		First(&res, "id = ?", reservationID).Error; err != nil {
 		return nil, err

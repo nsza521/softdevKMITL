@@ -14,7 +14,9 @@ func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interface
 	customerGroup.Use(middleware.AuthMiddleware())
 	customerGroup.GET("/profile", customerHandler.GetProfile())
 	customerGroup.PATCH("/profile", customerHandler.EditProfile())
-	customerGroup.GET("/fullname", customerHandler.GetFullnameByUsername())
+	customerGroup.POST("/fullname", customerHandler.GetFullnameByUsername())
+	customerGroup.POST("/firstname", customerHandler.GetFirstNameByUsername())
 	customerGroup.POST("/logout", customerHandler.Logout())
+	customerGroup.GET("/qrcode", customerHandler.GetQRCode())
 	// customerGroup.PUT("/change_password", customerHandler.ChangePassword())
 }
