@@ -4,9 +4,6 @@ import styles from "./history.module.css";
 import { useEffect, useState } from "react";
 import { Noto_Sans_Thai } from "next/font/google";
 import TransacDetail from "@/components/TransacDetail";
-import { table } from "console";
-import { create } from "domain";
-
 
 
 const notoThai = Noto_Sans_Thai({
@@ -27,9 +24,6 @@ interface Histroy {
     table_col : string;
     create_at : string;
 }
-
-
-
 
 export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
