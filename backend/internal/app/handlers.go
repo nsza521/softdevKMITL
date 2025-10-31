@@ -102,7 +102,7 @@ func (s *App) MapHandlers() error {
 
 	// Payment Group
 	paymentRepository := paymentRepository.NewPaymentRepository(s.db)
-	paymentUsecase := paymentUsecase.NewPaymentUsecase(paymentRepository)
+	paymentUsecase := paymentUsecase.NewPaymentUsecase(paymentRepository, customerRepository, restaurantRepository)
 	paymentHandler := paymentHttp.NewPaymentHandler(paymentUsecase)
 	paymentHttp.MapPaymentRoutes(paymentGroup, paymentHandler)
 
