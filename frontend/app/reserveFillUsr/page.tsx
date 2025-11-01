@@ -38,13 +38,13 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`,
+                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail/owner`,
                         { headers: { Authorization: `Bearer ${token}`} }
                     );
 
                     if (!res.ok) {
-                        console.error("Join random reservation failed");
-                        alert("ไม่สามารถเข้าร่วมโต๊ะสุ่มได้");
+                        console.error("fetch data error");
+                        alert("ไม่สามารถดึงข้อมูลได้");
                         return;
                     }
 
