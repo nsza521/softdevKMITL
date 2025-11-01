@@ -37,6 +37,15 @@ func (r *queueRepository) ListPendingOrdersByRestaurant(ctx context.Context, res
 	return orders, err
 }
 
+func (r *queueRepository) ListServedOrdersByRestaurant(ctx context.Context, restaurantID string) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Table("food_orders").
+		Where("status = ? AND restaurant_id = ?", "served", restaurantID).
+		Count(&count).Error
+	return count, err
+}
+
 // helper ใช้ตอน filter item ต่อ order
 func (r *queueRepository) CountMenuItemBelongsToRestaurant(menuItemID, restaurantID string) (bool, error) {
 	var count int64
