@@ -17,9 +17,11 @@ type PaymentHandler interface {
 
 type PaymentRepository interface {
 	CreateTransaction(transaction *models.Transaction) error
+	CreatePaymentMethod(method *models.PaymentMethod) error
 	GetPaymentMethodByID(paymentMethodID uuid.UUID) (*models.PaymentMethod, error)
-	GetPaymentMethods(methodType string) ([]models.PaymentMethod, error)
+	GetPaymentMethodsByType(methodType string) ([]models.PaymentMethod, error)
 	GetAllTransactionsByUserID(userID uuid.UUID) ([]models.Transaction, error)
+	GetAllPaymentMethods() ([]models.PaymentMethod, error)
 }
 
 type PaymentUsecase interface {

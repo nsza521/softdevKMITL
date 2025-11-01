@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"time"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 
@@ -25,8 +26,10 @@ type TableReservationRepository interface {
 	CreateTableReservation(reservation *models.TableReservation) (*models.TableReservation, error)
 	GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 	GetAllTableReservationByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservation, error)
+	CountReservationsByCustomerAndDate(customerID uuid.UUID, date time.Time) (int64, error)
 	UpdateTableReservation(reservation *models.TableReservation) error
 	DeleteTableReservation(reservationID uuid.UUID) error
+
 
 	// Table Reservation Members Repository
 	CreateTableReservationMember(member *models.TableReservationMembers) error
@@ -42,7 +45,7 @@ type TableReservationRepository interface {
 type TableReservationUsecase interface {
 	CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
 	CreateNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
-	CreateRandomTableReservation(request *dto.CreateRandomTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error)
+	CreateRandomTableReservation(request *dto.CreateRandomTableReservationRequest, customerID uuid.UUID) (*dto.RandomReservationDetail, error)
 	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
