@@ -2,13 +2,14 @@ package usecase
 
 import (
 	"fmt"
-	"time"
+	// "time"
 
-	customerInterfaces "backend/internal/customer/interfaces"
 	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
+
+	"github.com/google/uuid"
 
 	"github.com/google/uuid"
 )
@@ -42,14 +43,14 @@ func (u *TableReservationUsecase) getTableTimeslotStatus(reservedSeats int, maxS
 }
 
 func (u *TableReservationUsecase) CreateNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
-	today := time.Now()
-	count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
-	if err != nil {
-		return nil, err
-	}
-	if count >= 2 {
-		return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
-	}
+	// today := time.Now()
+	// count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if count >= 2 {
+	// 	return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
+	// }
 
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(request.TableTimeslotID)
 	if err != nil {
@@ -168,14 +169,14 @@ func (u *TableReservationUsecase) CreateRandomTableReservation(request *dto.Crea
 	// 	return nil, err
 	// }
 
-	today := time.Now()
-	count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
-	if err != nil {
-		return nil, err
-	}
-	if count >= 2 {
-		return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
-	}
+	// today := time.Now()
+	// count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if count >= 2 {
+	// 	return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
+	// }
 
 	// find available tableTimeslot
 	availableTableTimeslots, err := u.tableRepository.GetAllAvailableTableTimeslot(request.TimeslotID)
@@ -318,8 +319,40 @@ func (u *TableReservationUsecase) GetTableReservationDetail(reservationID uuid.U
 	}, nil
 }
 
+func (u *TableReservationUsecase) GetTableReservationOwnerDetail(reservationID uuid.UUID) (*dto.OwnerDetail, error) {
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	reservations, err := u.tableReservationRepository.GetAllTableReservationByTableTimeslotID(reservation.TableTimeslotID)
+	if err != nil {
+		return nil, err
+	}
+	var tableMembers []models.TableReservationMembers
+	for _, res := range reservations {
+		members, err := u.tableReservationRepository.GetAllMembersByReservationID(res.ID)
+		if err != nil {
+			return nil, err
+		}
+		tableMembers = append(tableMembers, members...)
+	}
+
+	ownerMember := tableMembers[0]
+	customer, err := u.customerRepository.GetByID(ownerMember.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.OwnerDetail{
+		TableTimeslotID: reservation.TableTimeslotID,
+		OwnerUsername:   customer.Username,
+		OwnerFirstname:  customer.FirstName,
+	}, nil
+}
+
 func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
-	reservationMembers, err := u.tableReservationRepository.GetAllReservationsByCustomerID(customerID)
+	reservationMembers, err := u.tableReservationRepository.GetAllTableReservationsByCustomerID(customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -342,8 +375,8 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 	return reservations, nil
 }
 
-func (u *TableReservationUsecase) GetAlltableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
-	reservationMembers, err := u.tableReservationRepository.GetAllReservationsByCustomerID(customerID)
+func (u *TableReservationUsecase) GetAllTableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
+	reservationMembers, err := u.tableReservationRepository.GetAllTableReservationsByCustomerID(customerID)
 	if err != nil {
 		return nil, err
 	}
