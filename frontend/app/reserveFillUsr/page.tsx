@@ -12,7 +12,6 @@ type Member = {
 
 type Reservation = {
     table_timeslot_id: UUID;
-    reserve_people: number;
     random: boolean;
     members: Member[];
 };
@@ -22,8 +21,11 @@ export default function ReserveFillUsrPage() {
     const searchParam = useSearchParams();
     const random = searchParam.get("random") === "true" || false;
     const reservation_id = searchParam.get("reservation_id") || "";
-    const table_id = searchParam.get("table_timeslot_id");
+    // const time_slot_id = searchParam.get("timeSlotId");
+    let table_id = searchParam.get("table_timeslot_id");
 
+    const [owner, setOwner] = useState<MemberInfo | null>(null);
+    // const [reservation_id, setReservationId] = useState("");
     const [table, setTable] = useState<Table | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -36,62 +38,62 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`ดึงข้อมูลจากในreservation `, {
-                        headers: {
+                    const res = await fetch(`http://localhost:8080/table/reservation/create/random`,
+                        {
+                            method: "POST",
+                            headers: {
                             "Content-Type": "application/json",
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                        },
-                    });
+                            Authorization: `Bearer ${token}`,
+                            },
 
-                    if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลการจองแบบสุ่มได้");
+                            // body: JSON.stringify({ timeslot_id: time_slot_id })
+                        }
+                    );
 
-                    const json = await res.json();
-                    const t = json.table_timeslot;
-
-                    if (!t) throw new Error("ไม่พบข้อมูลโต๊ะจากการสุ่ม");
-
-                    const data: Table = {
-                        id: t.id,
-                        row: t.table_row,
-                        col: t.table_col,
-                        max_seats: t.max_seats,
-                        status: t.status,
-                        reserved_seats: t.reserved_seats,
-                    };
-
-                    setTable(data);
-
-                    if (json.members) {
-                        setMembers(json.members);
-                        setSelectedMemberIndex(json.members.length);
+                    if (!res.ok) {
+                        console.error("Join random reservation failed");
+                        alert("ไม่สามารถเข้าร่วมโต๊ะสุ่มได้");
+                        return;
                     }
 
-                } else if (table_id) {
-                    const res = await fetch(`http://localhost:8080/table/table_timeslot/${table_id}`, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                        },
-                    });
+                    const resp = await res.json();
+                    // const reserv = resp.reservation;
+                    console.log("Created random reservation:", resp);
 
-                    if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
-
-                    const json = await res.json();
-                    const t = json.table_timeslot;
-
-                    if (!t) throw new Error("ไม่พบข้อมูลโต๊ะ");
-
-                    const data: Table = {
-                        id: t.id,
-                        row: t.table_row,
-                        col: t.table_col,
-                        max_seats: t.max_seats,
-                        status: t.status,
-                        reserved_seats: t.reserved_seats,
+                    const ownerInfo: MemberInfo = {
+                        username: resp.owner.username,
+                        first_name: resp.owner.first_name,
                     };
-
-                    setTable(data);
+                    // setOwner(ownerInfo);
+                    // table_id = reserv.table_timeslot_id;
                 }
+                console.log("table_id:", table_id);
+
+                const res = await fetch(`http://localhost:8080/table/table_timeslot/${table_id}`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                });
+
+                if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+
+                const json = await res.json();
+                const t = json.table_timeslot;
+
+                if (!t) throw new Error("ไม่พบข้อมูลโต๊ะ");
+
+                const data: Table = {
+                    id: t.id,
+                    row: t.table_row,
+                    col: t.table_col,
+                    max_seats: t.max_seats,
+                    status: t.status,
+                    reserved_seats: t.reserved_seats,
+                };
+
+                setTable(data);
+                
 
             } catch (err: any) {
                 setError(err.message);
@@ -149,7 +151,6 @@ export default function ReserveFillUsrPage() {
 
             const reservation: Reservation = {
                 table_timeslot_id: table_id || "",
-                reserve_people: selectedMemberIndex,
                 random: random,
                 members: members,
             };
@@ -166,8 +167,8 @@ export default function ReserveFillUsrPage() {
             if (!resp.ok) throw new Error("Failed to create reservation");
 
             if (resp.ok) {
-                // const result = await resp.json();
-                // console.log(result)
+                const result = await resp.json();
+                console.log(result)
                 router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
             }
 
@@ -175,6 +176,13 @@ export default function ReserveFillUsrPage() {
             console.error("Error:", err);
         }
     };
+
+    const handleSubmitRD = async () => {
+        console.log("reservation_id:", reservation_id);
+        if (reservation_id) {
+            router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
+        }
+    }
 
     return (
         <div className={styles.container}>
@@ -184,12 +192,13 @@ export default function ReserveFillUsrPage() {
                 onSelectMember={setSelectedMemberIndex}
                 onMembersChange={setMembers}
                 readOnly={random}
+                owner={owner}
             />
             <div className={styles.infoDiv}>
                 <img src="/info.svg"/>
                 <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
             </div>
-            <button className={styles.createReserveBt} onClick={random? handleSubmit: handleSubmitRD}>
+            <button className={styles.createReserveBt} onClick={random? handleSubmitRD: handleSubmit}>
                 เชิญเพื่อนและเริ่มสั่งอาหาร
                 <img src="/Arrow_Right_MD.svg"/>
             </button>
@@ -260,10 +269,11 @@ interface MembersProps {
     table: Table;
     onSelectMember: (num: number) => void;
     onMembersChange: (members: Member[]) => void;
-    readOnly?: boolean; 
+    readOnly?: boolean;
+    owner?: MemberInfo | null;
 }
 
-function Members({ table, onSelectMember, onMembersChange, readOnly = false }: MembersProps) {
+function Members({ table, onSelectMember, onMembersChange, readOnly = false, owner }: MembersProps) {
     const INITIAL_MEMBERS = Array.from({ length: 2 }, () => ({
         username: "",
         first_name: "",
@@ -373,6 +383,8 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                     <h1>สมาชิกที่เข้าร่วม</h1>
                     <div className={styles.titleLine}></div>
                 </div>
+
+                {/* แสดงข้อมูลตัวเอง */}
                 <label className={styles.sectionLabel}>คุณ :</label>
                 <div className={styles.myInputCon}>
                     <input
@@ -390,10 +402,33 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                 </div>
             </div>
 
+            {/* แสดงเจ้าของโต๊ะ เมื่อ readOnly */}
+            {readOnly && owner && (
+                <div className={styles.formSection}>
+                    <label className={styles.sectionLabel}>เจ้าของโต๊ะ :</label>
+                    <div className={styles.myInputCon}>
+                        <input
+                            className={styles.disabInput}
+                            type="text"
+                            value={`@ ${owner.username}`}
+                            disabled
+                        />
+                        <input
+                            className={styles.disabInput}
+                            type="text"
+                            value={`ชื่อ : ${owner.first_name}`}
+                            disabled
+                        />
+                    </div>
+                </div>
+            )}
+
             {members.map((m, i) => (
                 <div key={i} className={styles.formSection}>
                     <div className={styles.labelRow}>
                         <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
+
+                        {/* ✅ ซ่อนปุ่มลบสมาชิก 100% เมื่อ readonly */}
                         {i >= 2 && !readOnly && (
                             <button
                                 className={styles.removeUserBt}
@@ -407,6 +442,7 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                             </button>
                         )}
                     </div>
+
                     <div className={styles.inputCon}>
                         <input
                             className={styles.usnInput}
@@ -419,7 +455,7 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                                 handleChangeMember(i, "username", cleanValue);
                             }}
                             onBlur={() => handleUsernameBlur(i)}
-                            disabled={readOnly} // lock input
+                            disabled={readOnly}
                         />
                         <input
                             className={styles.disabInput}
@@ -429,9 +465,10 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                             disabled
                         />
                     </div>
-                </div>    
+                </div>
             ))}
 
+            {/* ✅ ซ่อนปุ่มเพิ่มสมาชิกเมื่อ readonly */}
             {!readOnly && members.length < table.max_seats - 1 && (
                 <button
                     className={styles.addUserBt}
@@ -445,5 +482,6 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
                 </button>
             )}
         </div>
+
     );
 }

@@ -87,10 +87,10 @@ export default function ReserveSelectTablePage() {
             }
 
             const resp = await res.json();
-
             console.log("Created random reservation:", resp);
 
-            // router.push( `/reserveFillUsr?random=${encodeURIComponent(true)}&reservation_id=${encodeURIComponent(resp.reservation_id)}`);
+            router.push( `/reserveFillUsr?random=${encodeURIComponent(true)}&reservation_id=${encodeURIComponent(resp.reservation.reservation_id)}` );
+            // router.push(`/reserveFillUsr?random=${encodeURIComponent(true)}`)
 
         } catch (err) {
             console.error(err);

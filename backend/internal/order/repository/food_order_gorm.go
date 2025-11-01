@@ -1,6 +1,7 @@
 package repository
 
 import (
+	models "backend/internal/db_model"
 	"context"
 	"errors"
 	"fmt"
@@ -9,18 +10,16 @@ import (
 	// "fmt"
 	"gorm.io/gorm"
 
-	"backend/internal/db_model"
-
 	"github.com/google/uuid"
 )
 
 // ใช้ guard แบบ scoped โดยผูก reservation กับ restaurant_id เสมอเวลา query
 type Reservation struct {
-	ReservationID           uuid.UUID `gorm:"type:char(36);primaryKey"`
-	RestaurantID uuid.UUID `gorm:"type:char(36);index;not null"`
-	CustomerID   uuid.UUID `gorm:"type:char(36);index;not null"`
-	Status       string    `gorm:"type:varchar(32);not null"`
-	ReserveDate  time.Time
+	ReservationID uuid.UUID `gorm:"type:char(36);primaryKey"`
+	RestaurantID  uuid.UUID `gorm:"type:char(36);index;not null"`
+	CustomerID    uuid.UUID `gorm:"type:char(36);index;not null"`
+	Status        string    `gorm:"type:varchar(32);not null"`
+	ReserveDate   time.Time
 }
 
 func (Reservation) TableName() string { return "table_reservations" }
@@ -67,12 +66,10 @@ func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reserv
 	return &res, nil
 }
 
-
 // สร้างออเดอร์แบบ transactional และผูก guard ตาม restaurant_id ของ reservation
 func (r *orderRepository) CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// double-check reservation ยังอยู่และเป็นร้านเดียวกัน
-
 
 		if err := tx.Create(order).Error; err != nil {
 			return err
