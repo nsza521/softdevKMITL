@@ -17,6 +17,7 @@ interface NotiCon {
 interface NotiAttributes {
   members : string[];
   tableNo : string;
+  reserveId : string;
   when : string;
   queueNo? : string;
   restaurant? : string;
@@ -40,8 +41,10 @@ export default function NotificationDetailPage (){
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
+         console.log("🔍 Data from API:", data);
         const found = data.items.find((item: NotiCon) => item.id === id);
         setNotiContent(found || null);
+        console.log("reserveId:", found?.attributes.reserveId);
       }
       catch(err){
         console.error(err);
@@ -74,7 +77,42 @@ export default function NotificationDetailPage (){
                 <p className={styles.descibe}>*  หากคุณได้ทำการจองโต๊ะร่วมกับรายชื่อดังกล่าว
                       โปรดยืนยันเพื่อดำเนินการต่อ</p>
                 <div className={styles.confirmBtn}>
-                  <button className={styles.acceptBtn}>ยืนยัน</button>
+                  <button
+            className={styles.acceptBtn}
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  alert("กรุณาเข้าสู่ระบบก่อน");
+                  return;
+                }
+                const reserveId = notiContent.attributes.reserveId;
+               
+                const res = await fetch(
+                  "http://localhost:8080/table/reservation/${reserveId}/confirm_member",
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+
+                if (!res.ok) {
+                  const err = await res.text();
+                  throw new Error(err);
+                }
+
+                alert("ยืนยันการจองโต๊ะสำเร็จ!");
+              } catch (error) {
+                console.error(error);
+                alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");
+              }
+            }}
+          >
+        ยืนยัน
+      </button>
                   <button className={styles.cancleBtn}>ยกเลิก</button>
                 </div>
               </div>
