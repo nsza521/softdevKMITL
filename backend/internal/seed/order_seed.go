@@ -164,7 +164,7 @@ func seedOneOrderIfNotExists(
 
 	// เตรียม actor/dummy IDs ต่อ order
 	customerID := uuid.New()
-	createdByUserID := uuid.New()
+	// createdByUserID := uuid.New()
 	var reservationID uuid.UUID
 	if plan.Channel == "reservation" {
 		reservationID = uuid.New() // จำลองว่ามีการจองโต๊ะ
@@ -179,7 +179,7 @@ func seedOneOrderIfNotExists(
 		ID:              orderID,
 		ReservationID:   reservationID,
 		CustomerID:      customerID,
-		CreatedByUserID: createdByUserID,
+		// CreatedByUserID: createdByUserID,
 		Status:          plan.Status,   // เช่น "pending" หรือ "preparing"
 		Channel:         plan.Channel,  // "walk_in" / "reservation"
 		OrderDate:       now,
