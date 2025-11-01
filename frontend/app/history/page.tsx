@@ -25,21 +25,35 @@ interface Histroy {
     create_at : string;
 }
 
+interface Topup {
+    transaction_id : string;
+    payment_method : string;
+    amount : number;
+    created_at :string;
+}
+
 export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
     const [history, setHistroy] = useState<Histroy[]>([]);
+    const [topup, setTopup] = useState<Topup[]>([]);
+
     const [error, setError] = useState("");
 
     useEffect(() => {
         const fetchHistory = async () =>{
             try {
                 const token = localStorage.getItem("token");
-                const res = await fetch("http://localhost:8080/table/reservation/history",{
+                const resHistory = await fetch("http://localhost:8080/table/reservation/history",{
                     headers:{"Authorization": `Bearer ${token}`,},
                 })
+                const dataHistory = await resHistory.json();
+                setHistroy(dataHistory.reservations);
 
-                const data = await res.json();
-                setHistroy(data.reservations);
+                const resTopup = await fetch("http://localhost:8080/payment/transaction/all",{
+                    headers:{"Authorization": `Bearer ${token}`,},
+                })
+                const dataTopup = await resTopup.json();
+                setTopup(dataTopup.transactions);
             }catch (err) {
                 console.error(err);
                 setError("โหลดข้อมูลไม่สำเร็จ");
@@ -65,7 +79,7 @@ export default function HistoryPage(){
 
             {active === "จองโต๊ะ" &&(
                 <div className={styles.detail_container}>
-                    {history.map((n) => (
+                    {[...history].reverse().map((n) => (
                         <TransacDetail
                             key={n.reservation_id}  
                             head={"โต๊ะ " + n.table_row + n.table_col}
@@ -93,13 +107,13 @@ export default function HistoryPage(){
 
             {active === "การเติมเงิน" &&(
                 <div className={styles.detail_container}>
-                    {Array.from({ length: 10 }).map((_, index) => (
+                    {[...topup].reverse().map((n) => (
                         <TransacDetail
-                            key={index} // key ต้องไม่ซ้ำ
+                            key={n.transaction_id}  
                             head="เติมเงิน"
-                            detail="ผ่าน QR"
-                            date="19 ส.ค. 2025"
-                            price="100 บาท"
+                            detail={"ผ่าน " + n.payment_method}
+                            date={n.created_at}
+                            price={n.amount + " บาท"}
                             imgsrc={icon.wallet}
                         />
                         ))}
