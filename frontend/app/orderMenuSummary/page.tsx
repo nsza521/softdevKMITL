@@ -4,12 +4,49 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
 import styles from "./orderMenuSummary.module.css"
 
-export default function OrderMenuSummaryPage({ params }: any) {
+type UUID = string;
+
+interface Option {
+    group_name: string;
+    option_name: string;
+}
+interface OrderItem {
+    item_id: UUID;
+    menu_name: string;
+    quantity: number;
+    total_price: number;
+    options: Option[];
+}
+
+interface Order {
+    order_id: UUID;
+    orders: OrderItem[];
+}
+
+interface Addon {
+  group_name: string;
+  option_name: string;
+}
+
+interface RawItem {
+  item_id: UUID;
+  menu_name: string;
+  quantity: number;
+  total_price: number;
+  addons?: Addon[]; 
+}
+
+interface RawOrder {
+  order_id: UUID;
+  items: RawItem[];
+}
+
+export default function OrderMenuSummaryPage() {
     const searchParams = useSearchParams();
     const order_id = searchParams.get("order_id") || ""
     const reservation_id = searchParams.get("reservationId") || ""
 
-    const [order, setOrder] = useState<any>(null)
+    const [order, setOrder] = useState<Order | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -25,11 +62,24 @@ export default function OrderMenuSummaryPage({ params }: any) {
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
-
                 console.log("Order Data:", data)
 
+                const formattedOrder: Order = {
+                order_id: data.order_id,
+                orders: data.items.map((item: RawItem): OrderItem => ({
+                    item_id: item.item_id,
+                    menu_name: item.menu_name,
+                    quantity: item.quantity,
+                    total_price: item.total_price,
+                    options: item.addons?.map((add: Addon): Option => ({
+                    group_name: add.group_name,
+                    option_name: add.option_name
+                    })) ?? []  
+                }))
+                };
 
-                // setOrder(data)
+                setOrder(formattedOrder);
+
             } catch (err: any) {
                 setError(err.message)
             } finally {
@@ -44,66 +94,75 @@ export default function OrderMenuSummaryPage({ params }: any) {
     if (error) return <p style={{color:"red"}}>{error}</p>
     if (!order) return <p>ไม่พบข้อมูลออเดอร์</p>
 
+    const total_price = order.orders.reduce((sum, item) => sum + item.total_price, 0);
 
     return (
         <div className={styles.container}>
             <div className={styles.myOrder}>
-                <h2>My Order</h2>
+            <h2>My Order</h2>
 
-                {order.items.length === 0 && (
-                    <p style={{opacity:0.6}}>ไม่มีรายการอาหาร</p>
-                )}
+            {/* ไม่มีรายการอาหาร */}
+            {order.orders.length === 0 && (
+                <p style={{ opacity: 0.6 }}>ไม่มีรายการอาหาร</p>
+            )}
 
-                {order.items.map((item: any) => (
-                    <div key={item.item_id} className={styles.blogItem}>
-                        
-                        <div className={styles.quantity}>
-                            <p>{item.quantity}</p>
-                        </div>
+            {/* แสดงรายการอาหาร */}
+            {order.orders.map((item: OrderItem) => (
+                <div key={item.item_id} className={styles.blogItem}>
 
-                        <div className={styles.menu}>
-                            <p>{item.menu_name}</p>
-
-                            <ul className={styles.addOnList}>
-                                {item.addons.map((add: any) => (
-                                    <li key={add.group_id}>
-                                        {add.group_name}: {add.option_name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className={styles.price}>
-                            <span>฿</span> <span>{item.price}</span>
-                        </div>
-                    </div>
-                ))}
-
-                <div className={styles.totalPrice}>
-                    <p>รวมทั้งหมด</p>
-                    <p>฿ {order.total_price}</p>
+                {/* จำนวน */}
+                <div className={styles.quantity}>
+                    <p>{item.quantity}</p>
                 </div>
+
+                {/* ชื่อเมนู + ตัวเลือก */}
+                <div className={styles.menu}>
+                    <p>{item.menu_name}</p>
+
+                    {/* ตัวเลือก addons */}
+                    {item.options.length > 0 && (
+                    <ul className={styles.addOnList}>
+                        {item.options.map((add: Option, index: number) => (
+                        <li key={index}>
+                            {add.group_name}: {add.option_name}
+                        </li>
+                        ))}
+                    </ul>
+                    )}
+                </div>
+
+                {/* ราคาของ item */}
+                <div className={styles.price}>
+                    <span>฿</span> <span>{item.total_price}</span>
+                </div>
+                </div>
+            ))}
+
+            {/* ยอดรวมทั้งหมด */}
+            <div className={styles.totalPrice}>
+                <p>รวมทั้งหมด</p>
+                <p>฿ {total_price}</p>
+            </div>
             </div>
 
-
+            {/* Balance ด้านล่าง */}
             <div className={styles.myBalance}>
-                <div className={styles.content}>
-                    <h2>My Balance</h2>
-                    <div className={styles.blogBalance}>
-                        <p>ยอดเงินคงเหลือ {order.balance} บาท</p>
-                        <button className={styles.topUpBtn}>
-                            <img src="/plus.svg" width={15} height={15} />
-                            เติมเงิน
-                        </button>
-                    </div>
+            <div className={styles.content}>
+                <h2>My Balance</h2>
+                <div className={styles.blogBalance}>
+                <p>ยอดเงินคงเหลือ  บาท</p>
+                <button className={styles.topUpBtn}>
+                    <img src="/plus.svg" width={15} height={15} />
+                    เติมเงิน
+                </button>
+                </div>
 
-                    <div className={styles.blogActionBtn}>
-                        <button className={styles.cancleBtn}>Cancel</button>
-                        <button className={styles.acceptBtn}>ชำระเงิน</button>
-                    </div>
+                <div className={styles.blogActionBtn}>
+                <button className={styles.cancleBtn}>Cancel</button>
+                <button className={styles.acceptBtn}>ชำระเงิน</button>
                 </div>
             </div>
-
+            </div>
         </div>
-    )
+    );
 }

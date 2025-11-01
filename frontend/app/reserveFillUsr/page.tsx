@@ -193,8 +193,6 @@ export default function ReserveFillUsrPage() {
                 }
 
                 console.log("Notification sent to", member.username);
-                const notires = await notificationRes.json();
-                console.log(notires)
             }
 
                 router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(result.reservation.reservation_id)}`);
@@ -245,8 +243,11 @@ type Table = {
 
 function TableInfo({ table, selectedMemberIndex, random }: { table: Table, selectedMemberIndex: number, random: boolean }) {
     const [allowOthers, setAllowOthers] = useState(false);
-
-    const occupied = selectedMemberIndex;
+    
+    let occupied = selectedMemberIndex;
+    if (random) {
+        occupied = table.reserved_seats;
+    }
     const min_allow = table.max_seats * 0.8;
     const canClick = (occupied >= min_allow && occupied < table.max_seats) || !random;
     const isChecked = occupied < min_allow ? true : allowOthers;

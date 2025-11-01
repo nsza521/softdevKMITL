@@ -1,10 +1,57 @@
 "use client";
 
+
+import styles from "./[id].module.css"
+import { title } from "process";
 import { useEffect, useState } from "react";
 import styles from "./[id].module.css";
 import { useParams } from "next/navigation";
 
+const mockUsers = [
+  {
+    id: 1,
+    head: "คุณได้จองโต๊ะร่วมกับ Username",
+    date: "19 ส.ค. 2025",
+    imgsrc: "/mail.svg",
+  },
+  {
+    id: 2,
+    head: "จองโต๊ะไม่สำเร็จ",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/unsuccess.svg",
+  },
+   {
+    id: 3,
+    head: "อาหารพร้อมแล้ว! คุณสามารถรับอาหารได้ที่ร้านค้า",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/food.svg",
+  },
+   {
+    id: 4,
+    head: "อาหารที่คุณสั่งถูกยกเลิก",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/orderchange.svg",
+  },
+   {
+    id: 5,
+    head: "คุณสร้างคำสั่งการจองโต๊ะ",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/create.svg",
+  },
+   {
+    id: 6,
+    head: "จองโต๊ะไม่สำเร็จ",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/unsuccess.svg",
+  },
 
+  {
+    id: 7,
+    head: "จองโต๊ะไม่สำเร็จ",
+    date: "20 ส.ค. 2025",
+    imgsrc: "/unsuccess.svg",
+  },
+];
 interface NotiCon {
   id : string;
   title : string;
