@@ -4,12 +4,31 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
 import styles from "./orderMenuSummary.module.css"
 
-export default function OrderMenuSummaryPage({ params }: any) {
+type UUID = string;
+
+interface Option {
+    group_name: string;
+    option_name: string;
+}
+interface OrderItem {
+    item_id: UUID;
+    menu_name: string;
+    quantity: number;
+    total_price: number;
+    options: Option[];
+}
+
+interface Order {
+    order_id: UUID;
+    orders: OrderItem[];
+}
+
+export default function OrderMenuSummaryPage() {
     const searchParams = useSearchParams();
     const order_id = searchParams.get("order_id") || ""
     const reservation_id = searchParams.get("reservationId") || ""
 
-    const [order, setOrder] = useState<any>(null)
+    const [order, setOrder] = useState<Order | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -25,11 +44,23 @@ export default function OrderMenuSummaryPage({ params }: any) {
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
-
                 console.log("Order Data:", data)
 
+                const formattedOrder: Order = {
+                    order_id: data.order_id,
+                    orders: data.items.map((item: any) => ({
+                        item_id: item.item_id,
+                        menu_name: item.menu_name,
+                        quantity: item.quantity,
+                        total_price: item.total_price,
+                        options: item.addons.map((add: any) => ({
+                            group_name: add.group_name,
+                            option_name: add.option_name
+                        }))
+                    }))
+                }
 
-                // setOrder(data)
+                setOrder(formattedOrder)
             } catch (err: any) {
                 setError(err.message)
             } finally {
