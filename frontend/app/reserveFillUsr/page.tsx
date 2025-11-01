@@ -49,7 +49,7 @@ export default function ReserveFillUsrPage() {
                     }
 
                     const resp = await res.json();
-                    // const reserv = resp.reservation;
+                    const reserv = resp.reservation;
                     console.log("random reservation:", resp);
 
                     // const ownerInfo: MemberInfo = {
@@ -57,7 +57,7 @@ export default function ReserveFillUsrPage() {
                     //     first_name: resp.owner.first_name,
                     // };
                     // setOwner(ownerInfo);
-                    // table_id = reserv.table_timeslot_id;
+                    table_id = reserv.table_timeslot_id;
                 }
                 console.log("table_id:", table_id);
 
@@ -161,6 +161,39 @@ export default function ReserveFillUsrPage() {
             if (resp.ok) {
                 const result = await resp.json();
                 console.log(result)
+
+            // notification part
+            const members = result.reservation.members;  
+            const targetMembers = members.slice(1); 
+
+            for (const member of targetMembers) {
+                const noti = {
+                    event: "reserve_with",
+                    receiverUsername: member.username,
+                    receiverType: "customer",
+                    data: {
+                        tableNo: table.row + table.col,
+                        when: result.reservation.create_at,
+                        members: members.map((m: { username: string }) => m.username)
+                    },
+                };
+
+                const notificationRes = await fetch("http://localhost:8080/notification/event", {
+                    method: "POST",
+                    headers: {  
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify(noti),
+                });
+
+                if (!notificationRes.ok) {
+                    console.error("Failed to send notification to", member.username);
+                }
+
+                console.log("Notification sent to", member.username);
+            }
+
                 router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(result.reservation.reservation_id)}`);
             }
 
@@ -172,7 +205,7 @@ export default function ReserveFillUsrPage() {
     const handleSubmitRD = async () => {
         console.log("reservation_id:", reservation_id);
         if (reservation_id) {
-            router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
+            router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(reservation_id)}`);
         }
     }
 

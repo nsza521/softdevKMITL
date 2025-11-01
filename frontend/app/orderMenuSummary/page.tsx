@@ -25,7 +25,11 @@ export default function OrderMenuSummaryPage({ params }: any) {
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
-                setOrder(data)
+
+                console.log("Order Data:", data)
+
+
+                // setOrder(data)
             } catch (err: any) {
                 setError(err.message)
             } finally {
