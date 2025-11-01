@@ -3,12 +3,13 @@ package usecase
 import (
 	"fmt"
 	// "time"
-	
-	"github.com/google/uuid"
-	"backend/internal/db_model"
+
+	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
+
+	customerInterfaces "backend/internal/customer/interfaces"
 
 	"github.com/google/uuid"
 )

@@ -38,26 +38,26 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`,
+                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail/owner`,
                         { headers: { Authorization: `Bearer ${token}`} }
                     );
 
                     if (!res.ok) {
-                        console.error("Join random reservation failed");
-                        alert("ไม่สามารถเข้าร่วมโต๊ะสุ่มได้");
+                        console.error("fetch data error");
+                        alert("ไม่สามารถดึงข้อมูลได้");
                         return;
                     }
 
                     const resp = await res.json();
-                    const reserv = resp.reservation;
+                    const detail = resp.details;
                     console.log("random reservation:", resp);
 
-                    // const ownerInfo: MemberInfo = {
-                    //     username: resp.owner.username,
-                    //     first_name: resp.owner.first_name,
-                    // };
-                    // setOwner(ownerInfo);
-                    table_id = reserv.table_timeslot_id;
+                    const ownerInfo: MemberInfo = {
+                        username: detail.owner_username,
+                        first_name: detail.owner_firstname,
+                    };
+                    setOwner(ownerInfo);
+                    table_id = detail.table_timeslot_id;
                 }
                 console.log("table_id:", table_id);
 
@@ -214,7 +214,7 @@ export default function ReserveFillUsrPage() {
 
     return (
         <div className={styles.container}>
-            <TableInfo table={table} selectedMemberIndex={selectedMemberIndex}/>
+            <TableInfo table={table} selectedMemberIndex={selectedMemberIndex} random={random}/>
             <Members 
                 table={table} 
                 onSelectMember={setSelectedMemberIndex}
@@ -243,12 +243,12 @@ type Table = {
     reserved_seats: number;
 };
 
-function TableInfo({ table, selectedMemberIndex }: { table: Table, selectedMemberIndex: number }) {
+function TableInfo({ table, selectedMemberIndex, random }: { table: Table, selectedMemberIndex: number, random: boolean }) {
     const [allowOthers, setAllowOthers] = useState(false);
 
     const occupied = selectedMemberIndex;
     const min_allow = table.max_seats * 0.8;
-    const canClick = occupied >= min_allow && occupied < table.max_seats;
+    const canClick = (occupied >= min_allow && occupied < table.max_seats) || !random;
     const isChecked = occupied < min_allow ? true : allowOthers;
 
     return (
@@ -451,7 +451,7 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false, own
                 </div>
             )}
 
-            {members.map((m, i) => (
+            {!readOnly && members.map((m, i) => (
                 <div key={i} className={styles.formSection}>
                     <div className={styles.labelRow}>
                         <label className={styles.sectionLabel}>สมาชิกคนที่ {i + 2}</label>
