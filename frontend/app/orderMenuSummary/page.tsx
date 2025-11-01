@@ -15,8 +15,13 @@ export default function OrderMenuSummaryPage({ params }: any) {
 
     useEffect(() => {
         const fetchOrder = async () => {
+            const token = localStorage.getItem("token")
             try {
-                const res = await fetch(`http://localhost:8080/restaurant/order/${order_id}/detail`)
+                const res = await fetch(`http://localhost:8080/restaurant/order/${order_id}/detail`, {
+                    headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }});
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
