@@ -41,7 +41,7 @@ func (r *TableReservationRepository) GetTableReservationByID(id uuid.UUID) (*mod
 
 func (r *TableReservationRepository) GetAllTableReservationByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservation, error) {
 	var reservations []models.TableReservation
-	if err := r.db.Where("table_timeslot_id = ?", tableTimeslotID).Find(&reservations).Error; err != nil {
+	if err := r.db.Where("table_timeslot_id = ?", tableTimeslotID).Order("created_at ASC").Find(&reservations).Error; err != nil {
 		return nil, err
 	}
 	return reservations, nil
@@ -89,7 +89,7 @@ func (r *TableReservationRepository) CreateTableReservationMember(member *models
 
 func (r *TableReservationRepository) GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error) {
 	var members []models.TableReservationMembers
-	if err := r.db.Where("reservation_id = ?", reservationID).Find(&members).Error; err != nil {
+	if err := r.db.Where("reservation_id = ?", reservationID).Order("created_at ASC").Find(&members).Error; err != nil {
 		return nil, err
 	}
 	return members, nil
@@ -105,7 +105,7 @@ func (r *TableReservationRepository) IsCustomerInReservation(reservationID uuid.
 	return count > 0, nil
 }
 
-func (r *TableReservationRepository) GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
+func (r *TableReservationRepository) GetAllTableReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
 	var reservations []models.TableReservationMembers
 	if err := r.db.Where("customer_id = ?", customerID).Find(&reservations).Error; err != nil {
 		return nil, err

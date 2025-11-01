@@ -27,3 +27,9 @@ type RandomReservationDetail struct {
 	ReservationID   uuid.UUID `json:"reservation_id"`
 	TableTimeslotID uuid.UUID `json:"table_timeslot_id"`
 }
+
+type OwnerDetail struct {
+	OwnerUsername   string    `json:"owner_username"`
+	OwnerFirstname  string    `json:"owner_firstname"`
+	TableTimeslotID uuid.UUID `json:"table_timeslot_id"`
+}
