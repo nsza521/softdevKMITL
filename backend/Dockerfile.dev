@@ -1,0 +1,17 @@
+# Use Go latest image as base
+FROM golang:latest AS dev
+
+WORKDIR /app
+
+# Install Air for hot reload
+RUN go install github.com/air-verse/air@latest
+
+# Copy go mod files and download deps
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the app
+COPY . .
+
+# Set Air as the entrypoint
+CMD ["air", "-c", ".air.toml"]

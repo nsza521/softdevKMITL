@@ -1,0 +1,25 @@
+# .air.toml
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # build from /cmd/api/
+  cmd = "go build -o ./tmp/main ./cmd/api/"
+  bin = "tmp/main"
+  full_bin = "./tmp/main"
+
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  exclude_dir = ["assets", "tmp", "vendor"]
+
+  poll = true
+  poll_interval = 1000 # 1s
+
+[log]
+  level = "debug"
+
+[dev]
+  watch_dir = ["./cmd/api", "./internal"]
+
+[color]
+  main = "yellow"
+  watcher = "cyan"
