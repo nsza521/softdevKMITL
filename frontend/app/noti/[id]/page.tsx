@@ -1,98 +1,97 @@
 "use client";
 
-
-import styles from "./[id].module.css"
-import { title } from "process";
+import { useEffect, useState } from "react";
+import styles from "./[id].module.css";
 import { useParams } from "next/navigation";
 
-const mockUsers = [
-  {
-    id: 1,
-    head: "คุณได้จองโต๊ะร่วมกับ Username",
-    date: "19 ส.ค. 2025",
-    imgsrc: "/mail.svg",
-  },
-  {
-    id: 2,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
-   {
-    id: 3,
-    head: "อาหารพร้อมแล้ว! คุณสามารถรับอาหารได้ที่ร้านค้า",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/food.svg",
-  },
-   {
-    id: 4,
-    head: "อาหารที่คุณสั่งถูกยกเลิก",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/orderchange.svg",
-  },
-   {
-    id: 5,
-    head: "คุณสร้างคำสั่งการจองโต๊ะ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/create.svg",
-  },
-   {
-    id: 6,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
 
-  {
-    id: 7,
-    head: "จองโต๊ะไม่สำเร็จ",
-    date: "20 ส.ค. 2025",
-    imgsrc: "/unsuccess.svg",
-  },
-];
+interface NotiCon {
+  id : string;
+  title : string;
+  type : string;
+  content : string;
+  createdAt : string;
+  attributes : NotiAttributes;
+}
+
+interface NotiAttributes {
+  members : string[];
+  tableNo : string;
+  when : string;
+  queueNo? : string;
+  restaurant? : string;
+}
 
 export default function NotificationDetailPage (){
   const params = useParams();
-  const id = Number(params.id);
-
-  const user = mockUsers.find(u => u.id === id);
+   const id = params.id as string;
+  const [notiContent, setNotiContent] = useState<NotiCon | null>(null);
 
   const handleConfirm = () => {
     alert("คุณกดยืนยันเรียบร้อยแล้ว!");
     // TODO: เรียก API เพื่อ update สถานะได้ที่นี่
   };
 
-  if (!user) return <p>ไม่พบ notification</p>;
+  useEffect(() =>{
+    const fetchNotiContent = async () => {
+      try{
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:8080/notification/1",{
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const found = data.items.find((item: NotiCon) => item.id === id);
+        setNotiContent(found || null);
+      }
+      catch(err){
+        console.error(err);
+      }
+    }
+    fetchNotiContent();
+  },[id])
+  if (!notiContent) return <p>ไม่พบ notification</p>;
   return (
     <div>
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <h3>{user.head}</h3>
+            <h3>{notiContent.title}</h3>
+            <p>{notiContent.content}</p>
           </div>
-          <div className={styles.detail}>
-            <p>{user.date}</p>
-          </div>
+
+            {notiContent.type === "RESERVE_WITH" && (
+              <div className={styles.detail}>
+                <p>รายละเอียด :</p>
+                <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
+                <p>วันที่ {notiContent.attributes.when}</p>
+                <div className={styles.member}>
+                  <p>สมาชิก :&nbsp;</p>
+                  <div>
+                    {notiContent.attributes.members.map((member, index) => (
+                      <p key={index}>{member}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className={styles.confirmBtn}>
+                  <button className={styles.acceptBtn}>ยืนยัน</button>
+                  <button className={styles.cancleBtn}>ยกเลิก</button>
+                </div>
+              </div>
+            )}
+
+            {notiContent.type === "ORDER_FINISHED" && (
+              <div className={styles.detail}>
+                <p>รายละเอียด :</p>
+                <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
+                <p>วันที่ {notiContent.attributes.when}</p>
+                <p>ร้านอาหาร : {notiContent.attributes.restaurant}</p>
+                <p>คิวที่ {notiContent.attributes.queueNo}</p>
+              </div>
+            )}
+            {/* {notiContent.type === "ORDER_CANCELED" && ()} */}
+            {notiContent.type === "RESERVE_SUCCESS" && ()}
+            {notiContent.type === "RESERVE_FAILED" && ()}
         </div>
-
-         {user.head === "คุณได้จองโต๊ะร่วมกับ Username" &&(
-            <div className={styles.confirmBtn}>
-              <button  onClick={handleConfirm}>ยืนยัน</button>
-              <button  onClick={handleConfirm}>ยกเลิก</button>
-            </div>
-          )}
-
-          {user.head === "อาหารที่คุณสั่งถูกยกเลิก" && (
-            <div className={styles.confirmBtn}>
-              <button onClick={handleConfirm}>เปลี่ยนคำสั่งซื้อ</button>
-            </div>
-          )}
-
-          {user.head === "จองโต๊ะไม่สำเร็จ" && (
-            <div className={styles.confirmBtn}>
-              <button onClick={handleConfirm}>จองใหม่อีกครั้ง</button>  
-            </div>
-          )}
       </div>
     </div>
   );

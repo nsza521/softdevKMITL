@@ -16,8 +16,6 @@ const icon = {
     unsuccess : "/unsuccess.svg",
 };
 
-
-
 interface allNoti {
   id : string;
   content : string;
@@ -28,7 +26,11 @@ interface allNoti {
 
 function getType(type:string) {
   if (type === "PAYMENT") return icon.wallet;
-  else if (type === "BOOKING") return icon.success;
+  else if (type === "RESERVE_SUCCESS") return icon.success;
+  else if (type === "RESERVE_FAILED") return icon.unsuccess;
+  else if (type === "ORDER_CANCELED") return icon.order_cancle;
+  else if (type === "ORDER_FINISHED") return icon.food;
+  else if (type === "BOOKING") return icon.create
   else return icon.mail
 }
 
