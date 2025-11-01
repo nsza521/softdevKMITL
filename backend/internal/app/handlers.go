@@ -55,6 +55,8 @@ func (s *App) MapHandlers() error {
 	customerRepository := customerRepository.NewCustomerRepository(s.db)
 	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepository, s.minio)
 	customerHandler := customerHttp.NewCustomerHandler(customerUsecase)
+
+
 	customerHttp.MapCustomerRoutes(customerGroup, customerHandler)
 
 	// --- MenuItem (ของเดิม) ---
