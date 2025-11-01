@@ -88,6 +88,7 @@ func initMySQL() (*gorm.DB, error) {
 		
 		&models.PaymentMethod{},
 		&models.Payment{},
+		&models.Transaction{},
 		&models.Notifications{},
 	); err != nil {
 		return nil, fmt.Errorf("error migrating database: %v", err)
@@ -103,8 +104,6 @@ func initMySQL() (*gorm.DB, error) {
 
 	return db, nil
 }
-
-
 
 func initMinIO() (*minio.Client, error) {
 

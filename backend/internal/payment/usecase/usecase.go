@@ -32,7 +32,7 @@ func (u *PaymentUsecase) GetTopupPaymentMethods(userID uuid.UUID) ([]dto.Payment
 	
 	var paymentMethods []dto.PaymentMethodDetail
 
-	methods, err := u.paymentRepository.GetPaymentMethods("topup")
+	methods, err := u.paymentRepository.GetPaymentMethodsByType("topup")
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +48,8 @@ func (u *PaymentUsecase) GetTopupPaymentMethods(userID uuid.UUID) ([]dto.Payment
 	return paymentMethods, nil
 }
 
-func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, amount float32, paymentMethodID uuid.UUID) error {
-	paymentMethod, err := u.paymentRepository.GetPaymentMethodByID(paymentMethodID)
+func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, request *dto.TopupRequest) error {
+	paymentMethod, err := u.paymentRepository.GetPaymentMethodByID(request.PaymentMethodID)
 	if err != nil {
 		return err
 	}
@@ -62,15 +62,15 @@ func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, amount float32, payment
 		return err
 	}
 
-	customer.WalletBalance += amount
+	customer.WalletBalance += request.Amount
 	if err := u.customerRepository.Update(customer); err != nil {
 		return err
 	}
 
 	transaction := &models.Transaction{
 		UserID:          userID,
-		Amount:          amount,
-		PaymentMethodID: paymentMethodID,
+		Amount:          request.Amount,
+		PaymentMethodID: paymentMethod.ID,
 		Type:            "topup",
 	}
 
@@ -81,7 +81,31 @@ func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, amount float32, payment
 	return nil
 }
 
-func (u *PaymentUsecase) CreateTopupTransaction(userID uuid.UUID, amount float32, paymentMethodID uuid.UUID) error {
-	// Implementation for creating a top-up transaction
-	return nil
+func (u *PaymentUsecase) GetAllTransactions(userID uuid.UUID) ([]dto.TransactionDetail, error) {
+	_, err := u.customerRepository.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions, err := u.paymentRepository.GetAllTransactionsByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var transactionDetails []dto.TransactionDetail
+	for _, tx := range transactions {
+		paymentMethod, err := u.paymentRepository.GetPaymentMethodByID(tx.PaymentMethodID)
+		if err != nil {
+			return nil, err
+		}
+		transactionDetails = append(transactionDetails, dto.TransactionDetail{
+			TransactionID:   tx.ID,
+			Amount:          tx.Amount,
+			PaymentMethod:   paymentMethod.Name,
+			Type:            tx.Type,
+			CreatedAt:       tx.CreatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	return transactionDetails, nil
 }

@@ -12,6 +12,10 @@ type CreateTableReservationRequest struct {
 	Members 	  		[]Username	`json:"members" binding:"required"`
 }
 
+type CreateRandomTableReservationRequest struct {
+	TimeslotID     uuid.UUID 	`json:"timeslot_id"`
+}
+
 type Username struct {
 	Username string `json:"username"`
 }

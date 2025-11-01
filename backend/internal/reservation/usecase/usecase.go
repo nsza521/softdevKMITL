@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	customerInterfaces "backend/internal/customer/interfaces"
@@ -29,8 +28,11 @@ func NewTableReservationUsecase(tableReservationRepository interfaces.TableReser
 }
 
 // Table Reservation Usecase
-func (u *TableReservationUsecase) getTableTimeslotStatus(reservedSeats int, maxSeats int) string {
-	if reservedSeats >= int(0.8*float32(maxSeats)) {
+func (u *TableReservationUsecase) getTableTimeslotStatus(reservedSeats int, maxSeats int, random bool) string {
+	if !random && reservedSeats >= int(0.8*float32(maxSeats)) {
+		return "full"
+	}
+	if random && reservedSeats >= maxSeats {
 		return "full"
 	}
 	if reservedSeats > 0 {
@@ -39,8 +41,16 @@ func (u *TableReservationUsecase) getTableTimeslotStatus(reservedSeats int, maxS
 	return "available"
 }
 
-func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
-	// Implement logic for creating a non-random table reservation
+func (u *TableReservationUsecase) CreateNotRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
+	today := time.Now()
+	count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
+	if err != nil {
+		return nil, err
+	}
+	if count >= 2 {
+		return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
+	}
+
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(request.TableTimeslotID)
 	if err != nil {
 		return nil, err
@@ -49,6 +59,9 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 	status := tableTimeslot.Status
 	if status == "full" || status == "expired" {
 		return nil, fmt.Errorf("Table is not available for reservation")
+	}
+	if status == "partial" {
+		return nil, fmt.Errorf("TableTimeslot is already reserved")
 	}
 
 	// timeslot , err := u.tableRepository.GetTimeslotByID(tableTimeslot.TimeslotID)
@@ -72,9 +85,6 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 	reservePeople := len(request.Members)
 	if reservePeople <= 0 {
 		return nil, fmt.Errorf("Reserve people must be greater than 0")
-	}
-	if reservePeople > table.MaxSeats {
-		return nil, fmt.Errorf("Reserve people exceeds max seats of the table")
 	}
 	if reservePeople > (table.MaxSeats - tableTimeslot.ReservedSeats) {
 		return nil, fmt.Errorf("Reserve people exceeds available seats of the table")
@@ -103,8 +113,7 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
 	}
 
-	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats)
-
+	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, random)
 	err = u.tableRepository.UpdateTableTimeslot(tableTimeslot)
 	if err != nil {
 		return nil, err
@@ -138,83 +147,97 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 	}, nil
 }
 
-func (u *TableReservationUsecase) createRandomTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
-	if request.Random == false {
-		return nil, fmt.Errorf("Random must be true for random table reservation")
-	}
-
-	if len(request.Members) != 1 {
-		return nil, fmt.Errorf("Random reservation allows only 1 member")
+func (u *TableReservationUsecase) CreateRandomTableReservation(request *dto.CreateRandomTableReservationRequest, customerID uuid.UUID) (*dto.RandomReservationDetail, error) {
+	customer, err := u.customerRepository.GetByID(customerID)
+	if err != nil {
+		return nil, err
 	}
 
 	// find current active timeslot
-	now := time.Now()
-	currentTimeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	// now := time.Now()
+	// currentTimeslot, err := u.tableRepository.GetActiveTimeslot(now)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if currentTimeslot == nil {
+	// 	return nil, fmt.Errorf("No available timeslot right now")
+	// }
+
+	// timeslot, err := u.tableRepository.GetTimeslotByID(request.TimeslotID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	today := time.Now()
+	count, err := u.tableReservationRepository.CountReservationsByCustomerAndDate(customerID, today)
 	if err != nil {
 		return nil, err
 	}
-	if currentTimeslot == nil {
-		return nil, fmt.Errorf("No available timeslot right now")
+	if count >= 2 {
+		return nil, fmt.Errorf("You have reached the daily reservation limit (2 per day)")
 	}
 
 	// find available tableTimeslot
-	availableTableTimeslot, err := u.tableRepository.GetAvailableTableTimeslot(currentTimeslot.ID)
+	availableTableTimeslots, err := u.tableRepository.GetAllAvailableTableTimeslot(request.TimeslotID)
 	if err != nil {
 		return nil, err
 	}
-	if availableTableTimeslot == nil {
+	if len(availableTableTimeslots) == 0 {
 		return nil, fmt.Errorf("No available tables in this timeslot")
 	}
 
-	// create reservation
-	reservation := &models.TableReservation{
-		TableTimeslotID: availableTableTimeslot.ID,
-		ReservePeople:   1,
-		Random:          true,
-		Status:          "pending",
-	}
-	createdReservation, err := u.tableReservationRepository.CreateTableReservation(reservation)
-	if err != nil {
-		return nil, err
-	}
+	for _, tableTimeslot := range availableTableTimeslots {
+		reservations, err := u.tableReservationRepository.GetAllTableReservationByTableTimeslotID(tableTimeslot.ID)
+		if err != nil {
+			return nil, err
+		}
 
-	// update reserved seats
-	table, err := u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
-	if err != nil {
-		return nil, err
-	}
-	minLeft := max(int(math.Ceil(0.8*float64(table.MaxSeats))) - availableTableTimeslot.ReservedSeats, 0)
-	if minLeft+availableTableTimeslot.ReservedSeats > table.MaxSeats {
-		return nil, fmt.Errorf("Reserved seats exceed max seats of the table")
-	}
-	availableTableTimeslot.ReservedSeats += 1
-	availableTableTimeslot.Status = u.getTableTimeslotStatus(availableTableTimeslot.ReservedSeats, minLeft+availableTableTimeslot.ReservedSeats)
-	if err := u.tableRepository.UpdateTableTimeslot(availableTableTimeslot); err != nil {
-		return nil, err
-	}
+		alreadyReserved := false
+		for _, reservation := range reservations {
+			err = u.isCustomerInReservation(reservation.ID, customerID)
+			if err == nil {
+				alreadyReserved = true
+				break
+			}
+		}
+		if alreadyReserved {
+			continue
+		}
 
-	// add member
-	if err := u.CreateTableReservationMember(createdReservation.ID, request.Members[0].Username); err != nil {
-		return nil, err
-	}
+		reservation := &models.TableReservation{
+			TableTimeslotID: tableTimeslot.ID,
+			ReservePeople:   1,
+			Random:          true,
+			Status:          "pending",
+		}
 
-	table, err = u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
-	if err != nil {
-		return nil, err
-	}
+		createdReservation, err := u.tableReservationRepository.CreateTableReservation(reservation)
+		if err != nil {
+			return nil, err
+		}
 
-	return &dto.ReservationDetail{
-		CreateAt:        createdReservation.CreatedAt.Format("02-01-2006 15:04"),
-		ReservationID:   createdReservation.ID,
-		TableTimeslotID: createdReservation.TableTimeslotID,
-		ReservePeople:   createdReservation.ReservePeople,
-		Status:          createdReservation.Status,
-		Members:         request.Members,
-		TableRow:        table.TableRow,
-		TableCol:        table.TableCol,
-		StartTime:       currentTimeslot.StartTime.Format("15:04"),
-		EndTime:         currentTimeslot.EndTime.Format("15:04"),
-	}, nil
+		table, err := u.tableRepository.GetTableByID(tableTimeslot.TableID)
+		if err != nil {
+			return nil, err
+		}
+
+		tableTimeslot.ReservedSeats += 1
+		tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, true)
+		if err := u.tableRepository.UpdateTableTimeslot(&tableTimeslot); err != nil {
+			return nil, err
+		}
+
+		if err := u.CreateTableReservationMember(createdReservation.ID, customer.Username); err != nil {
+			return nil, err
+		}
+
+		return &dto.RandomReservationDetail{
+			ReservationID:   createdReservation.ID,
+			TableTimeslotID: createdReservation.TableTimeslotID,
+		}, nil
+	}
+	// member := dto.Username{Username: customer.Username}
+	return nil, fmt.Errorf("No available tables for reservation")
 }
 
 func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
@@ -235,9 +258,10 @@ func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTabl
 	// ถ้าไม่มีโต๊ะว่าง ต้องเพิ่มเข้าคิว ??
 
 	if request.TableTimeslotID != uuid.Nil {
-		return u.createNotRandomTableReservation(request, customerID)
+		return u.CreateNotRandomTableReservation(request, customerID)
 	} else {
-		return u.createRandomTableReservation(request, customerID)
+		return nil, fmt.Errorf("Not implemented yet")
+		// return u.CreateRandomTableReservation(, customerID)
 	}
 }
 
@@ -302,6 +326,10 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 
 	reservations := []dto.ReservationDetail{}
 	for _, reservationMember := range reservationMembers {
+		if reservationMember.Status != "confirmed" {
+			continue
+		}
+
 		reservation, err := u.GetTableReservationDetail(reservationMember.ReservationID, customerID)
 		if err != nil {
 			return nil, err
@@ -310,6 +338,23 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 		if reservation.Status == "confirmed" {
 			reservations = append(reservations, *reservation)
 		}
+	}
+	return reservations, nil
+}
+
+func (u *TableReservationUsecase) GetAlltableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error) {
+	reservationMembers, err := u.tableReservationRepository.GetAllReservationsByCustomerID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	reservations := []dto.ReservationDetail{}
+	for _, reservationMember := range reservationMembers {
+		reservation, err := u.GetTableReservationDetail(reservationMember.ReservationID, customerID)
+		if err != nil {
+			return nil, err
+		}
+		reservations = append(reservations, *reservation)
 	}
 	return reservations, nil
 }
@@ -359,7 +404,7 @@ func (u *TableReservationUsecase) DeleteTableReservation(reservationID uuid.UUID
 		tableTimeslot.ReservedSeats = 0
 	}
 
-	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats)
+	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, false)
 
 	return u.tableRepository.UpdateTableTimeslot(tableTimeslot)
 }
@@ -376,6 +421,23 @@ func (u *TableReservationUsecase) isCustomerInReservation(reservationID uuid.UUI
 	return nil
 }
 
+func (u *TableReservationUsecase) getAllMemberByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservationMembers, error) {
+	reservations, err := u.tableReservationRepository.GetAllTableReservationByTableTimeslotID(tableTimeslotID)
+	if err != nil {
+		return nil, err
+	}
+
+	var allMembers []models.TableReservationMembers
+	for _, reservation := range reservations {
+		members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservation.ID)
+		if err != nil {
+			return nil, err
+		}
+		allMembers = append(allMembers, members...)
+	}
+	return allMembers, nil
+}
+
 func (u *TableReservationUsecase) isAllMembersConfirmed(reservationID uuid.UUID) bool {
 	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
 	if err != nil {
@@ -388,6 +450,15 @@ func (u *TableReservationUsecase) isAllMembersConfirmed(reservationID uuid.UUID)
 		}
 	}
 	return true
+}
+
+func (u *TableReservationUsecase) ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
+	err := u.isCustomerInReservation(reservationID, customerID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
@@ -486,7 +557,7 @@ func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uui
 		tableTimeslot.ReservedSeats = 0
 	}
 
-	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats)
+	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, false)
 
 	err = u.tableRepository.UpdateTableTimeslot(tableTimeslot)
 	if err != nil {

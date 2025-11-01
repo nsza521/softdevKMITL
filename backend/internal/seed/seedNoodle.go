@@ -226,9 +226,10 @@ func seedAddOnsForNoodleShop(db *gorm.DB, restaurantID uuid.UUID) error {
 func getOrCreateNoodleRestaurant(db *gorm.DB) (*models.Restaurant, bool, error) {
 	const username = "restaurant_noodle"
 	const email = "noodle@example.com"
+	const name = "ร้านก๋วยเตี๋ยว"
 
 	var rest models.Restaurant
-	if err := db.Where("username = ? OR email = ?", username, email).First(&rest).Error; err == nil {
+	if err := db.Where("username = ? OR email = ? OR name = ?", username, email, name).First(&rest).Error; err == nil {
 		return &rest, false, nil
 	}
 
@@ -240,6 +241,7 @@ func getOrCreateNoodleRestaurant(db *gorm.DB) (*models.Restaurant, bool, error) 
 		Username: username,
 		Email:    email,
 		Password: hashed,
+		Name:     name,
 	}
 	if err := db.Create(&rest).Error; err != nil {
 		return nil, false, err
