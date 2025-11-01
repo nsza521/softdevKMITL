@@ -11,7 +11,7 @@ type FoodOrder struct {
 	ReservationID   uuid.UUID       `gorm:"type:char(36);index;"` // อนุญาตให้ null ได้
 	CustomerID      uuid.UUID       `gorm:"type:char(36);index;"`
 	// Customer   *Customer `gorm:"foreignKey:CustomerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	CreatedByUserID uuid.UUID       `gorm:"type:char(36);not null;index"`
+	// CreatedByUserID uuid.UUID       `gorm:"type:char(36);not null;index"`
 	Status          string          `gorm:"type:enum('pending','preparing','served','paid','cancelled');default:'pending';not null"`
 	Channel         string     		`gorm:"type:enum('walk_in','reservation','delivery');not null;default:'walk_in'"`
 	OrderDate       time.Time       `gorm:"not null"`
