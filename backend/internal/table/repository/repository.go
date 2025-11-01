@@ -123,10 +123,10 @@ func (r *TableRepository) DeleteTableTimeslotByTimeslotID(timeslotID uuid.UUID) 
 	return r.db.Where("timeslot_id = ?", timeslotID).Delete(&models.TableTimeslot{}).Error
 }
 
-func (r *TableRepository) GetAvailableTableTimeslot(timeslotID uuid.UUID) (*models.TableTimeslot, error) {
-	var tableTimeslot *models.TableTimeslot
-	if err := r.db.Where("timeslot_id = ? AND (status = 'available' OR status = 'partial')", timeslotID).Order("created_at ASC").First(&tableTimeslot).Error; err != nil {
+func (r *TableRepository) GetAllAvailableTableTimeslot(timeslotID uuid.UUID) ([]models.TableTimeslot, error) {
+	var tableTimeslots []models.TableTimeslot
+	if err := r.db.Where("timeslot_id = ? AND (status = 'available' OR status = 'partial')", timeslotID).Order("created_at ASC").Find(&tableTimeslots).Error; err != nil {
 		return nil, err
 	}
-	return tableTimeslot, nil
+	return tableTimeslots, nil
 }
