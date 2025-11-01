@@ -201,6 +201,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "tableNo":    d["tableNo"],
             "when":       d["when"],
             "restaurant": d["restaurant"],
+			"menu": 	  d["menu"],
             "queueNo":    d["queueNo"],
         }
 

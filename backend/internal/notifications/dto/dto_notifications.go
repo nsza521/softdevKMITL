@@ -2,6 +2,8 @@ package dto
 
 import (
 	// "time"
+	// menu "backend/internal/menu/dto"
+
 	"github.com/google/uuid"
 )
 
@@ -93,6 +95,7 @@ type OrderFinishedData struct {
 	TableNo    string `json:"tableNo"`
 	When       string `json:"when"`
 	Restaurant string `json:"restaurant"`
+	Menu       string `json:"menu,omitempty"`
 	QueueNo    string `json:"queueNo,omitempty"`
 }
 
