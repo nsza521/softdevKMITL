@@ -103,15 +103,15 @@ func (r *RestaurantRepository) Update(restaurant *models.Restaurant) error {
 // ✅ อัปเดตเฉพาะฟิลด์ที่ != nil
 func (r *RestaurantRepository) PartialUpdate(
 	restaurantID uuid.UUID,
-	name *string,
+	name string,
 	menuType *string,
 	// addOnMenuItems []string,
 ) (*models.Restaurant, error) {
 
 	// 1) อัปเดต name/menuType เฉพาะที่ != nil
 	updates := map[string]any{}
-	if name != nil {
-		updates["name"] = *name
+	if name != "" {
+		updates["name"] = name
 	}
 	if menuType != nil {
 		updates["menu_type"] = *menuType

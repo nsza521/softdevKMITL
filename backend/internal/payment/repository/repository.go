@@ -27,7 +27,7 @@ func (r *PaymentRepository) CreateTransaction(transaction *models.Transaction) e
 
 func (r *PaymentRepository) GetAllTransactionsByUserID(userID uuid.UUID) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	if err := r.db.Where("user_id = ?", userID).Find(&transactions).Error; err != nil {
+	if err := r.db.Where("user_id = ?", userID).Order("created_at ASC").Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil
