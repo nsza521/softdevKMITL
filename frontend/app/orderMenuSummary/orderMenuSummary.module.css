@@ -13,12 +13,15 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 0 20px;
+    padding: 0 30px;
 }
 
 .blogItem {
-    display: grid;
-    grid-template-columns: 0.5fr 2fr 0.5fr;
+    /* display: grid; */
+    /* grid-template-columns: 0.5fr 2fr 0.5fr; */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     border-bottom: 1px solid var(--color3);
     padding: 10px 0;
 }
@@ -45,24 +48,26 @@
 
 .addOnList {
     display: flex;
+    flex-direction: row;
     gap: 10px;
-    align-items: center;
-    li {
+    color:  var(--color2);
+    /* align-items: center; */
+    /* li {
         border: solid 1px;
         color: var(--color2);
         border-radius: 10px;
         list-style-type: none;
         padding: 0 5px;
-    }
+    } */
 }
 
 .totalPrice {
     display: flex;
-    gap: 250px;
+    justify-content: space-between;
 }
 
 .myBalance {
-    padding: 0 20px;
+    padding: 0 30px;
     border-top: solid 10px var(--color3);
 }
 
@@ -75,7 +80,7 @@
 
 .blogBalance {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -91,10 +96,10 @@
 
 .blogActionBtn {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: space-between;
     
     .cancleBtn {
-        padding: 10px 60px;
+        padding: 10px 70px;
         border-radius: 20px;
         border: solid 1px var(--color1);
         background-color: var(--color5);
@@ -103,17 +108,15 @@
     }
 
     .acceptBtn {
-        padding: 10px 60px;
+        padding: 10px 70px;
         border-radius: 20px;
         background-color: var(--color1);
         color: white;
         cursor: pointer;
     }
 }
-
-
-
-
-
-
-
+.itemDetail {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}

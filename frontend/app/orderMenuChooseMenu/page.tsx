@@ -10,6 +10,7 @@ export default function MenuPage() {
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
 
+  const [restaurantName, setRestaurantName] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([])
@@ -52,6 +53,19 @@ export default function MenuPage() {
         }));
 
         setMenuItems(formatted);
+
+        const restaurant_name = await fetch(`http://localhost:8080/restaurant/${restaurant_id}/detail`, {
+          headers: { "Authorization": `Bearer ${storedToken}` }
+        })
+
+        if (!restaurant_name.ok) {
+          setError("โหลดชื่อร้านไม่สำเร็จ");
+          return;
+        }
+        
+        const resData = await restaurant_name.json();
+        setRestaurantName(resData.restaurant_detail.name);
+
       } catch (err) {
         console.error(err);
         setError("เกิดข้อผิดพลาดในการโหลดเมนู");
@@ -89,7 +103,7 @@ export default function MenuPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Welcome to </h1>
+        <h1>Welcome to {restaurantName}</h1>
       </header>
 
       <FilterGroup onFilterChange={(type) => setActiveFilter(type)} />
@@ -256,7 +270,7 @@ interface MenuItem {
   menu_pic?: string
   description?: string
   types: Type[]
-  addons?: Addon[]
+  addons: Addon[]
   onAdd?: () => void
 }
 
@@ -378,9 +392,11 @@ function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupPr
         <img src={detail.menu_pic ?? "/placeholder.png"} className={styles.menuImg} />
 
         <div className={styles.popupOptionsCon}>
-          {detail.addons? (
-            <h3>ตัวเลือกเพิ่มเติมสำหรับ {detail.name}</h3>
-          ) : null}
+          <h3>
+            {detail.addons?.length > 0
+              ? `ตัวเลือกเพิ่มเติมสำหรับ ${detail.name}`
+              : detail.name}
+          </h3>
           <div className={styles.optionsList}>
             {detail.addons?.map((addon) => (
               <div key={addon.id} className={styles.addonGroup}>
