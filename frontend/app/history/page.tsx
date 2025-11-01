@@ -53,7 +53,7 @@ export default function HistoryPage(){
                     headers:{"Authorization": `Bearer ${token}`,},
                 })
                 const dataTopup = await resTopup.json();
-                setTopup(dataTopup.transactions);
+                setTopup(dataTopup.transactions ?? []);
             }catch (err) {
                 console.error(err);
                 setError("โหลดข้อมูลไม่สำเร็จ");
