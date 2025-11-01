@@ -38,16 +38,8 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`http://localhost:8080/table/reservation/create/random`,
-                        {
-                            method: "POST",
-                            headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                            },
-
-                            // body: JSON.stringify({ timeslot_id: time_slot_id })
-                        }
+                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`,
+                        { headers: { Authorization: `Bearer ${token}`} }
                     );
 
                     if (!res.ok) {
@@ -57,15 +49,15 @@ export default function ReserveFillUsrPage() {
                     }
 
                     const resp = await res.json();
-                    // const reserv = resp.reservation;
-                    console.log("Created random reservation:", resp);
+                    const reserv = resp.reservation;
+                    console.log("random reservation:", resp);
 
-                    const ownerInfo: MemberInfo = {
-                        username: resp.owner.username,
-                        first_name: resp.owner.first_name,
-                    };
+                    // const ownerInfo: MemberInfo = {
+                    //     username: resp.owner.username,
+                    //     first_name: resp.owner.first_name,
+                    // };
                     // setOwner(ownerInfo);
-                    // table_id = reserv.table_timeslot_id;
+                    table_id = reserv.table_timeslot_id;
                 }
                 console.log("table_id:", table_id);
 
@@ -169,7 +161,40 @@ export default function ReserveFillUsrPage() {
             if (resp.ok) {
                 const result = await resp.json();
                 console.log(result)
-                router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
+
+            // notification part
+            const members = result.reservation.members;  
+            const targetMembers = members.slice(1); 
+
+            for (const member of targetMembers) {
+                const noti = {
+                    event: "reserve_with",
+                    receiverUsername: member.username,
+                    receiverType: "customer",
+                    data: {
+                        tableNo: table.row + table.col,
+                        when: result.reservation.create_at,
+                        members: members.map((m: { username: string }) => m.username)
+                    },
+                };
+
+                const notificationRes = await fetch("http://localhost:8080/notification/event", {
+                    method: "POST",
+                    headers: {  
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify(noti),
+                });
+
+                if (!notificationRes.ok) {
+                    console.error("Failed to send notification to", member.username);
+                }
+
+                console.log("Notification sent to", member.username);
+            }
+
+                router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(result.reservation.reservation_id)}`);
             }
 
         } catch (err) {
@@ -180,7 +205,7 @@ export default function ReserveFillUsrPage() {
     const handleSubmitRD = async () => {
         console.log("reservation_id:", reservation_id);
         if (reservation_id) {
-            router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
+            router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(reservation_id)}`);
         }
     }
 

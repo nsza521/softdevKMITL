@@ -1,16 +1,14 @@
 "use client";
-import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 import styles from "./orderMenuChooseMenu.module.css";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type UUID = string;
 
 export default function MenuPage() {
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
-  // const restaurant_id = "7e3073db-fae6-4520-be71-2f8088aa15fc";
 
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -147,7 +145,6 @@ function FilterButton({ label, isActive = false, onClick }: FilterButtonProps) {
 function FilterGroup({ onFilterChange }: { onFilterChange: (type: string) => void }) {
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
-  // const restaurant_id = "7e3073db-fae6-4520-be71-2f8088aa15fc";
 
   const defaultFilter = "All";
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -298,7 +295,6 @@ interface MenuPopupProps {
 }
 
 function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupProps) {
-  // const restaurant_id = "7e3073db-fae6-4520-be71-2f8088aa15fc";
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
 
@@ -382,7 +378,9 @@ function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupPr
         <img src={detail.menu_pic ?? "/placeholder.png"} className={styles.menuImg} />
 
         <div className={styles.popupOptionsCon}>
-          <h3>ตัวเลือกเพิ่มเติมสำหรับ {detail.name}</h3>
+          {detail.addons? (
+            <h3>ตัวเลือกเพิ่มเติมสำหรับ {detail.name}</h3>
+          ) : null}
           <div className={styles.optionsList}>
             {detail.addons?.map((addon) => (
               <div key={addon.id} className={styles.addonGroup}>
@@ -461,6 +459,7 @@ function Cart({ cart }: CartProps) {
   const router = useRouter();
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
+  const reservation_id = searchParam.get("reservationId") || "";
 
   if (cart.length === 0) return null;
 
@@ -485,17 +484,24 @@ function Cart({ cart }: CartProps) {
       return;
     }
 
-    const reservation_id = restaurant_id
-
     const items = cart.map(ci => ({
       menu_item_id: ci.item.id,
       quantity: ci.quantity,
       selections: ci.selectedAddons.flatMap(addon =>
-        addon.options.map(opt => ({
-          group_id: addon.id,
-          option_id: opt.id,
-          // qty: opt.max_qty ? opt.max_qty : undefined
-        }))
+        addon.options.map(opt => {
+          if (addon.required === false) {
+            return {
+              group_id: addon.id,
+              option_id: opt.id,
+              qty: 1
+            };
+          }
+
+          return {
+            group_id: addon.id,
+            option_id: opt.id
+          };
+        })
       )
     }));
 
@@ -503,6 +509,8 @@ function Cart({ cart }: CartProps) {
       reservation_id,
       items
     };
+    // console.log("Cart", cart);
+    // console.log("Order request items:", items);
 
     try {
       const res = await fetch("http://localhost:8080/restaurant/order", {
@@ -519,11 +527,10 @@ function Cart({ cart }: CartProps) {
         alert("ส่งคำสั่งซื้อไม่สำเร็จ");
         return;
       }
-
       const resp = await res.json();
       console.log("Order response:", resp);
 
-      // router.push(`/orderMenuSummary${}`);
+      router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
 
     } catch (err) {
       console.error(err);

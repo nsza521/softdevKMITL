@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"fmt"
-	// "time"
-	
-	"github.com/google/uuid"
-	"backend/internal/db_model"
+	"time"
+
+	customerInterfaces "backend/internal/customer/interfaces"
+	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
@@ -192,42 +192,28 @@ func (u *TableReservationUsecase) CreateRandomTableReservation(request *dto.Crea
 			return nil, err
 		}
 
-	// update reserved seats
-	table, err := u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
-	if err != nil {
-		return nil, err
+		table, err := u.tableRepository.GetTableByID(tableTimeslot.TableID)
+		if err != nil {
+			return nil, err
+		}
+
+		tableTimeslot.ReservedSeats += 1
+		tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, true)
+		if err := u.tableRepository.UpdateTableTimeslot(&tableTimeslot); err != nil {
+			return nil, err
+		}
+
+		if err := u.CreateTableReservationMember(createdReservation.ID, customer.Username); err != nil {
+			return nil, err
+		}
+
+		return &dto.RandomReservationDetail{
+			ReservationID:   createdReservation.ID,
+			TableTimeslotID: createdReservation.TableTimeslotID,
+		}, nil
 	}
-
-	availableTableTimeslot.ReservedSeats += 1
-	availableTableTimeslot.Status = u.getTableTimeslotStatus(availableTableTimeslot.ReservedSeats, table.MaxSeats, true)
-	if err := u.tableRepository.UpdateTableTimeslot(availableTableTimeslot); err != nil {
-		return nil, err
-	}
-
-	// add member
-	if err := u.CreateTableReservationMember(createdReservation.ID, customer.Username); err != nil {
-		return nil, err
-	}
-
-	table, err = u.tableRepository.GetTableByID(availableTableTimeslot.TableID)
-	if err != nil {
-		return nil, err
-	}
-
-	member := dto.Username{Username: customer.Username}
-
-	return &dto.ReservationDetail{
-		CreateAt:       createdReservation.CreatedAt.Format("02-01-2006 15:04"),
-		ReservationID:  createdReservation.ID,
-		TableTimeslotID: createdReservation.TableTimeslotID,
-		ReservePeople:  createdReservation.ReservePeople,
-		Status:         createdReservation.Status,
-		Members:        []dto.Username{member},
-		TableRow:       table.TableRow,
-		TableCol:       table.TableCol,
-		StartTime:      timeslot.StartTime.Format("15:04"),
-		EndTime:        timeslot.EndTime.Format("15:04"),
-	}, nil
+	// member := dto.Username{Username: customer.Username}
+	return nil, fmt.Errorf("No available tables for reservation")
 }
 
 func (u *TableReservationUsecase) CreateTableReservation(request *dto.CreateTableReservationRequest, customerID uuid.UUID) (*dto.ReservationDetail, error) {
