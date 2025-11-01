@@ -174,7 +174,8 @@ export default function ReserveFillUsrPage() {
                     data: {
                         tableNo: table.row + table.col,
                         when: result.reservation.create_at,
-                        members: members.map((m: { username: string }) => m.username)
+                        members: members.map((m: { username: string }) => m.username),
+                        reservationId: result.reservation.reservation_id,
                     },
                 };
 
