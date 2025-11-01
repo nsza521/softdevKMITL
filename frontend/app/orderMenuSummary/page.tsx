@@ -3,27 +3,6 @@
 import { useState } from "react"
 import styles from "./orderMenuSummary.module.css"
 
-
-const orders = [
-    {
-        id : 1,
-        menu : "ข้าวไข่เจียว",
-        price : 50,
-        quantity : 1,
-        addOn : ['พิเศษ'],    
-    },
-    {
-        id : 2,
-        menu : "ข้าวหน้าเนื้อ",
-        price : 70,
-        quantity : 2,
-        addOn : ['พิเศษ','ไข่ดาว'],     
-    }
-]
-
-
-
-
 export default function orderMenuSummaryPage() {
     return (
         <div className={styles.container}>

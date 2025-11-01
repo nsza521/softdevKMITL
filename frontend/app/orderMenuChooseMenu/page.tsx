@@ -3,7 +3,7 @@ import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.s
 import styles from "./orderMenuChooseMenu.module.css";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type UUID = string;
 
@@ -461,6 +461,7 @@ function Cart({ cart }: CartProps) {
   const router = useRouter();
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
+  const reservation_id = searchParam.get("reservationId") || "";
 
   if (cart.length === 0) return null;
 
@@ -485,17 +486,24 @@ function Cart({ cart }: CartProps) {
       return;
     }
 
-    const reservation_id = restaurant_id
-
     const items = cart.map(ci => ({
       menu_item_id: ci.item.id,
       quantity: ci.quantity,
       selections: ci.selectedAddons.flatMap(addon =>
-        addon.options.map(opt => ({
-          group_id: addon.id,
-          option_id: opt.id,
-          // qty: opt.max_qty ? opt.max_qty : undefined
-        }))
+        addon.options.map(opt => {
+          if (addon.required === false) {
+            return {
+              group_id: addon.id,
+              option_id: opt.id,
+              qty: 1
+            };
+          }
+
+          return {
+            group_id: addon.id,
+            option_id: opt.id
+          };
+        })
       )
     }));
 
@@ -503,6 +511,8 @@ function Cart({ cart }: CartProps) {
       reservation_id,
       items
     };
+    // console.log("Cart", cart);
+    // console.log("Order request items:", items);
 
     try {
       const res = await fetch("http://localhost:8080/restaurant/order", {
@@ -519,11 +529,10 @@ function Cart({ cart }: CartProps) {
         alert("ส่งคำสั่งซื้อไม่สำเร็จ");
         return;
       }
-
       const resp = await res.json();
       console.log("Order response:", resp);
 
-      // router.push(`/orderMenuSummary${}`);
+      router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
 
     } catch (err) {
       console.error(err);

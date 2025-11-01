@@ -169,7 +169,7 @@ export default function ReserveFillUsrPage() {
             if (resp.ok) {
                 const result = await resp.json();
                 console.log(result)
-                router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
+                router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(result.reservation.reservation_id)}`);
             }
 
         } catch (err) {
