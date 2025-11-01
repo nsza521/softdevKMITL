@@ -1,7 +1,9 @@
 package dto
 
 import (
-	"time"
+	// "time"
+	// menu "backend/internal/menu/dto"
+
 	"github.com/google/uuid"
 )
 
@@ -14,7 +16,7 @@ type Notification struct {
 	ReceiverID   uuid.UUID `json:"receiverId"`
 	ReceiverType string    `json:"receiverType"`
 	IsRead       bool      `json:"isRead"`
-	CreatedAt    time.Time `json:"createdAt"`
+	CreatedAt    string `json:"createdAt"`
 
 	Attributes 	map[string]interface{} `json:"attributes,omitempty"`
 }
@@ -78,7 +80,7 @@ type CreateEventResponse struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Attributes map[string]interface{} `json:"attributes,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // ---- payload เฉพาะเหตุการณ์ ----
@@ -93,6 +95,7 @@ type OrderFinishedData struct {
 	TableNo    string `json:"tableNo"`
 	When       string `json:"when"`
 	Restaurant string `json:"restaurant"`
+	Menu       string `json:"menu,omitempty"`
 	QueueNo    string `json:"queueNo,omitempty"`
 }
 
@@ -108,6 +111,8 @@ type ReserveSuccessData struct {
 	When       string `json:"when"`
 	Restaurant string `json:"restaurant"`
 	Seat       int    `json:"seat"`
+	Members     []string `json:"members"`       // ["Username", "Username", ...]
+	QueueNo    string `json:"queueNo,omitempty"`
 }
 
 type ReserveFailedData struct {

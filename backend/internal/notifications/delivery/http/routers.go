@@ -36,7 +36,6 @@ func getCustomerIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
 	return customerID, true
 }
 
-
 // MapNotiRoutes กำหนดเส้นทาง API สำหรับการแจ้งเตือน
 func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 
@@ -49,16 +48,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		if !ok {
 			return
 		}
-        // // Parse receiverId from URL parameter
-        // receiverIdStr := c.Param("receiverId")
-        // receiverId, err := uuid.Parse(receiverIdStr)
-        // if err != nil {
-        //     c.JSON(stdhttp.StatusBadRequest, gin.H{
-        //         "error": "invalid receiverId format",
-        //         "receiverId": receiverIdStr,
-        //     })
-        //     return
-        // }
 
         // Parse page from URL parameter
         pageStr := c.Param("page")
@@ -146,15 +135,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 			return
 		}
 		c.JSON(stdhttp.StatusCreated, resp)
-		// if err := c.ShouldBindJSON(&req); err != nil {
-		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
-		// 	return
-		// }
-		// if resp, err := h.MockCreate(c.Request.Context(), req); err != nil {
-		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
-		// } else {
-		// 	c.JSON(stdhttp.StatusCreated, resp)
-		// }
 	})
 
 	// ✅ PATCH: Mark single as read/unread
@@ -200,25 +180,10 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 			return
 		}
 
-		// rid, err := uuid.Parse(strings.Trim(req.ReceiverID, "[]\" "))
-		// if err != nil {
-		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{
-		// 		"error":      "invalid receiverId",
-		// 		"raw_value":  req.ReceiverID,
-		// 		"parseError": err.Error(),
-		// 	})
-		// 	return
-		// }
-
 		customerID, ok := getCustomerIDAndValidateRole(c)
 		if !ok {
 			return
 		}
-
-		// if req.ReceiverType != "customer" && req.ReceiverType != "restaurant" {
-		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
-		// 	return
-		// }
 
 		updated, err := h.MarkAllRead(c.Request.Context(), customerID, req.ReceiverType)
 		if err != nil {

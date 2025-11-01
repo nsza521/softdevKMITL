@@ -38,6 +38,14 @@ func (r *TableReservationRepository) GetTableReservationByID(id uuid.UUID) (*mod
 	return &reservation, nil
 }
 
+func (r *TableReservationRepository) GetAllTableReservationByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservation, error) {
+	var reservations []models.TableReservation
+	if err := r.db.Where("table_timeslot_id = ?", tableTimeslotID).Find(&reservations).Error; err != nil {
+		return nil, err
+	}
+	return reservations, nil
+}
+
 func (r *TableReservationRepository) UpdateTableReservation(reservation *models.TableReservation) error {
 	if err := r.db.Save(reservation).Error; err != nil {
 		return err
