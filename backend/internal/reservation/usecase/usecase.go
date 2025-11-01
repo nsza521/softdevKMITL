@@ -2,8 +2,7 @@ package usecase
 
 import (
 	"fmt"
-	"math"
-	"time"
+	// "time"
 
 	customerInterfaces "backend/internal/customer/interfaces"
 	models "backend/internal/db_model"
@@ -49,6 +48,9 @@ func (u *TableReservationUsecase) createNotRandomTableReservation(request *dto.C
 	status := tableTimeslot.Status
 	if status == "full" || status == "expired" {
 		return nil, fmt.Errorf("Table is not available for reservation")
+	}
+	if status == "partial" {
+		return nil, fmt.Errorf("TableTimeslot is already reserved")
 	}
 
 	// timeslot , err := u.tableRepository.GetTimeslotByID(tableTimeslot.TimeslotID)
@@ -209,11 +211,11 @@ func (u *TableReservationUsecase) createRandomTableReservation(request *dto.Crea
 		TableTimeslotID: createdReservation.TableTimeslotID,
 		ReservePeople:   createdReservation.ReservePeople,
 		Status:          createdReservation.Status,
-		Members:         request.Members,
+		Members:         []dto.Username{member},
 		TableRow:        table.TableRow,
 		TableCol:        table.TableCol,
-		StartTime:       currentTimeslot.StartTime.Format("15:04"),
-		EndTime:         currentTimeslot.EndTime.Format("15:04"),
+		StartTime:       timeslot.StartTime.Format("15:04"),
+		EndTime:         timeslot.EndTime.Format("15:04"),
 	}, nil
 }
 
@@ -302,6 +304,10 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 
 	reservations := []dto.ReservationDetail{}
 	for _, reservationMember := range reservationMembers {
+		if reservationMember.Status != "confirmed" {
+			continue
+		}
+
 		reservation, err := u.GetTableReservationDetail(reservationMember.ReservationID, customerID)
 		if err != nil {
 			return nil, err
@@ -376,6 +382,23 @@ func (u *TableReservationUsecase) isCustomerInReservation(reservationID uuid.UUI
 	return nil
 }
 
+func (u *TableReservationUsecase) getAllMemberByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservationMembers, error) {
+	reservations, err := u.tableReservationRepository.GetAllTableReservationByTableTimeslotID(tableTimeslotID)
+	if err != nil {
+		return nil, err
+	}
+
+	var allMembers []models.TableReservationMembers
+	for _, reservation := range reservations {
+		members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservation.ID)
+		if err != nil {
+			return nil, err
+		}
+		allMembers = append(allMembers, members...)
+	}
+	return allMembers, nil
+}
+
 func (u *TableReservationUsecase) isAllMembersConfirmed(reservationID uuid.UUID) bool {
 	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
 	if err != nil {
@@ -388,6 +411,15 @@ func (u *TableReservationUsecase) isAllMembersConfirmed(reservationID uuid.UUID)
 		}
 	}
 	return true
+}
+
+func (u *TableReservationUsecase) ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
+	err := u.isCustomerInReservation(reservationID, customerID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {

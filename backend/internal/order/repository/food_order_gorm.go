@@ -1,6 +1,7 @@
 package repository
 
 import (
+	models "backend/internal/db_model"
 	"context"
 	"errors"
 	"fmt"
@@ -8,8 +9,6 @@ import (
 
 	// "fmt"
 	"gorm.io/gorm"
-
-	"backend/internal/db_model"
 
 	"github.com/google/uuid"
 )
