@@ -111,6 +111,8 @@ type ReserveSuccessData struct {
 	When       string `json:"when"`
 	Restaurant string `json:"restaurant"`
 	Seat       int    `json:"seat"`
+	Members     []string `json:"members"`       // ["Username", "Username", ...]
+	QueueNo    string `json:"queueNo,omitempty"`
 }
 
 type ReserveFailedData struct {

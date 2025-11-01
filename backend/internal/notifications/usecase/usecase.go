@@ -227,6 +227,8 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "when":       d["when"],
             "restaurant": d["restaurant"],
             "seat":       d["seat"],
+			"queueNo":    d["queueNo"],
+			"members":    toStrings(d["members"]),
         }
 
     case "reserve_failed":
