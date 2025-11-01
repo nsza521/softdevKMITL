@@ -42,15 +42,20 @@ func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reserv
 
 	fmt.Printf("Loading reservation ID: %s for customer ID: %s\n", reservationID, customerID)
 
+	// if err := r.db.Debug().WithContext(ctx).
+	// 	First(&res, "id = ?", reservationID).Error; err != nil {
+	// 	return nil, err
+	// }
+
 	if err := r.db.Debug().WithContext(ctx).
-		First(&res, "id = ?", reservationID).Error; err != nil {
+		Take(&res, "id = ?", reservationID).Error; err != nil {
 		return nil, err
 	}
 
-	// ถ้าเป็นเจ้าของ → ผ่าน
-	if res.CustomerID == customerID {
-		return &res, nil
-	}
+	// // ถ้าเป็นเจ้าของ → ผ่าน
+	// if res.CustomerID == customerID {
+	// 	return &res, nil
+	// }
 
 	// ไม่ใช่เจ้าของ → ตรวจในตารางสมาชิก
 	var cnt int64

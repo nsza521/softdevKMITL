@@ -34,6 +34,12 @@ func (r *PaymentRepository) GetAllTransactionsByUserID(userID uuid.UUID) ([]mode
 }
 
 // Payment Methods
+func (r *PaymentRepository) CreatePaymentMethod(method *models.PaymentMethod) error {
+	if err := r.db.Create(method).Error; err != nil {
+		return err
+	}
+	return nil
+}
 func (r *PaymentRepository) GetPaymentMethodByID(paymentMethodID uuid.UUID) (*models.PaymentMethod, error) {
 	var method models.PaymentMethod
 	if err := r.db.First(&method, "id = ?", paymentMethodID).Error; err != nil {
@@ -42,9 +48,17 @@ func (r *PaymentRepository) GetPaymentMethodByID(paymentMethodID uuid.UUID) (*mo
 	return &method, nil
 }
 
-func (r *PaymentRepository) GetPaymentMethods(methodType string) ([]models.PaymentMethod, error) {
+func (r *PaymentRepository) GetPaymentMethodsByType(methodType string) ([]models.PaymentMethod, error) {
 	var methods []models.PaymentMethod
 	if err := r.db.Where("type IN ?", []string{methodType, "all"}).Find(&methods).Error; err != nil {
+		return nil, err
+	}
+	return methods, nil
+}
+
+func (r *PaymentRepository) GetAllPaymentMethods() ([]models.PaymentMethod, error) {
+	var methods []models.PaymentMethod
+	if err := r.db.Find(&methods).Error; err != nil {
 		return nil, err
 	}
 	return methods, nil

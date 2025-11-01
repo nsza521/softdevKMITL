@@ -32,7 +32,7 @@ func (u *PaymentUsecase) GetTopupPaymentMethods(userID uuid.UUID) ([]dto.Payment
 	
 	var paymentMethods []dto.PaymentMethodDetail
 
-	methods, err := u.paymentRepository.GetPaymentMethods("topup")
+	methods, err := u.paymentRepository.GetPaymentMethodsByType("topup")
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +94,14 @@ func (u *PaymentUsecase) GetAllTransactions(userID uuid.UUID) ([]dto.Transaction
 
 	var transactionDetails []dto.TransactionDetail
 	for _, tx := range transactions {
+		paymentMethod, err := u.paymentRepository.GetPaymentMethodByID(tx.PaymentMethodID)
+		if err != nil {
+			return nil, err
+		}
 		transactionDetails = append(transactionDetails, dto.TransactionDetail{
 			TransactionID:   tx.ID,
 			Amount:          tx.Amount,
-			PaymentMethodID: tx.PaymentMethodID,
+			PaymentMethod:   paymentMethod.Name,
 			Type:            tx.Type,
 			CreatedAt:       tx.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
