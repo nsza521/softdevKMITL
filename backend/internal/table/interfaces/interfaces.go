@@ -52,7 +52,7 @@ type TableRepository interface {
 	GetTableTimeslotByID(id uuid.UUID) (*models.TableTimeslot, error)
 	UpdateTableTimeslot(tableTimeslot *models.TableTimeslot) error
 	DeleteTableTimeslotByTimeslotID(timeslotID uuid.UUID) error
-	GetAvailableTableTimeslot(timeslotID uuid.UUID) (*models.TableTimeslot, error)
+	GetAllAvailableTableTimeslot(timeslotID uuid.UUID) ([]models.TableTimeslot, error)
 }
 
 type TableUsecase interface {
