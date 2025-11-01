@@ -38,16 +38,8 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`http://localhost:8080/table/reservation/create/random`,
-                        {
-                            method: "POST",
-                            headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                            },
-
-                            // body: JSON.stringify({ timeslot_id: time_slot_id })
-                        }
+                    const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`,
+                        { headers: { Authorization: `Bearer ${token}`} }
                     );
 
                     if (!res.ok) {
@@ -58,12 +50,12 @@ export default function ReserveFillUsrPage() {
 
                     const resp = await res.json();
                     // const reserv = resp.reservation;
-                    console.log("Created random reservation:", resp);
+                    console.log("random reservation:", resp);
 
-                    const ownerInfo: MemberInfo = {
-                        username: resp.owner.username,
-                        first_name: resp.owner.first_name,
-                    };
+                    // const ownerInfo: MemberInfo = {
+                    //     username: resp.owner.username,
+                    //     first_name: resp.owner.first_name,
+                    // };
                     // setOwner(ownerInfo);
                     // table_id = reserv.table_timeslot_id;
                 }
