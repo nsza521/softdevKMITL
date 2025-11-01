@@ -29,6 +29,8 @@ type OrderRepository interface {
 	LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error)
 	CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
 	GetOrderDetailForRestaurant(ctx context.Context, orderID, restaurantID uuid.UUID) (*OrderDetailForRestaurant, error)
+	UpdateStatus(ctx context.Context, orderID string, newStatus string) error
+
 }
 
 type orderRepository struct{ db *gorm.DB }
@@ -97,3 +99,11 @@ func (r *orderRepository) CreateOrderTx(ctx context.Context, order *models.FoodO
 		return nil
 	})
 }
+
+func (r *orderRepository) UpdateStatus(ctx context.Context, orderID string, newStatus string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.FoodOrder{}).
+		Where("id = ?", orderID).
+		Update("status", newStatus).Error
+}
+

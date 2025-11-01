@@ -16,4 +16,6 @@ func MapFoodOrderRoutes(g *gin.RouterGroup, h *OrderHandler) {
 
 	// ===== History (ออเดอร์ที่เสิร์ฟหรือจ่ายเงินแล้ว) =====
 	g.GET("/history", middleware.AuthMiddleware(), h.GetHistoryForDay)
+
+	g.PATCH("/orders/:orderID/status", middleware.AuthMiddleware(), h.UpdateStatus)
 }
