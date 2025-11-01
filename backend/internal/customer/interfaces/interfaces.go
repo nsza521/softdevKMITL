@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"time"
-	
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -20,6 +20,8 @@ type CustomerHandler interface {
 	GetFullnameByUsername() gin.HandlerFunc
 	GetFirstNameByUsername() gin.HandlerFunc
 	GetQRCode() gin.HandlerFunc
+	GetMyHistory() gin.HandlerFunc
+	
 }
 
 type CustomerRepository interface {
@@ -28,6 +30,7 @@ type CustomerRepository interface {
 	IsCustomerExists(username string, email string) (bool, error)
 	GetByID(id uuid.UUID) (*models.Customer, error)
 	Update(customer *models.Customer) error
+	ListServedOrdersByCustomer(context.Context, string) ([]models.FoodOrder, error)
 }
 
 type CustomerUsecase interface {
@@ -39,4 +42,7 @@ type CustomerUsecase interface {
 	GetFirstnameByUsername(customerID uuid.UUID, request *dto.GetFullnameRequest) (*dto.GetFirstnameResponse, error)
 	GetQRCode(customerID uuid.UUID) (string, error)
 	Logout(token string, expiry time.Time) error
+	GetMyOrderHistory(ctx *gin.Context) ([]dto.OrderHistoryDay, error)
+	ListServedOrdersByCustomer(ctx context.Context, customerID string) ([]models.FoodOrder, error)
+
 }

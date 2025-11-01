@@ -7,7 +7,10 @@ import (
 	"backend/internal/middleware"
 )
 
-func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interfaces.CustomerHandler) {
+func MapCustomerRoutes(
+    customerGroup *gin.RouterGroup,
+    customerHandler interfaces.CustomerHandler,
+) {
 	customerGroup.POST("/register", customerHandler.Register())
 	customerGroup.POST("/login", customerHandler.Login())
 
@@ -19,4 +22,8 @@ func MapCustomerRoutes(customerGroup *gin.RouterGroup, customerHandler interface
 	customerGroup.POST("/logout", customerHandler.Logout())
 	customerGroup.GET("/qrcode", customerHandler.GetQRCode())
 	// customerGroup.PUT("/change_password", customerHandler.ChangePassword())
+
+	// 👇 เพิ่ม route ของ history ฝั่งลูกค้า
+    customerGroup.GET("/orders/history", customerHandler.GetMyHistory())
+
 }

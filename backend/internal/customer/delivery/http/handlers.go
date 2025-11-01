@@ -1,14 +1,16 @@
 package http
 
 import (
-	"time"
+	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"backend/internal/customer/interfaces"
 	"backend/internal/customer/dto"
+	"backend/internal/customer/interfaces"
 	// user "backend/internal/user/dto"
 )
 
@@ -226,5 +228,29 @@ func (h *CustomerHandler) Logout() gin.HandlerFunc {
 		}
 
 		c.JSON(200, gin.H{"message": "logged out successfully"})
+	}
+}
+
+func (h *CustomerHandler) GetMyHistory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// userID := c.GetString("user_id")
+		role   := c.GetString("role")
+
+		// กันไม่ให้ account ร้านมา call endpoint ลูกค้า
+		if role != "customer" && role != "user" && role != "customer_user" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
+		
+		resp, err := h.customerUsecase.GetMyOrderHistory(c)
+		fmt.Println("GetMyHistory resp:", resp)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"history": resp,
+		})
 	}
 }
