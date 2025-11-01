@@ -65,11 +65,10 @@ func (u *RestaurantUsecase) Register(request *dto.RegisterRestaurantRequest) err
 
 	// Create new restaurant
 	restaurant := models.Restaurant{
+
 		Username: username,
 		Email:    request.Email,
 		Password: hashedPassword,
-		Name:     request.Name,
-		Status:   "closed",
 	}
 	createdRestaurant, err := u.restaurantRepository.Create(&restaurant)
 	if err != nil {
@@ -202,19 +201,6 @@ func (u *RestaurantUsecase) ChangeStatus(restaurantID uuid.UUID, request *dto.Ch
 	return nil
 }
 
-func (u *RestaurantUsecase) GetByID(restaurantID uuid.UUID) (*dto.RestaurantDetail, error) {
-	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dto.RestaurantDetail{
-		Name:      restaurant.Name,
-		Status:     restaurant.Status,
-		PictureURL: restaurant.ProfilePic,
-	}, nil
-}
-
 func strOrEmpty(p *string) string {
 	if p != nil {
 		return *p
@@ -230,7 +216,7 @@ func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRe
 		return nil, err
 	}
 
-	if request.Name != "" || request.MenuType != nil {
+	if request.Name != nil || request.MenuType != nil {
 		if _, err := u.restaurantRepository.PartialUpdate(restaurantID, request.Name, request.MenuType); err != nil {
 			return nil, err
 		}
@@ -252,14 +238,14 @@ func (u *RestaurantUsecase) EditInfo(restaurantID uuid.UUID, request *dto.EditRe
 
 	return &dto.EditRestaurantResponse{
 		ID:            updated.ID,
-		Name:          updated.Name,
+		Name:          strOrEmpty(updated.Name),
 		MenuType:      strOrEmpty(updated.MenuType),
 		AddOnMenuItem: addOns,
 	}, nil
 }
 
 func (u *RestaurantUsecase) UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error) {
-    return u.restaurantRepository.PartialUpdate(id, name, nil)
+    return u.restaurantRepository.PartialUpdate(id, &name, nil)
 }
 func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
 	utils.BlacklistToken(token, expiry.Unix())

@@ -18,7 +18,7 @@ type Restaurant struct {
 
 	// BankAccountID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
-	Name          string    `gorm:"not null;unique"`
+	Name          *string   `gorm:"type:varchar(255)"`
 	MenuType      *string   `gorm:"type:varchar(64)"`
 }
 

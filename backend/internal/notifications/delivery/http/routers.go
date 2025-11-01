@@ -4,14 +4,15 @@ package http
 import (
 	stdhttp "net/http"
 	"strconv"
+
 	// "strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"backend/internal/middleware"
 	"backend/internal/notifications/dto"
 	"backend/internal/notifications/interfaces"
-	"backend/internal/middleware"
 )
 
 func getCustomerIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
@@ -36,6 +37,7 @@ func getCustomerIDAndValidateRole(c *gin.Context) (uuid.UUID, bool) {
 	return customerID, true
 }
 
+
 // MapNotiRoutes กำหนดเส้นทาง API สำหรับการแจ้งเตือน
 func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 
@@ -48,62 +50,71 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		if !ok {
 			return
 		}
+        // // Parse receiverId from URL parameter
+        // receiverIdStr := c.Param("receiverId")
+        // receiverId, err := uuid.Parse(receiverIdStr)
+        // if err != nil {
+        //     c.JSON(stdhttp.StatusBadRequest, gin.H{
+        //         "error": "invalid receiverId format",
+        //         "receiverId": receiverIdStr,
+        //     })
+        //     return
+        // }
 
-        // Parse page from URL parameter
-        pageStr := c.Param("page")
-        page, err := strconv.Atoi(pageStr)
-        if err != nil || page < 1 {
-            c.JSON(stdhttp.StatusBadRequest, gin.H{
-                "error": "invalid page number",
-                "page": pageStr,
-            })
-            return
-        }
+		// Parse page from URL parameter
+		pageStr := c.Param("page")
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			c.JSON(stdhttp.StatusBadRequest, gin.H{
+				"error": "invalid page number",
+				"page":  pageStr,
+			})
+			return
+		}
 
-        // Get receiverType from query parameter (default: customer)
-        receiverType := c.DefaultQuery("type", "customer")
-        if receiverType != "customer" && receiverType != "restaurant" {
-            c.JSON(stdhttp.StatusBadRequest, gin.H{
-                "error": "receiverType must be 'customer' or 'restaurant'",
-                "receiverType": receiverType,
-            })
-            return
-        }
+		// Get receiverType from query parameter (default: customer)
+		receiverType := c.DefaultQuery("type", "customer")
+		if receiverType != "customer" && receiverType != "restaurant" {
+			c.JSON(stdhttp.StatusBadRequest, gin.H{
+				"error":        "receiverType must be 'customer' or 'restaurant'",
+				"receiverType": receiverType,
+			})
+			return
+		}
 
-        // Optional: filter by read status
-        var isRead *bool
-        if readStatus := c.Query("read"); readStatus != "" {
-            if b, err := strconv.ParseBool(readStatus); err == nil {
-                isRead = &b
-            }
-        }
+		// Optional: filter by read status
+		var isRead *bool
+		if readStatus := c.Query("read"); readStatus != "" {
+			if b, err := strconv.ParseBool(readStatus); err == nil {
+				isRead = &b
+			}
+		}
 
-        // Set page size (default: 20, max: 100)
-        pageSize, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-        if pageSize > 100 {
-            pageSize = 100
-        }
+		// Set page size (default: 20, max: 100)
+		pageSize, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+		if pageSize > 100 {
+			pageSize = 100
+		}
 
-        // Build query
-        q := dto.ListQuery{
-            ReceiverID:   customerID,
-            ReceiverType: receiverType,
-            IsRead:       isRead,
-            Page:         page,
-            PageSize:     pageSize,
-            Sort:         c.DefaultQuery("sort", "created_at_desc"),
-        }
+		// Build query
+		q := dto.ListQuery{
+			ReceiverID:   customerID,
+			ReceiverType: receiverType,
+			IsRead:       isRead,
+			Page:         page,
+			PageSize:     pageSize,
+			Sort:         c.DefaultQuery("sort", "created_at_desc"),
+		}
 
-        // Call usecase
-        resp, err := h.List(c.Request.Context(), q)
-        if err != nil {
-            c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
-            return
-        }
+		// Call usecase
+		resp, err := h.List(c.Request.Context(), q)
+		if err != nil {
+			c.JSON(stdhttp.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-        c.JSON(stdhttp.StatusOK, resp)
-    })
-
+		c.JSON(stdhttp.StatusOK, resp)
+	})
 
 	// ✅ POST: Mock create notifications
 	r.POST("/mock", func(c *gin.Context) {
@@ -114,7 +125,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		}
 
 		var body struct {
-			Count		int `json:"count" binding:"required"`
+			Count        int    `json:"count" binding:"required"`
 			ReceiverType string `json:"receiverType" binding:"required"`
 		}
 
@@ -124,9 +135,9 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 		}
 
 		// var req dto.MockCreateRequest
-		req := dto.MockCreateRequest {
-			Count:		body.Count,
-			ReceiverID: customerID,
+		req := dto.MockCreateRequest{
+			Count:        body.Count,
+			ReceiverID:   customerID,
 			ReceiverType: body.ReceiverType,
 		}
 		resp, err := h.MockCreate(c.Request.Context(), req)
@@ -135,6 +146,15 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 			return
 		}
 		c.JSON(stdhttp.StatusCreated, resp)
+		// if err := c.ShouldBindJSON(&req); err != nil {
+		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
+		// 	return
+		// }
+		// if resp, err := h.MockCreate(c.Request.Context(), req); err != nil {
+		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
+		// } else {
+		// 	c.JSON(stdhttp.StatusCreated, resp)
+		// }
 	})
 
 	// ✅ PATCH: Mark single as read/unread
@@ -168,6 +188,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	// ✅ PATCH: Mark all as read
+
 	r.PATCH("/read-all", func(c *gin.Context) {
 		type RequestReadAll struct {
 			// ReceiverID   string `json:"receiverId" binding:"required"`
@@ -180,10 +201,25 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 			return
 		}
 
+		// rid, err := uuid.Parse(strings.Trim(req.ReceiverID, "[]\" "))
+		// if err != nil {
+		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{
+		// 		"error":      "invalid receiverId",
+		// 		"raw_value":  req.ReceiverID,
+		// 		"parseError": err.Error(),
+		// 	})
+		// 	return
+		// }
+
 		customerID, ok := getCustomerIDAndValidateRole(c)
 		if !ok {
 			return
 		}
+
+		// if req.ReceiverType != "customer" && req.ReceiverType != "restaurant" {
+		// 	c.JSON(stdhttp.StatusBadRequest, gin.H{"error": "invalid receiverType"})
+		// 	return
+		// }
 
 		updated, err := h.MarkAllRead(c.Request.Context(), customerID, req.ReceiverType)
 		if err != nil {
@@ -198,6 +234,7 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	r.POST("/event", func(c *gin.Context) {
+
 		var req dto.CreateEventRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
@@ -212,4 +249,3 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 }
-

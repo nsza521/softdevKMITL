@@ -13,7 +13,6 @@ func MapRestaurantRoutes(restaurantGroup *gin.RouterGroup, restaurantHandler int
 
 	restaurantGroup.Use(middleware.AuthMiddleware())
 	restaurantGroup.GET("/all", restaurantHandler.GetAll())
-	restaurantGroup.GET("/detail", restaurantHandler.GetByID())
 	restaurantGroup.GET("/get_pic", restaurantHandler.GetProfilePicture())
 	restaurantGroup.POST("/upload_pic", restaurantHandler.UploadProfilePicture())
 	restaurantGroup.PATCH("/status", restaurantHandler.ChangeStatus())

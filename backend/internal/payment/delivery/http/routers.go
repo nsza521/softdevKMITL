@@ -9,7 +9,5 @@ import (
 
 func MapPaymentRoutes(paymentGroup *gin.RouterGroup, paymentHandler interfaces.PaymentHandler) {
 	paymentGroup.Use(middleware.AuthMiddleware())
-	paymentGroup.GET("/topup/method/all", paymentHandler.GetTopupPaymentMethods())
-	paymentGroup.POST("/topup/wallet", paymentHandler.TopupToWallet())
-	paymentGroup.GET("/transaction/all", paymentHandler.GetAllTransactions())
+	paymentGroup.GET("/topup/all", paymentHandler.GetTopupPaymentMethods())
 }

@@ -1,0 +1,231 @@
+.container{
+    background-color: var(--color5);
+    color: var(--color1);
+    width: 100%;
+    min-height: 100vh;
+    padding: 10vh 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-x: hidden;
+}
+
+.header h1 {
+    padding: 0 40px;
+    font-size: 20px;
+}
+
+.filterBar {
+    margin: 0 40px;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    gap: 10px;
+}
+
+.filterBarScroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;          
+    flex: 1 1 0;
+    min-width: 0;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;          
+    scrollbar-color: var(--color3) transparent;
+}
+
+.filterBarScroll > * {
+    flex: 0 0 auto;
+}
+
+.filterOn {
+    background-color: var(--color2);
+    color: var(--color5);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.filterOff {
+    background-color: var(--color3);
+    color: var(--color1);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.menuCon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 40px 30px 40px;
+}
+
+.menuItemCon {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color1);
+    width: 100%;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--color3);
+}
+
+.menuItemInfoCon {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.menuItemInfoCon img{
+    border-radius: 10px;
+    width: 110px;
+    height: 110px;
+}
+
+.menuItemInfoCon h3 {
+    font-size: 16px;
+}
+
+.bt {
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.addCartBt {
+    background-color: var(--color2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+    width: 240px;
+    border-radius: 20px;
+    color: var(--color5);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.popupBottomCon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 20px 0;
+    padding: 0 40px;
+}
+
+.quantityCon {
+    display: flex;
+    width: 100px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popupOverlay {
+    position: fixed;
+    bottom: 6vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popupCon {
+    position: relative;
+    width: 100%;
+    background-color: var(--color4);
+}
+
+.closeBt {
+    background-color: transparent;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.popupOptionsCon {
+    padding: 0px 40px 15px 40px;
+    border-bottom: 1px solid var(--color5);
+    height: 200px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;          
+    scrollbar-color: var(--color5) transparent;
+}
+
+.popupOptionsCon h3{
+    font-size: 16px;
+    padding: 5px 0;
+    background-color: var(--color4);
+    position: absolute;
+    border-bottom: 1px solid var(--color5);
+    width: calc(100% - 80px);
+}
+
+.optionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 45px;
+}
+
+.optionsList label{
+    display: flex;
+    gap: 4px;
+}
+
+.addonGroup {
+    /* padding: 10px 0; */
+    /* border-bottom: 1px solid var(--color5); */
+}
+
+.menuImg {
+    width: 100%;
+    height: auto;
+}
+
+.cartCon {
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--color2);
+    color: var(--color5);
+    font-size: 16px;
+    margin: 0 20px;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    position: fixed;
+    bottom: 8vh;
+    width: 400px;
+}
+
+.cartItemCon {
+    display: flex;
+    gap: 10px;
+    background-color: var(--color3);
+    color: var(--color1);
+    font-size: 14px;
+    border-radius: 5px;
+    padding: 2px 5px;
+}
+
+.cartQtyCircle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  background-color: var(--color2); /* อยากเปลี่ยนเป็นสีหลักร้านก็ได้ */
+  color: var(--color5);
+  font-weight: bold;
+  border-radius: 50%;
+  font-size: 14px;
+}

@@ -3,6 +3,7 @@
 import { useState , useEffect } from "react";
 import styles from "./home.module.css";
 import { Noto_Sans_Thai } from "next/font/google";
+import { useRouter } from "next/navigation"; 
 
 const notoThai = Noto_Sans_Thai({
   subsets: ["thai"],
@@ -13,6 +14,7 @@ const notoThai = Noto_Sans_Thai({
 export default function HomePage() {
   const [showPopup, setShowPopup] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+   const router = useRouter(); 
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -43,7 +45,7 @@ export default function HomePage() {
     try {
       const token = localStorage.getItem("token"); // ดึง token ที่เก็บไว้ตอน login
 
-      const res = await fetch("http://localhost:8080/user/logout", {
+      const res = await fetch("http://localhost:8080/customer/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,7 +86,7 @@ export default function HomePage() {
 
       <div className={styles.boxs}>
         <span>ยอดเงินคงเหลือ {profile ? `${profile.wallet_balance}` : "กำลังโหลด..."} บาท</span>
-        <button>
+        <button onClick={() => router.push("/topup")}>
           <img src="/plus.svg" width={15} height={15} />
           เติมเงิน
         </button>

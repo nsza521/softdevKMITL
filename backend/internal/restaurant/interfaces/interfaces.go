@@ -18,7 +18,6 @@ type RestaurantHandler interface {
 	Login() gin.HandlerFunc
 	Logout() gin.HandlerFunc
 	GetAll() gin.HandlerFunc
-	GetByID() gin.HandlerFunc
 	UploadProfilePicture() gin.HandlerFunc
 	GetProfilePicture() gin.HandlerFunc
 	ChangeStatus() gin.HandlerFunc
@@ -37,7 +36,7 @@ type RestaurantRepository interface {
 	Update(restaurant *models.Restaurant) error
 
 	// edit
-	PartialUpdate(restaurantID uuid.UUID, name string, menuType *string) (*models.Restaurant, error)
+	PartialUpdate(restaurantID uuid.UUID, name *string, menuType *string) (*models.Restaurant, error)
     ReplaceAddOnMenuItems(restaurantID uuid.UUID, items []string) error
     GetAddOnMenuItems(restaurantID uuid.UUID) ([]string, error)
 
@@ -49,7 +48,6 @@ type RestaurantUsecase interface {
 	Login(request *dto.LoginRequest) (string, error)
 	Logout(token string, expiry time.Time) error
 	GetAll() ([]dto.RestaurantDetailResponse, error)
-	GetByID(restaurantID uuid.UUID) (*dto.RestaurantDetail, error)
 	UploadProfilePicture(restaurantID uuid.UUID, file *multipart.FileHeader) (string, error)
 	GetProfilePicture(restaurantID uuid.UUID) (*models.Restaurant, error)
 	

@@ -26,4 +26,5 @@ type Transaction struct {
 	PaymentMethodID uuid.UUID `gorm:"type:char(36);not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Amount         float32   `gorm:"not null"`
 	Type           string    `gorm:"not null"` // e.g., "topup", "paid", "refund"
+	Status         string    `gorm:"not null; default:'pending'"` // e.g., "pending", "completed", "failed"
 }

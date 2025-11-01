@@ -10,12 +10,7 @@ type RestaurantDetailResponse struct {
 	PictureURL *string   `json:"picture_url"`
 	Email      string    `json:"email"`
 	Status     string    `json:"status"`
-	Name       string    `json:"name"`
-}
-type RestaurantDetail struct {
-	Name       string    `json:"name"`
-	Status     string    `json:"status"`
-	PictureURL *string   `json:"picture_url"`
+	Name       *string    `json:"name"`
 }
 
 type ChangeStatusRequest struct {
@@ -25,7 +20,7 @@ type ChangeStatusRequest struct {
 // edit
 
 type EditRestaurantRequest struct {
-	Name          string  `json:"name,omitempty"`
+	Name          *string  `json:"name,omitempty"`
 	MenuType      *string  `json:"menu_type,omitempty"`
 	AddOnMenuItem []string `json:"add_on_menu_item"`
 }
