@@ -116,10 +116,15 @@ func (s *App) MapHandlers() error {
 	// --- Repo ชั้นล่าง ---
 	orderRepo := foodOrderRepository.NewOrderRepository(s.db)
 	queueRepo := foodOrderRepository.NewQueueRepository(s.db)
+	historyRepo := foodOrderRepository.NewOrderHistoryRepository(s.db) // 👈 ใหม่
+
 	menuRead := foodOrderAdapter.NewMenuReadAdapter(mUC)
 	orderUC := foodOrderUsecase.NewOrderUsecase(orderRepo, menuRead)
 	queueUC := foodOrderUsecase.NewQueueUsecase(queueRepo)
-	foodOrderHandler := foodOrderHttp.NewOrderHandler(orderUC, queueUC)
+
+	historyUC := foodOrderUsecase.NewOrderHistoryUsecase(historyRepo)
+
+	foodOrderHandler := foodOrderHttp.NewOrderHandler(orderUC, queueUC, historyUC)
 	foodOrderHttp.MapFoodOrderRoutes(foodOrderGroup, foodOrderHandler)
 
 	// Notification Group
