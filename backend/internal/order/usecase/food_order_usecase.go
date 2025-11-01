@@ -74,26 +74,18 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
         return dto.CreateFoodOrderResp{}, errors.New("no items")
     }
 
-    // 1) โหลด reservation ถ้ามี
-    var rsv *repository.Reservation
-    if req.ReservationID != nil {
-        rr, err := u.repo.LoadReservationForCustomer(ctx, *req.ReservationID, currentCustomer)
-        if err != nil {
-            return dto.CreateFoodOrderResp{}, err
-        }
-        rsv = rr
-    }
 
-    // 2) เตรียม pointer สำหรับ ReservationID
     var reservationIDPtr uuid.UUID
-    if rsv != nil {
-        reservationIDPtr = rsv.ReservationID
+    if req.ReservationID != nil {
+        fmt.Printf("Reservation ID: %s\n", *req.ReservationID)
+        reservationIDPtr = *req.ReservationID
     }
 
-    // 3) เตรียม pointer สำหรับ CustomerID (walk-in => nil)
     var customerPtr uuid.UUID
     if currentCustomer != uuid.Nil {
+        fmt.Printf("Current customer ID: %s\n", currentCustomer)
         customerPtr = currentCustomer
+        fmt.Printf("Set customerPtr to: %s\n", customerPtr)
     }
 
     // 4) Channel
