@@ -16,15 +16,11 @@
 }
 
 .filterBar {
-    padding: 0 40px;
+    margin: 0 40px;
     display: flex;
     align-items: baseline;
     flex-wrap: nowrap;
     gap: 10px;
-}
-
-.filterBar > * {
-  flex: 0 0 auto;
 }
 
 .filterBarScroll {
@@ -35,7 +31,7 @@
     min-width: 0;
     scroll-behavior: smooth;
     scrollbar-width: thin;          
-    scrollbar-color: #ccc transparent;
+    scrollbar-color: var(--color3) transparent;
 }
 
 .filterBarScroll > * {
@@ -106,8 +102,10 @@
     background-color: var(--color2);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 10px 50px;
+    padding: 10px 0;
+    width: 240px;
     border-radius: 20px;
     color: var(--color5);
     font-size: 16px;
@@ -120,13 +118,14 @@
     align-items: center;
     width: 100%;
     margin: 20px 0;
-    padding: 0 60px;
+    padding: 0 40px;
 }
 
 .quantityCon {
     display: flex;
+    width: 100px;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
 }
 
 .popupOverlay {
@@ -153,23 +152,39 @@
 }
 
 .popupOptionsCon {
-    padding: 10px 40px 15px 40px;
+    padding: 0px 40px 15px 40px;
     border-bottom: 1px solid var(--color5);
+    height: 200px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;          
+    scrollbar-color: var(--color5) transparent;
 }
 
 .popupOptionsCon h3{
     font-size: 16px;
+    padding: 5px 0;
+    background-color: var(--color4);
+    position: absolute;
+    border-bottom: 1px solid var(--color5);
+    width: calc(100% - 80px);
 }
 
 .optionsList {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    padding-top: 45px;
 }
 
 .optionsList label{
     display: flex;
-    gap: 8px;
+    gap: 4px;
+}
+
+.addonGroup {
+    /* padding: 10px 0; */
+    /* border-bottom: 1px solid var(--color5); */
 }
 
 .menuImg {
@@ -187,6 +202,9 @@
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+    position: fixed;
+    bottom: 8vh;
+    width: 400px;
 }
 
 .cartItemCon {
@@ -197,4 +215,17 @@
     font-size: 14px;
     border-radius: 5px;
     padding: 2px 5px;
+}
+
+.cartQtyCircle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  background-color: var(--color2); /* อยากเปลี่ยนเป็นสีหลักร้านก็ได้ */
+  color: var(--color5);
+  font-weight: bold;
+  border-radius: 50%;
+  font-size: 14px;
 }
