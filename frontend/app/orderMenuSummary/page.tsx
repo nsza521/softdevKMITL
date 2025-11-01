@@ -94,6 +94,7 @@ export default function OrderMenuSummaryPage() {
     if (error) return <p style={{color:"red"}}>{error}</p>
     if (!order) return <p>ไม่พบข้อมูลออเดอร์</p>
 
+    const total_price = order.orders.reduce((sum, item) => sum + item.total_price, 0);
 
     return (
         <div className={styles.container}>
