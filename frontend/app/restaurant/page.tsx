@@ -584,20 +584,19 @@ function TotalSales({username}:any) {
 
           <button
             className={`${styles.tabBtn} ${
-              activeTab === "summary" ? styles.activeTab : ""
-            }`}
-            onClick={() => setActiveTab("summary")}
-          >
-            สรุปรายรับ
-          </button>
-
-          <button
-            className={`${styles.tabBtn} ${
               activeTab === "withdraw" ? styles.activeTab : ""
             }`}
             onClick={() => setActiveTab("withdraw")}
           >
             ประวัติการถอนเงิน
+          </button>
+                    <button
+            className={`${styles.tabBtn2} ${
+              activeTab === "summary" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("summary")}
+          >
+            {/* สรุปรายรับ */}
           </button>
         </div>
 

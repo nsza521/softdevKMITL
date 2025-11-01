@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/customer/login", {
+      const res = await fetch("http://localhost:8080/restaurant/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -38,9 +38,9 @@ export default function LoginPage() {
       // เก็บ token ลง localStorage ก็ได้
       localStorage.setItem("token", data.token);
 
-      alert("Login Success!");
+      // alert("Login Success!");
       // redirect ไปหน้าอื่นก็ได้ เช่น /dashboard
-      window.location.href = "/home";
+      window.location.href = "/restaurant";
 
     } catch (err) {
       console.error("❌ Error:", err);

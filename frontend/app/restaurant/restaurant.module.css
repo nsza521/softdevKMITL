@@ -426,7 +426,19 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
+.tabBtn2 {
+    visibility: hidden;
+    color: white;
+    background-color: #D77948;
+    border-radius: 20px 20px 0px 0px;
+    flex: 1;    
+    padding: 10px;
 
+    border: none;   
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
 .tabBtn:hover {
   color: #000;
 }

@@ -58,7 +58,7 @@ export default function SignupPage() {
   return (
     <div className={`${styles.container} ${notoThai.variable}`}>
       <div className={styles.logo}>
-        <div>Logo Banner</div>
+        <div><img src="/jongtohsmall.png" alt="" /></div>
       </div>
 
       <div className={styles.registerbox}>

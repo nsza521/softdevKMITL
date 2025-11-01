@@ -29,6 +29,7 @@
     font-size: 16px;
     font-weight: 400;
     padding-top: 24%;
+    object-fit: cover;
 }
 .logo div{
     display: flex;
@@ -36,7 +37,9 @@
     align-items: center;
     width: 65%;
     height: 100px;
-    background-color: #6D6D6D;
+    background-color: #D77948;
+        overflow: hidden; /* ป้องกันรูปเกิน */
+    border-radius: 16px; /* ถ้าอยากให้ขอบโค้ง */
 }
 .registerbox form{
     width: 78%;
@@ -90,4 +93,7 @@
 .registerbox input:focus {
   outline: none;       /* กัน outline โผล่มา */
   border-bottom: 1px solid black; /* จะใส่สีเข้มขึ้นตอนกดก็ได้ */
+}
+.logo img{
+    width: 200px;
 }
