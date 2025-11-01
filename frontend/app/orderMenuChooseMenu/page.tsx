@@ -459,6 +459,8 @@ interface CartProps {
 
 function Cart({ cart }: CartProps) {
   const router = useRouter();
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
 
   if (cart.length === 0) return null;
 
@@ -483,8 +485,7 @@ function Cart({ cart }: CartProps) {
       return;
     }
 
-    const reservation_id = "76c77c40-f2d3-4994-a593-640610ccfbea";
-    const note = "ถึง 12:30";
+    const reservation_id = restaurant_id
 
     const items = cart.map(ci => ({
       menu_item_id: ci.item.id,
@@ -500,7 +501,6 @@ function Cart({ cart }: CartProps) {
 
     const body = {
       reservation_id,
-      note,
       items
     };
 

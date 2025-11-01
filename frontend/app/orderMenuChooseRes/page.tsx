@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import styles from "./orderMenuChooseRes.module.css";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";  
 
 interface allRestaurant {
   id: string;
@@ -13,6 +14,8 @@ interface allRestaurant {
 }
 
 export default function OrderMenuChooseRes() {
+  const searchParams = useSearchParams();
+  const reservationId = searchParams.get("reservationId");
   const router = useRouter();
   const [restaurant, setRestaurant] = useState<allRestaurant[]>([]);
 
@@ -40,7 +43,7 @@ export default function OrderMenuChooseRes() {
           className={styles.blog_item}
           onClick={() =>{
               if (Rstr.status === "open"){
-                  router.push(`/orderMenuChooseMenu?id=${encodeURIComponent(Rstr.id)}`);
+                  router.push(`/orderMenuChooseMenu?id=${encodeURIComponent(Rstr.id)}&reservationId=${encodeURIComponent(reservationId || "")}`);
                 }
             }
           }

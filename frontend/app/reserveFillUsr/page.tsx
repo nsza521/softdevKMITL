@@ -36,7 +36,7 @@ export default function ReserveFillUsrPage() {
                 const token = localStorage.getItem("token");
 
                 if (random) {
-                    const res = await fetch(`http://localhost:8080/table/reservation/random`, {
+                    const res = await fetch(`ดึงข้อมูลจากในreservation `, {
                         headers: {
                             "Content-Type": "application/json",
                             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -168,7 +168,7 @@ export default function ReserveFillUsrPage() {
             if (resp.ok) {
                 // const result = await resp.json();
                 // console.log(result)
-                router.push("/orderMenuChooseRes");
+                router.push(`/orderMenuChooseRes?reservationId${encodeURIComponent(reservation_id)}`);
             }
 
         } catch (err) {
@@ -189,7 +189,7 @@ export default function ReserveFillUsrPage() {
                 <img src="/info.svg"/>
                 <p>สมาชิกทุกท่านจะมีเวลาในการสั่งอาหาร 5 นาที หากทุกท่านไม่ทำการสั่งอาหารภายใน 5 นาที จะถือว่าสละสิทธิ์</p>
             </div>
-            <button className={styles.createReserveBt} onClick={handleSubmit}>
+            <button className={styles.createReserveBt} onClick={random? handleSubmit: handleSubmitRD}>
                 เชิญเพื่อนและเริ่มสั่งอาหาร
                 <img src="/Arrow_Right_MD.svg"/>
             </button>
@@ -260,7 +260,7 @@ interface MembersProps {
     table: Table;
     onSelectMember: (num: number) => void;
     onMembersChange: (members: Member[]) => void;
-    readOnly?: boolean; // เพิ่ม prop สำหรับ random mode
+    readOnly?: boolean; 
 }
 
 function Members({ table, onSelectMember, onMembersChange, readOnly = false }: MembersProps) {
@@ -314,19 +314,19 @@ function Members({ table, onSelectMember, onMembersChange, readOnly = false }: M
     }, [myProfile, members, onMembersChange]);
 
     const handleRemoveMember = (index: number) => {
-        if (readOnly) return; // lock การลบใน random mode
+        if (readOnly) return;
         setMembers((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleChangeMember = (index: number, field: keyof MemberInfo, value: string) => {
-        if (readOnly) return; // lock การแก้ไขใน random mode
+        if (readOnly) return;
         const updated = [...members];
         updated[index][field] = value;
         setMembers(updated);
     };
 
     const handleUsernameBlur = async (index: number) => {
-        if (readOnly) return; // lock การตรวจสอบ/แก้ไข
+        if (readOnly) return;
         const username = members[index].username.trim();
         if (!username) return;
 

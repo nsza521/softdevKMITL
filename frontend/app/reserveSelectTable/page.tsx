@@ -68,13 +68,15 @@ export default function ReserveSelectTablePage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:8080/reservation/join_random/${time_slot_id}`,
+            const res = await fetch(`http://localhost:8080/table/reservation/create/random`,
                 {
                     method: "POST",
                     headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                     },
+
+                    body: JSON.stringify({ timeslot_id: time_slot_id })
                 }
             );
 
@@ -86,7 +88,9 @@ export default function ReserveSelectTablePage() {
 
             const resp = await res.json();
 
-            router.push( `/reserveFillUsr?random=${encodeURIComponent(true)}&reservation_id=${encodeURIComponent(resp.reservation_id)}`);
+            console.log("Created random reservation:", resp);
+
+            // router.push( `/reserveFillUsr?random=${encodeURIComponent(true)}&reservation_id=${encodeURIComponent(resp.reservation_id)}`);
 
         } catch (err) {
             console.error(err);
