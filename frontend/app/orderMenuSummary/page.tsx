@@ -24,21 +24,16 @@ interface Order {
 }
 
 interface Addon {
-  group_name: string;
-  option_name: string;
+    group_name: string;
+    option_name: string;
+    qty?: number;
 }
 
 interface RawItem {
-  item_id: UUID;
-  menu_name: string;
-  quantity: number;
-  total_price: number;
-  addons?: Addon[]; 
-}
-
-interface RawOrder {
-  order_id: UUID;
-  items: RawItem[];
+    order_item_id: UUID;
+    menu_name: string;
+    line_subtotal: number;
+    options?: Addon[];
 }
 
 export default function OrderMenuSummaryPage() {
@@ -65,17 +60,17 @@ export default function OrderMenuSummaryPage() {
                 console.log("Order Data:", data)
 
                 const formattedOrder: Order = {
-                order_id: data.order_id,
-                orders: data.items.map((item: RawItem): OrderItem => ({
-                    item_id: item.item_id,
-                    menu_name: item.menu_name,
-                    quantity: item.quantity,
-                    total_price: item.total_price,
-                    options: item.addons?.map((add: Addon): Option => ({
-                    group_name: add.group_name,
-                    option_name: add.option_name
-                    })) ?? []  
-                }))
+                    order_id: data.order_id,
+                    orders: data.items.map((item: RawItem): OrderItem => ({
+                        item_id: item.order_item_id,
+                        menu_name: item.menu_name,
+                        quantity: 1, // ถ้า qty อยู่ที่ item ต้องเปลี่ยนเป็น item.qty
+                        total_price: item.line_subtotal,
+                        options: item.options?.map((add: Addon): Option => ({
+                            group_name: add.group_name,
+                            option_name: add.option_name
+                        })) || []
+                    }))
                 };
 
                 setOrder(formattedOrder);
@@ -95,6 +90,8 @@ export default function OrderMenuSummaryPage() {
     if (!order) return <p>ไม่พบข้อมูลออเดอร์</p>
 
     const total_price = order.orders.reduce((sum, item) => sum + item.total_price, 0);
+
+    console.log("Rendered Order:", order);
 
     return (
         <div className={styles.container}>
@@ -124,7 +121,7 @@ export default function OrderMenuSummaryPage() {
                     <ul className={styles.addOnList}>
                         {item.options.map((add: Option, index: number) => (
                         <li key={index}>
-                            {add.group_name}: {add.option_name}
+                            {add.option_name}
                         </li>
                         ))}
                     </ul>
