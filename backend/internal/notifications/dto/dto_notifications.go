@@ -119,4 +119,5 @@ type ReserveFailedData struct {
 	TableNo    string `json:"tableNo"`
 	When       string `json:"when"`
 	Restaurant string `json:"restaurant"`
+	Members     []string `json:"members"`       // ["Username", "Username", ...]
 }
