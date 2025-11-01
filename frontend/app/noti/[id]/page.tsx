@@ -89,8 +89,8 @@ export default function NotificationDetailPage (){
               </div>
             )}
             {/* {notiContent.type === "ORDER_CANCELED" && ()} */}
-            {notiContent.type === "RESERVE_SUCCESS" && ()}
-            {notiContent.type === "RESERVE_FAILED" && ()}
+            {/* {notiContent.type === "RESERVE_SUCCESS" && ()}
+            {notiContent.type === "RESERVE_FAILED" && ()} */}
         </div>
       </div>
     </div>
