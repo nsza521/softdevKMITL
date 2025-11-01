@@ -1,5 +1,4 @@
 "use client";
-import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 import styles from "./orderMenuChooseMenu.module.css";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -8,9 +7,10 @@ import { useEffect, useState } from "react";
 type UUID = string;
 
 export default function MenuPage() {
-  // const restaurant_id = searchParam.get("id") || "";
-  const restaurant_id = "7e3073db-fae6-4520-be71-2f8088aa15fc";
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
 
+  const [activeFilter, setActiveFilter] = useState<string>("All");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([])
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -83,25 +83,30 @@ export default function MenuPage() {
         return [...prev, { item, quantity, selectedAddons }]
       }
     })
+    // console.log("Cart updated:", cart);
   }
-
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Welcome to [ชื่อร้าน]</h1>
+        <h1>Welcome to </h1>
       </header>
 
-      <FilterGroup />
+      <FilterGroup onFilterChange={(type) => setActiveFilter(type)} />
 
       <div className={styles.menuCon}>
-        {menuItems.map((item) => (
-          <MenuItem
-            key={item.id}
-            menuItem={item}
-            onAdd={() => handleAddItem(item)}
-            cart={cart}
-          />
+        {menuItems
+          .filter(item =>
+            activeFilter === "All" ||
+            item.types.some(t => t.name === activeFilter)
+          )
+          .map(item => (
+            <MenuItem
+              key={item.id}
+              menuItem={item}
+              onAdd={() => handleAddItem(item)}
+              cart={cart}
+            />
         ))}
       </div>
 
@@ -137,27 +142,67 @@ function FilterButton({ label, isActive = false, onClick }: FilterButtonProps) {
   )
 }
 
-function FilterGroup() {
-  const defaultFilter = "All"
-  const filters = ["อาหารจานเดียว", "เมนูเส้น", "เครื่องดื่ม", "ของหวาน", "ของทานเล่น", "ชุดอาหาร", "สลัด", "ซุป", "อาหารว่าง"]
-  
-  const [activeIndex, setActiveIndex] = useState<number>(0)
-  const [otherButtons, setOtherButtons] = useState<string[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+function FilterGroup({ onFilterChange }: { onFilterChange: (type: string) => void }) {
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+
+  const defaultFilter = "All";
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [otherButtons, setOtherButtons] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    
-    setOtherButtons(filters)
-    setLoading(false)
-  }, [])
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
+      setError("ไม่พบโทเค็น กรุณาเข้าสู่ระบบใหม่");
+      return;
+    }
+
+    async function fetchTypes() {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/restaurant/menu/${restaurant_id}/types`,
+          { headers: { Authorization: `Bearer ${storedToken}` } }
+        );
+
+        if (!res.ok) {
+          setError("โหลดประเภทเมนูไม่สำเร็จ");
+          return;
+        }
+
+        const data = await res.json();
+        const fetchedTypes = data.types.map((t: any) => t.type);
+
+        setOtherButtons(fetchedTypes);
+      } catch (err) {
+        console.error(err);
+        setError("เกิดข้อผิดพลาดในการโหลดประเภทเมนู");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTypes();
+  }, []);
 
   const handleClick = (index: number) => {
+    let newIndex = index;
+
     if (activeIndex === index) {
-      setActiveIndex(0)
-    } else {
-      setActiveIndex(index)
+      newIndex = 0;
     }
-  }
+
+    setActiveIndex(newIndex);
+
+    if (newIndex === 0) {
+      onFilterChange("All");
+    } else {
+      onFilterChange(otherButtons[newIndex - 1]);
+    }
+  };
+
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div className={styles.filterBar}>
@@ -182,7 +227,7 @@ function FilterGroup() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 interface Type {
@@ -250,7 +295,8 @@ interface MenuPopupProps {
 }
 
 function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupProps) {
-  const restaurant_id = "7e3073db-fae6-4520-be71-2f8088aa15fc";
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
 
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
@@ -332,7 +378,9 @@ function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupPr
         <img src={detail.menu_pic ?? "/placeholder.png"} className={styles.menuImg} />
 
         <div className={styles.popupOptionsCon}>
-          <h3>ตัวเลือกเพิ่มเติมสำหรับ {detail.name}</h3>
+          {detail.addons? (
+            <h3>ตัวเลือกเพิ่มเติมสำหรับ {detail.name}</h3>
+          ) : null}
           <div className={styles.optionsList}>
             {detail.addons?.map((addon) => (
               <div key={addon.id} className={styles.addonGroup}>
@@ -408,19 +456,96 @@ interface CartProps {
 }
 
 function Cart({ cart }: CartProps) {
-  if (cart.length === 0) return null
+  const router = useRouter();
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+  const reservation_id = searchParam.get("reservationId") || "";
 
-  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0)
-  const itemCost = cart.reduce((sum, ci) => sum + parseFloat(ci.item.price) * ci.quantity, 0)
+  if (cart.length === 0) return null;
+
+  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0);
+  const itemCost = cart.reduce((sum, ci) => {
+    const basePrice = parseFloat(ci.item.price);
+
+    const addonTotal = ci.selectedAddons?.reduce((addonSum, addon) => {
+      const optionTotal = addon.options.reduce((optSum, opt) => {
+        return optSum + parseFloat(opt.price_delta);
+      }, 0);
+      return addonSum + optionTotal;
+    }, 0) ?? 0;
+
+    return sum + (basePrice + addonTotal) * ci.quantity;
+  }, 0);
+
+  const handleCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Token not found");
+      return;
+    }
+
+    const items = cart.map(ci => ({
+      menu_item_id: ci.item.id,
+      quantity: ci.quantity,
+      selections: ci.selectedAddons.flatMap(addon =>
+        addon.options.map(opt => {
+          if (addon.required === false) {
+            return {
+              group_id: addon.id,
+              option_id: opt.id,
+              qty: 1
+            };
+          }
+
+          return {
+            group_id: addon.id,
+            option_id: opt.id
+          };
+        })
+      )
+    }));
+
+    const body = {
+      reservation_id,
+      items
+    };
+    // console.log("Cart", cart);
+    // console.log("Order request items:", items);
+
+    try {
+      const res = await fetch("http://localhost:8080/restaurant/order", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        alert("ส่งคำสั่งซื้อไม่สำเร็จ");
+        return;
+      }
+      const resp = await res.json();
+      console.log("Order response:", resp);
+
+      router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
+
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
 
   return (
-    <div className={styles.cartCon}>
+    <button className={styles.cartCon} onClick={handleCheckout}>
       <div className={styles.cartItemCon}>
         <img src="/Shopping_Cart_Black.svg" />
         <span>{itemNum}</span>
       </div>
       <span>ตะกร้าของฉัน</span>
       <span>฿ {itemCost}</span>
-    </div>
-  )
+    </button>
+  );
 }

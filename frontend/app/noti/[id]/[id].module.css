@@ -11,10 +11,15 @@
     flex-direction: column;
     justify-content: center;
     gap: 20px;
+    width: 480px;
     position: absolute;
     margin-top: 48px;
     padding: 20px;
 
+}
+
+.descibe {
+    color: grey;
 }
 
 .member {
