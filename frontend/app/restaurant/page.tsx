@@ -174,7 +174,7 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
   const [username, setUsername] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("All"); // เพิ่ม state กรอง type
   const [restaurantID, setRestaurantID] = useState<string | null>(null);
-
+  
   const [restaurantPic, setRestaurantPic] = useState<string>("");
   useEffect(() => {
 
@@ -1228,7 +1228,178 @@ function AddmenuPage() {
   );
 }
 function MenuDetailPage({ menu, onBack }: any) {
-  if (!menu) return <p>ไม่พบข้อมูลเมนู</p>;
+  const [showGroupPopup, setShowGroupPopup] = useState(false);
+  const [showOptionPopup, setShowOptionPopup] = useState(false);
+  const [groupID, setGroupID] = useState<string | null>(null);
+  const [restaurantID, setRestaurantID] = useState<string | null>(null);
+
+  const token = localStorage.getItem("token");
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const payload = token.split('.')[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = JSON.parse(atob(base64));
+
+      if (jsonPayload.role === "restaurant") {
+        setRestaurantID(jsonPayload.user_id);
+        console.log("Restaurant ID:", jsonPayload.user_id);
+      } else {
+        console.error("Token ไม่ใช่ร้านอาหาร");
+      }
+    } catch (err) {
+      console.error("❌ JWT decode error:", err);
+    }
+  }, []);
+
+const [groupData, setGroupData] = useState({ 
+  name: "",
+  required: false,
+  min_select: 1,
+  max_select: 1,
+  allow_qty: false,
+});
+
+const [optionData, setOptionData] = useState({
+  name: "",
+  price_delta: 0,
+  is_default: false,
+  max_qty: 0,
+});
+
+const [options, setOptions] = useState<any[]>([]);
+
+if (!menu) return <p>ไม่พบข้อมูลเมนู</p>;
+
+              const handleGroupChange = (e: any) => {
+                const { name, value, type, checked } = e.target;
+                setGroupData((prev) => ({
+                  ...prev,
+                  [name]: type === "checkbox" ? checked : Number(value) || value, // convert number inputs
+                }));
+              };
+
+
+
+              const handleOptionChange = (e: any) => {
+                const { name, value, type, checked } = e.target;
+                setOptionData((prev) => ({
+                  ...prev,
+                  [name]:
+                    type === "checkbox"
+                      ? checked
+                      : name === "price_delta" || name === "max_qty"
+                      ? Number(value)
+                      : value,
+                }));
+              };
+
+
+
+            const handleCreateGroup = async () => {
+              try {
+                console.log("✅ Creating AddOn Group:", groupData);
+                const res = await fetch(
+                  `http://localhost:8080/restaurant/menu/${restaurantID}/addon-groups`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                    method: "POST",
+                    body: JSON.stringify(groupData),
+                  }
+                );
+                const data = await res.json();
+                setGroupID(data.id); // เอา id จริงจาก backend
+                console.log(data);
+                setShowGroupPopup(false);
+                setShowOptionPopup(true);
+              } catch (err) {
+                console.error("❌ Failed to create group:", err);
+                alert("สร้างกลุ่มไม่สำเร็จ");
+              }
+            };
+
+
+
+
+          const handleAddOption = () => {
+            setOptions((prev) => [
+              ...prev,
+              {
+                ...optionData,
+                price_delta: Number(optionData.price_delta),
+                max_qty: Number(optionData.max_qty),
+              },
+            ]);
+            setOptionData({
+              name: "",
+              price_delta: 0,
+              is_default: false,
+              max_qty: 0,
+            });
+          };
+
+
+
+
+          
+            const handleSubmitOptions = async () => {
+              if (!groupID) return alert("ยังไม่มี group id");
+              try {
+                console.log("✅ Sending all options:", options);
+
+                for (const [index, opt] of options.entries()) {
+                  const payload = {
+                    ...opt,
+                    price_delta: Number(opt.price_delta),
+                    max_qty: Number(opt.max_qty),
+                  };
+
+                  const res = await fetch(
+                    `http://localhost:8080/restaurant/menu/addon-groups/${groupID}/options`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify(payload),
+                    }
+                  );
+
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => ({ message: "No JSON response" }));
+                    console.error(`❌ Failed to send option #${index + 1}:`, payload, errData);
+                    alert(`ส่ง Option "${opt.name}" ไม่สำเร็จ`);
+                    return;
+                  }
+
+                  const data = await res.json().catch(() => ({}));
+                  console.log(`✅ Option #${index + 1} saved:`, data);
+                }
+
+                // reset after all options sent
+                setOptions([]);
+                setOptionData({
+                  name: "",
+                  price_delta: 0,
+                  is_default: false,
+                  max_qty: 0,
+                });
+                setGroupID(null);
+                setShowOptionPopup(false);
+                alert("ส่ง options สำเร็จทั้งหมด ✅");
+              } catch (err) {
+                console.error("❌ Failed to submit options:", err);
+                alert("ส่ง options ไม่สำเร็จ");
+              }
+            };
+
+  
 
   return (
     <div className={styles.menuDetailPageWrapper}>
@@ -1253,7 +1424,7 @@ function MenuDetailPage({ menu, onBack }: any) {
           </div>
 
           <div className={styles.menuDetailAddonSection}>
-            <h4>🍳 Add-ons (ตัวเลือกเพิ่มเติม)</h4>
+            <h4 className={styles.handlerthisfkignstupidshit}>🍳 Add-ons (ตัวเลือกเพิ่มเติม) <button onClick={() => setShowGroupPopup(true)}  className={styles.addonsBTN}> <span className="material-symbols-outlined">add_circle</span>เพิ่ม Add-ons</button></h4>
             {menu.addons && menu.addons.length > 0 ? (
               menu.addons.map((a: any) => (
                 <div key={a.id} className={styles.menuDetailAddonItem}>
@@ -1282,6 +1453,125 @@ function MenuDetailPage({ menu, onBack }: any) {
           </div>
         </div>
       </div>
+            {showGroupPopup && (
+        <div className={styles.popupOverlay} onClick={() => setShowGroupPopup(false)}>
+          <div className={styles.popupContainer} onClick={(e) => e.stopPropagation()}>
+            <h3>เพิ่ม Add-On Group</h3>
+
+            <label>
+              ชื่อกลุ่ม:
+              <input name="name" value={groupData.name} onChange={handleGroupChange} />
+            </label>
+
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                name="required"
+                checked={groupData.required}
+                onChange={handleGroupChange}
+              />
+              Required
+            </label>
+
+            <div className={styles.inlineInputs}>
+              <label>
+                Min select:
+                <input
+                  type="number"
+                  name="min_select"
+                  value={groupData.min_select}
+                  onChange={handleGroupChange}
+                />
+              </label>
+              <label>
+                Max select:
+                <input
+                  type="number"
+                  name="max_select"
+                  value={groupData.max_select}
+                  onChange={handleGroupChange}
+                />
+              </label>
+            </div>
+
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                name="allow_qty"
+                checked={groupData.allow_qty}
+                onChange={handleGroupChange}
+              />
+              Allow quantity selection
+            </label>
+
+            <div className={styles.popupButtons}>
+              <button onClick={handleCreateGroup}>✅ สร้าง Group</button>
+              <button onClick={() => setShowGroupPopup(false)}>❌ ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------- Popup: Add Options -------- */}
+      {showOptionPopup && (
+        <div className={styles.popupOverlay} onClick={() => setShowOptionPopup(false)}>
+          <div className={styles.popupContainer} onClick={(e) => e.stopPropagation()}>
+            <h3>เพิ่ม Option ใน Group</h3>
+
+            <label>
+              ชื่อ Option:
+              <input name="name" value={optionData.name} onChange={handleOptionChange} />
+            </label>
+            <label>
+              ราคาเพิ่ม (฿):
+              <input
+                type="number"
+                name="price_delta"
+                value={optionData.price_delta}
+                onChange={handleOptionChange}
+              />
+            </label>
+
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                name="is_default"
+                checked={optionData.is_default}
+                onChange={handleOptionChange}
+              />
+              เป็นค่าเริ่มต้น
+            </label>
+
+            <label>
+              Max Quantity:
+              <input
+                type="number"
+                name="max_qty"
+                value={optionData.max_qty}
+                onChange={handleOptionChange}
+              />
+            </label>
+
+            <button onClick={handleAddOption}>➕ เพิ่ม Option</button>
+
+            {options.length > 0 && (
+              <ul>
+                {options.map((opt, i) => (
+                  <li key={i}>
+                    {opt.name} ({opt.price_delta}฿)
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className={styles.popupButtons}>
+              <button onClick={handleSubmitOptions}>✅ บันทึกทั้งหมด</button>
+              <button onClick={() => setShowOptionPopup(false)}>❌ ปิด</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+  
 }

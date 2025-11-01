@@ -1292,3 +1292,132 @@
       color: gray;
 
 }
+.addonsBTN {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 20px;
+  font-size: 14px;
+  gap: 6px;
+  background-color: #d77a48;
+  color: white;
+  width: 160px;
+  height: 42px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  
+  /* เพิ่มความนุ่มและมิติ */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: 
+    transform 0.2s ease, 
+    box-shadow 0.2s ease, 
+    background-color 0.2s ease;
+}
+
+.addonsBTN:hover {
+  transform: scale(1.01);
+  background-color: #e0814f; /* สีสว่างขึ้นนิดหนึ่ง */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+
+.handlerthisfkignstupidshit{
+  display: flex;
+  align-items: center;
+}
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.popupContainer {
+  background: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  width: 360px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: popupEnter 0.25s ease;
+}
+
+.popupContainer h3 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.popupContainer label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.popupContainer input[type="text"],
+.popupContainer input[type="number"] {
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.inlineInputs {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popupButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.popupButtons button {
+  flex: 1;
+  padding: 8px 0;
+  margin: 0 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.popupButtons button:first-child {
+  background-color: #4caf50;
+  color: white;
+}
+
+.popupButtons button:last-child {
+  background-color: #f44336;
+  color: white;
+}
+
+.popupButtons button:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes popupEnter {
+  from { transform: scale(0.9); opacity: 0 }
+  to { transform: scale(1); opacity: 1 }
+}
