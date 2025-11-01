@@ -57,6 +57,7 @@ type OrderUsecase interface {
 	// เวอร์ชันใหม่: reservation_id อยู่ใน body (optional)
 	Create(ctx context.Context, req dto.CreateFoodOrderReq, currentCustomer uuid.UUID) (dto.CreateFoodOrderResp, error)
 	GetDetailForRestaurant(ctx context.Context, input GetDetailForRestaurantInput) (dto.OrderDetailForRestaurantResp, error)
+    UpdateStatus(ctx context.Context, orderID, newStatus string) (dto.UpdateStatusResponse, error)
 }
 
 type orderUsecase struct {
@@ -232,3 +233,22 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
         Status:      order.Status,
     }, nil
 }
+
+
+func (uc *orderUsecase) UpdateStatus(ctx context.Context, orderID, newStatus string) (dto.UpdateStatusResponse, error) {
+    orderUUID, err := uuid.Parse(orderID)
+    if err != nil {
+        return dto.UpdateStatusResponse{}, fmt.Errorf("invalid order ID: %v", err)
+    }
+
+    if err := uc.repo.UpdateStatus(ctx, orderID, newStatus); err != nil {
+        return dto.UpdateStatusResponse{}, err
+    }
+
+    return dto.UpdateStatusResponse{
+        ID:     orderUUID.String(),
+        Status:  newStatus,
+    }, nil
+}
+	
+

@@ -28,9 +28,6 @@ func NewOrderHandler(
     }
 }
 
-
-
-
 // POST /orders  (reservation_id เป็น optional ใน body)
 func (h *OrderHandler) Create(c *gin.Context) {
 	
@@ -127,4 +124,27 @@ func (h *OrderHandler) GetHistoryForDay(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+
+// PATCH /restaurant/orders/:orderID/status
+func (h *OrderHandler) UpdateStatus(c *gin.Context) {
+	orderID := c.Param("orderID")
+
+	var req dto.UpdateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	res, err := h.orderUC.UpdateStatus(c.Request.Context(), orderID, req.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.UpdateStatusResponse{
+		ID:     res.ID,
+		Status: res.Status,
+	})
 }
