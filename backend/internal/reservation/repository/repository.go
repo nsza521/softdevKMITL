@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"time"
 	"gorm.io/gorm"
 	"github.com/google/uuid"
 
@@ -59,6 +60,26 @@ func (r *TableReservationRepository) DeleteTableReservation(reservationID uuid.U
 	}
 	return nil
 }
+
+func (r *TableReservationRepository) CountReservationsByCustomerAndDate(customerID uuid.UUID, date time.Time) (int64, error) {
+    var count int64
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+    startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
+    endOfDay := startOfDay.Add(24 * time.Hour)
+
+    err := r.db.
+        Table("table_reservations").
+        Joins("JOIN table_reservation_members m ON m.reservation_id = table_reservations.id").
+        Where("m.customer_id = ? AND table_reservations.status IN (?) AND table_reservations.created_at BETWEEN ? AND ?",
+            customerID,
+            []string{"pending", "confirmed"},
+            startOfDay,
+            endOfDay).
+        Count(&count).Error
+
+    return count, err
+}
+
 
 
 // Table Reservation Members Repository
