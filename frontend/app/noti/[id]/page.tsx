@@ -29,7 +29,7 @@ export default function NotificationDetailPage (){
 
   const handleConfirm = () => {
     alert("คุณกดยืนยันเรียบร้อยแล้ว!");
-    // TODO: เรียก API เพื่อ update สถานะได้ที่นี่
+    
   };
 
   useEffect(() =>{
@@ -55,13 +55,12 @@ export default function NotificationDetailPage (){
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <h3>{notiContent.title}</h3>
-            <p>{notiContent.content}</p>
+            <h2>{notiContent.title}</h2>
           </div>
 
             {notiContent.type === "RESERVE_WITH" && (
               <div className={styles.detail}>
-                <p>รายละเอียด :</p>
+                <p>รายละเอียด :&nbsp;{notiContent.content}</p>
                 <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
                 <p>วันที่ {notiContent.attributes.when}</p>
                 <div className={styles.member}>
@@ -72,6 +71,8 @@ export default function NotificationDetailPage (){
                     ))}
                   </div>
                 </div>
+                <p className={styles.descibe}>*  หากคุณได้ทำการจองโต๊ะร่วมกับรายชื่อดังกล่าว
+                      โปรดยืนยันเพื่อดำเนินการต่อ</p>
                 <div className={styles.confirmBtn}>
                   <button className={styles.acceptBtn}>ยืนยัน</button>
                   <button className={styles.cancleBtn}>ยกเลิก</button>
@@ -81,16 +82,57 @@ export default function NotificationDetailPage (){
 
             {notiContent.type === "ORDER_FINISHED" && (
               <div className={styles.detail}>
-                <p>รายละเอียด :</p>
+                <p>รายละเอียด :&nbsp;{notiContent.content}</p>
                 <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
                 <p>วันที่ {notiContent.attributes.when}</p>
                 <p>ร้านอาหาร : {notiContent.attributes.restaurant}</p>
                 <p>คิวที่ {notiContent.attributes.queueNo}</p>
               </div>
             )}
-            {/* {notiContent.type === "ORDER_CANCELED" && ()} */}
-            {/* {notiContent.type === "RESERVE_SUCCESS" && ()}
-            {notiContent.type === "RESERVE_FAILED" && ()} */}
+            {notiContent.type === "ORDER_CANCELED" && (
+              <div className={styles.detail}>
+                <p>รายละเอียด :&nbsp;{notiContent.content}</p>
+                <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
+                <p>วันที่ {notiContent.attributes.when}</p>
+                <p>ร้านอาหาร : {notiContent.attributes.restaurant}</p>
+                <p>คิวที่ {notiContent.attributes.queueNo}</p>
+                <p className={styles.descibe}>* คิวของคุณจะไม่ถูกเลื่อนออกไปแต่อาหารที่คุณเปลี่ยน
+                    หากราคาแตกต่างเราจะทำการหักเงิน/คืนของคุณใน
+                    ระบบ</p>
+              </div>
+            )}
+            {notiContent.type === "RESERVE_SUCCESS" && (
+               <div className={styles.detail}>
+                <p>รายละเอียด :&nbsp;{notiContent.content}</p>
+                <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
+                <p>วันที่ {notiContent.attributes.when}</p>
+                <p>ร้านอาหาร : {notiContent.attributes.restaurant}</p>
+                <p>คิวที่ {notiContent.attributes.queueNo}</p>
+                <div className={styles.member}>
+                  <p>สมาชิก :&nbsp;</p>
+                  <div>
+                    {notiContent.attributes.members.map((member, index) => (
+                      <p key={index}>{member}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            {notiContent.type === "RESERVE_FAILED" && (
+              <div className={styles.detail}>
+                <p>รายละเอียด :&nbsp;{notiContent.content}</p>
+                <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
+                <p>วันที่ {notiContent.attributes.when}</p>
+                <div className={styles.member}>
+                  <p>สมาชิก :&nbsp;</p>
+                  <div>
+                    {notiContent.attributes.members.map((member, index) => (
+                      <p key={index}>{member}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </div>
