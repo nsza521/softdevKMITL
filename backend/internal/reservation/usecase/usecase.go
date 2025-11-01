@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	customerInterfaces "backend/internal/customer/interfaces"
 	models "backend/internal/db_model"
 	"backend/internal/reservation/dto"
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
-
-	"github.com/google/uuid"
 
 	"github.com/google/uuid"
 )
