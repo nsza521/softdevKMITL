@@ -109,6 +109,40 @@ func (h *TableReservationHandler) GetAllTableReservationHistory() gin.HandlerFun
 	}
 }
 
+func (h *TableReservationHandler) GetAllTableReservationByCustomerID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservations, err := h.tableReservationUsecase.GetAllTableReservationByCustomerID(customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"reservations": reservations})
+	}
+}
+
+func (h *TableReservationHandler) GetTableReservationOwnerDetail() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		ownerDetails, err := h.tableReservationUsecase.GetTableReservationOwnerDetail(reservationID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"details": ownerDetails})
+	}
+}
+
 func (h *TableReservationHandler) GetTableReservationDetail() gin.HandlerFunc {
 	return func(c *gin.Context) {
 

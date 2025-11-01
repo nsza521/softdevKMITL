@@ -2,10 +2,11 @@ package repository
 
 import (
 	"time"
-	"gorm.io/gorm"
-	"github.com/google/uuid"
 
-	"backend/internal/db_model"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+
+	models "backend/internal/db_model"
 )
 
 type TableReservationRepository struct {
@@ -23,7 +24,7 @@ func (r *TableReservationRepository) CreateTableReservation(reservation *models.
 	if err := r.db.Create(reservation).Error; err != nil {
 		return nil, err
 	}
-	
+
 	createdReservation, err := r.GetTableReservationByID(reservation.ID)
 	if err != nil {
 		return nil, err
@@ -37,6 +38,14 @@ func (r *TableReservationRepository) GetTableReservationByID(id uuid.UUID) (*mod
 		return nil, err
 	}
 	return &reservation, nil
+}
+
+func (r *TableReservationRepository) GetAllTableReservationByTableTimeslotID(tableTimeslotID uuid.UUID) ([]models.TableReservation, error) {
+	var reservations []models.TableReservation
+	if err := r.db.Where("table_timeslot_id = ?", tableTimeslotID).Order("created_at ASC").Find(&reservations).Error; err != nil {
+		return nil, err
+	}
+	return reservations, nil
 }
 
 func (r *TableReservationRepository) UpdateTableReservation(reservation *models.TableReservation) error {
@@ -54,25 +63,23 @@ func (r *TableReservationRepository) DeleteTableReservation(reservationID uuid.U
 }
 
 func (r *TableReservationRepository) CountReservationsByCustomerAndDate(customerID uuid.UUID, date time.Time) (int64, error) {
-    var count int64
+	var count int64
 	loc, _ := time.LoadLocation("Asia/Bangkok")
-    startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
-    endOfDay := startOfDay.Add(24 * time.Hour)
+	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
+	endOfDay := startOfDay.Add(24 * time.Hour)
 
-    err := r.db.
-        Table("table_reservations").
-        Joins("JOIN table_reservation_members m ON m.reservation_id = table_reservations.id").
-        Where("m.customer_id = ? AND table_reservations.status IN (?) AND table_reservations.created_at BETWEEN ? AND ?",
-            customerID,
-            []string{"pending", "confirmed"},
-            startOfDay,
-            endOfDay).
-        Count(&count).Error
+	err := r.db.
+		Table("table_reservations").
+		Joins("JOIN table_reservation_members m ON m.reservation_id = table_reservations.id").
+		Where("m.customer_id = ? AND table_reservations.status IN (?) AND table_reservations.created_at BETWEEN ? AND ?",
+			customerID,
+			[]string{"pending", "confirmed"},
+			startOfDay,
+			endOfDay).
+		Count(&count).Error
 
-    return count, err
+	return count, err
 }
-
-
 
 // Table Reservation Members Repository
 func (r *TableReservationRepository) CreateTableReservationMember(member *models.TableReservationMembers) error {
@@ -81,7 +88,7 @@ func (r *TableReservationRepository) CreateTableReservationMember(member *models
 
 func (r *TableReservationRepository) GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error) {
 	var members []models.TableReservationMembers
-	if err := r.db.Where("reservation_id = ?", reservationID).Find(&members).Error; err != nil {
+	if err := r.db.Where("reservation_id = ?", reservationID).Order("created_at ASC").Find(&members).Error; err != nil {
 		return nil, err
 	}
 	return members, nil
@@ -97,7 +104,7 @@ func (r *TableReservationRepository) IsCustomerInReservation(reservationID uuid.
 	return count > 0, nil
 }
 
-func (r *TableReservationRepository) GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
+func (r *TableReservationRepository) GetAllTableReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error) {
 	var reservations []models.TableReservationMembers
 	if err := r.db.Where("customer_id = ?", customerID).Find(&reservations).Error; err != nil {
 		return nil, err
