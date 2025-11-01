@@ -1,6 +1,0 @@
-package dto
-
-import (
-
-)
-
