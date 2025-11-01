@@ -9,7 +9,7 @@ import (
 	"backend/internal/reservation/interfaces"
 	tableInterfaces "backend/internal/table/interfaces"
 
-	"github.com/google/uuid"
+	customerInterfaces "backend/internal/customer/interfaces"
 
 	"github.com/google/uuid"
 )
