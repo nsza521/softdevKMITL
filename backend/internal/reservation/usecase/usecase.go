@@ -586,7 +586,7 @@ func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.U
 
 	var paidMembersCount int = 0
 	for _, member := range members {
-		if member.Status == "paid" {
+		if member.Status == "paid" || member.Status == "paid_pending" {
 			paidMembersCount++
 		}
 	}
