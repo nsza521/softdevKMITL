@@ -161,7 +161,7 @@ const handleLogout = async () => {
     if (!res.ok) throw new Error("Logout failed");
     localStorage.removeItem("token");
     alert("ออกจากระบบเรียบร้อย");
-    window.location.href = "/login";
+    window.location.href = "/loginrestaurant";
   } catch (err) {
     console.error("❌ Error:", err);
     alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
@@ -539,40 +539,175 @@ function QueuePage() {
     </div>
   );
 }
-function TotalSales({username}:any) {
+ function TotalSales({ username }: any) {
   const [showMoney, setShowMoney] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
 
+  // ✅ popup state
+  const [showPopupoftiHisButtonIsAmazaing, setShowPopupoftiHisButtonIsAmazaing] = useState(false);
+  const [withdrawData, setWithdrawData] = useState({
+    full_name: "",
+    bank_name: "KBANK",
+    bank_account_number: "",
+    withdraw_amount: "",
+  });
+
+  const token = localStorage.getItem("token");
+  console.log("token",token);
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setWithdrawData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawData.full_name || !withdrawData.bank_account_number || !withdrawData.withdraw_amount) {
+      alert("กรอกข้อมูลให้ครบก่อนครับ");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/payment/withdraw/wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...withdrawData,
+          withdraw_amount: Number(withdrawData.withdraw_amount),
+        }),
+      });
+
+      const data = await res.json();
+      console.log("📦 Withdraw response:", data);
+
+      if (!res.ok) {
+        alert("ถอนเงินไม่สำเร็จ: " + (data.message || "เกิดข้อผิดพลาด"));
+      } else {
+        alert("ถอนเงินสำเร็จ!");
+        setShowPopupoftiHisButtonIsAmazaing(false);
+        setWithdrawData({
+          full_name: "",
+          bank_name: "KBANK",
+          bank_account_number: "",
+          withdraw_amount: "",
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error:", err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+  };
+
   return (
     <section className={styles.shopcontent}>
-        <div className={styles.sectionofcirclemoney}>
-              <h2 className={styles.headerstotalsales}>บัญชีของ {username}</h2>
+      <div className={styles.sectionofcirclemoney}>
+        <h2 className={styles.headerstotalsales}>บัญชีของ {username}</h2>
 
-            {/* วงกลมยอดเงิน */}
-            <div className={styles.moneyCircle}>
-                <p className={styles.subText}>ยอดเงินคงเหลือ</p>
+        <div className={styles.moneyCircle}>
+          <p className={styles.subText}>ยอดเงินคงเหลือ</p>
+          <h1 className={styles.totalAmount}>
+            {showMoney ? "12,540.75 ฿" : "********"}
+          </h1>
 
-                <h1 className={styles.totalAmount}>
-                {showMoney ? "12,540.75 ฿" : "********"}
-                </h1>
-
-                <button
-                className={styles.eyeButton}
-                onClick={() => setShowMoney(!showMoney)}
-                >
-                <span className="material-symbols-outlined">
-                    {showMoney ? "visibility" : "visibility_off"}
-                </span>
-                </button>
-            </div>
+          <button
+            className={styles.eyeButton}
+            onClick={() => setShowMoney(!showMoney)}
+          >
+            <span className="material-symbols-outlined">
+              {showMoney ? "visibility" : "visibility_off"}
+            </span>
+          </button>
         </div>
+      </div>
 
-      <button className={styles.withdrawButton}>ยื่นคำขอถอนเงิน</button>
+      {/* ปุ่มยื่นคำขอถอนเงิน */}
+      <button
+        className={styles.withdrawButton}
+        onClick={() => setShowPopupoftiHisButtonIsAmazaing(true)}
+      >
+        ยื่นคำขอถอนเงิน
+      </button>
 
-      {/* footer ภายใน section */}
+      {/* popup ถอนเงิน */}
+      {showPopupoftiHisButtonIsAmazaing && (
+        <div
+          className={styles.popupOverlay}
+          onClick={() => setShowPopupoftiHisButtonIsAmazaing(false)}
+        >
+          <div
+            className={styles.popupForm}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>ยื่นคำขอถอนเงิน</h3>
+
+            <label>
+              ชื่อ-นามสกุล:
+              <input
+                type="text"
+                name="full_name"
+                value={withdrawData.full_name}
+                onChange={handleChange}
+                placeholder="กรอกชื่อผู้ถอน"
+                required
+              />
+            </label>
+
+            <label>
+              ธนาคาร:
+              <select
+                name="bank_name"
+                value={withdrawData.bank_name}
+                onChange={handleChange}
+              >
+                <option value="KBANK"> กสิกรไทย (KBANK)</option>
+                <option value="SCB">ไทยพาณิชย์ (SCB)</option>
+                <option value="BBL">กรุงเทพ (BBL)</option>
+                <option value="KTB">กรุงไทย (KTB)</option>
+              </select>
+            </label>
+
+            <label>
+              เลขบัญชี:
+              <input
+                type="text"
+                name="bank_account_number"
+                value={withdrawData.bank_account_number}
+                onChange={handleChange}
+                placeholder="0123456789"
+              />
+            </label>
+
+            <label>
+              จำนวนเงินที่ต้องการถอน:
+              <input
+                type="number"
+                name="withdraw_amount"
+                value={withdrawData.withdraw_amount}
+                onChange={handleChange}
+                placeholder="10"
+                min="1"
+              />
+            </label>
+            
+            <div className={styles.popupActions}>
+              <button className={styles.confirmBtn} onClick={handleWithdraw}>
+                ยืนยันถอนเงิน
+              </button>
+              <button
+                className={styles.cancelBtnnnnnn}
+                onClick={() => setShowPopupoftiHisButtonIsAmazaing(false)}
+              >
+                ยกเลิก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* footer section */}
       <div className={styles.footerSection}>
-        {/* ปุ่มแท็บ */}
-        <div className={styles.tabButtons}>
+                <div className={styles.tabButtons}>
           <button
             className={`${styles.tabBtn} ${
               activeTab === "history" ? styles.activeTab : ""
@@ -594,32 +729,25 @@ function TotalSales({username}:any) {
             className={`${styles.tabBtn2} ${
               activeTab === "summary" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("summary")}
           >
             {/* สรุปรายรับ */}
           </button>
         </div>
 
-        {/* เนื้อหาแท็บ */}
         <div className={styles.tabContent}>
           {activeTab === "history" && <p>📜 รายการย้อนหลังของร้านทั้งหมด</p>}
-          {activeTab === "summary" && <p>📊 สรุปรายรับรายวัน / เดือน</p>}
-          {activeTab === "withdraw" && 
-          <div className={styles.historywithdrawflex}>
-            <div>สิงหาคม 2568 ▾</div>
-            <div>
+          {activeTab === "withdraw" && (
+            <div className={styles.historywithdrawflex}>
+              <div>สิงหาคม 2568 ▾</div>
+              <div>
                 <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
+              </div>
             </div>
-          </div>
-          }
-        </div>  
+          )}
+        </div>
       </div>
     </section>
   );
-
 }
 function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSelectedMenu}: any) {
   const [mode, setMode] = useState<"add" | "manage">("manage");
@@ -841,7 +969,7 @@ function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSele
       price: editPrice,
       description: editDescription,
       time_taken: editTimeTaken,
-      menu_type_ids: editSelectedTypes,
+      // menu_type_ids: editSelectedTypes,
     };
 
     // PATCH menu item
