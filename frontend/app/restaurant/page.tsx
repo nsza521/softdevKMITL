@@ -524,7 +524,7 @@ const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
         {/* รูป */}
         <div className={styles.imageorderholder}>
           <img
-            src={filteredOrders[current].menu_pic}
+            src={item.menu_pic}
             alt="order"
           />
         </div>
@@ -1429,7 +1429,7 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-<section >
+<div className={styles.asdasdsadsadsadsaaaaaaaa}>
   <div className={styles.imageUploadBox}>
     <label htmlFor="menuPic" className={styles.uploadLabel}>
       {menuPic ? (
@@ -1471,7 +1471,7 @@ function AddmenuPage() {
       </label>
     ))}
   </div>
-</section>
+</div>
 
         <section className={styles.sectiongapaddmenu}>
           <div className={styles.Contenthandler}>
