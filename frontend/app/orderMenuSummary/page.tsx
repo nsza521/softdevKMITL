@@ -200,7 +200,7 @@ export default function OrderMenuSummaryPage() {
                     <h2>My Balance</h2>
                     <div className={styles.blogBalance}>
                         <p>ยอดเงินคงเหลือ {walletBalance} บาท</p>
-                        <button className={styles.topUpBtn}>
+                        <button className={styles.topUpBtn} onClick={() => router.push("/topup")}>
                             <img src="/plus.svg" width={15} height={15} />
                             เติมเงิน
                         </button>

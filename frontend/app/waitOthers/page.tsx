@@ -63,10 +63,11 @@ function Mode1() {
 function Mode2() {
   return (
     <div className={styles.modeCon}>
-      <h2>จองโต๊ะและสั่งอาหารสำเร็จ! ระบบจะทำการหักเงินในกระเป๋าอัตโนมัติ!</h2>
+      <h2>จองโต๊ะและสั่งอาหารสำเร็จ!</h2>
+      <h2>ระบบจะทำการหักเงินในกระเป๋าอัตโนมัติ</h2>
       <div>
-        <button>
-            ดูประวัติการจอง <img src=""/>
+        <button className={styles.histBt}>
+          ดูประวัติการจอง <img src="/Arrow_Right_MD.svg"/>
         </button>
         <p>กำลังกลับไปที่หน้าหลักในอีก  วินาที</p>
       </div>
