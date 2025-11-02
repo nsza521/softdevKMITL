@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import styles from "./waitOthers.module.css";
 
 export default function WaitOthers() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const reservation_id = searchParams.get("reservationId")  || "";
   const [mode, setMode] = useState<1 | 2>(1); 
@@ -75,17 +74,35 @@ function Mode1( { confirmed_paid_people, total_people }: { confirmed_paid_people
 }
 
 function Mode2() {
+  const router = useRouter();
+  const [countdown, setCountdown] = useState(5); // จำนวนวินาทีเริ่มต้น
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      router.push("/home");    // ถึง 0 ให้ redirect
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown, router]);
+
   return (
     <div className={styles.modeCon2}>
       <div>
         <h2>จองโต๊ะและสั่งอาหารสำเร็จ!</h2>
         <h2>ระบบจะทำการหักเงินในกระเป๋าอัตโนมัติ</h2>
       </div>
+
       <div className={styles.buttonCon}>
-        <button className={styles.histBt}>
-          ดูประวัติการจอง <img src="/Arrow_Right_MD.svg"/>
+        <button className={styles.histBt} onClick={() => router.push("/history")}>
+          ดูประวัติการจอง <img src="/Arrow_Right_MD.svg" />
         </button>
-        <p>กำลังกลับไปที่หน้าหลักในอีก  วินาที</p>
+
+        <p>กำลังกลับไปที่หน้าหลักในอีก {countdown} วินาที</p>
       </div>
     </div>
   );
