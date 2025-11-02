@@ -10,10 +10,11 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"github.com/minio/minio-go/v7"
 )
 
 // เรียกจาก InitAllSeedData(db) หลัง seed ร้านพื้นฐานแล้ว
-func seedFixedForNoodleShop(db *gorm.DB) error {
+func seedFixedForNoodleShop(db *gorm.DB, minioClient *minio.Client) error {
 	rest, created, err := getOrCreateNoodleRestaurant(db)
 	if err != nil {
 		return err
@@ -21,6 +22,20 @@ func seedFixedForNoodleShop(db *gorm.DB) error {
 	if created {
 		fmt.Println("created noodle shop:", rest.Username)
 	}
+
+	// ---- อัปโหลดรูป ----
+	filename := "restaurant_noodle.png"
+    if rest.ProfilePic == nil || *rest.ProfilePic == "" {
+        imgURL, err := uploadSampleRestaurantImage(minioClient, filename)
+        if err != nil {
+            return fmt.Errorf("upload noodle shop image failed: %w", err)
+        }
+        rest.ProfilePic = &imgURL
+        if err := db.Save(rest).Error; err != nil {
+            return fmt.Errorf("save noodle shop image URL: %w", err)
+        }
+        fmt.Println("Uploaded noodle shop image:", imgURL)
+    }
 
 	// ถ้ามี tag ของร้านนี้อยู่แล้ว แปลว่าน่าจะ seed ไปแล้ว — ข้าม
 	var cnt int64

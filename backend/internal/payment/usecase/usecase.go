@@ -141,10 +141,11 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         }
 
         // Mark member as paid_pending
-        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid_pending"); err != nil {
-            return fmt.Errorf("failed to mark member paid_pending: %w", err)
+        // if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid_pending"); err != nil {
+        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid"); err != nil {
+            return fmt.Errorf("failed to mark member paid: %w", err)
         }
-        fmt.Println("Member marked as paid_pending")
+        fmt.Println("Member marked as paid")
 
         // Check how many members have confirmed payment
         members, err := u.paymentRepository.GetAllMembersByTableReservationID(reservationID)
@@ -155,7 +156,7 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         totalMembers := len(members)
         pendingMembers := 0
         for _, m := range members {
-            if m.Status == "paid_pending" || m.Status == "paid" || m.Status == "completed" {
+            if m.Status == "paid" || m.Status == "completed" {
                 pendingMembers++
             }
         }
