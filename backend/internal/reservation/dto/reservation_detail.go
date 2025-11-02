@@ -35,9 +35,10 @@ type OwnerDetail struct {
 }
 
 type ReservationStatusDetail struct {
-	ReservationStatus   string   `json:"reservation_status"`
-	TotalPeople         int      `json:"total_people"`
-	ConfirmedPaidPeople int      `json:"confirmed_paid_people"`
+	ReservationStatus   string   	`json:"reservation_status"`
+	TotalPeople         int      	`json:"total_people"`
+	ConfirmedPaidPeople int       	`json:"confirmed_paid_people"`
+	Members      		[]Username  `json:"members"`
 }
 
 type ReservationTime struct {

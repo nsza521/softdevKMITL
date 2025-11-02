@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"github.com/minio/minio-go/v7"
 )
 
-func InitAllSeedData(db *gorm.DB)  error {
+func InitAllSeedData(db *gorm.DB, minioClient *minio.Client) error {
 
 	if err := seedCustomers(db); err != nil {
 		return fmt.Errorf("error seeding customers: %v", err)
 	}
 
-	if err := seedRestaurants(db); err != nil {
+	if err := seedRestaurants(db, minioClient); err != nil {
 		return fmt.Errorf("error seeding restaurants: %v", err)
 	}
 
@@ -28,7 +29,7 @@ func InitAllSeedData(db *gorm.DB)  error {
 		return fmt.Errorf("error seeding payment methods: %v", err)
 	}
 
-	if err := seedFixedForNoodleShop(db); err != nil {
+	if err := seedFixedForNoodleShop(db, minioClient); err != nil {
 		return fmt.Errorf("error seeding noodle shop: %v", err)
 	}
 

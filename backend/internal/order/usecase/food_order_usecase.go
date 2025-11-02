@@ -75,11 +75,13 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
         return dto.CreateFoodOrderResp{}, errors.New("no items")
     }
 
+    var status string = "pending"
 
     var reservationIDPtr uuid.UUID
     if req.ReservationID != nil {
         fmt.Printf("Reservation ID: %s\n", *req.ReservationID)
         reservationIDPtr = *req.ReservationID
+        
     }
 
     var customerPtr uuid.UUID
@@ -93,13 +95,14 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
     channel := "walk_in"
     if reservationIDPtr != uuid.Nil {
         channel = "reservation"
+        status = "paid"
     }
 
     order := &models.FoodOrder{
         ID:             uuid.New(),
         ReservationID:  reservationIDPtr, // ← nil ได้
         CustomerID:     customerPtr,      // ← nil ได้ (ถ้าเก็บระดับ order)
-        Status:         "pending",
+        Status:         status,
         OrderDate:      u.nowFn(),
         Note:           req.Note,
         Channel:        channel,
