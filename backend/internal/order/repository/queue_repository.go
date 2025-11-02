@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-
+	"time"
 	"backend/internal/db_model"
 
 	"gorm.io/gorm"
@@ -24,18 +24,23 @@ func NewQueueRepository(db *gorm.DB) QueueRepository {
 func (r *queueRepository) ListPendingOrdersByRestaurant(ctx context.Context, restaurantID string) ([]models.FoodOrder, error) {
 	var orders []models.FoodOrder
 
+	// คำนวณช่วงเวลาของ "วันนี้" (ตั้งแต่ 00:00 ถึง 23:59)
+	today := time.Now().Truncate(24 * time.Hour)
+	tomorrow := today.Add(24 * time.Hour)
+
 	err := r.db.WithContext(ctx).
 		Preload("Items.Options").
 		Joins("JOIN food_order_items ON food_order_items.food_order_id = food_orders.id").
 		Joins("JOIN menu_items ON menu_items.id = food_order_items.menu_item_id").
-		Where("food_orders.status = ?", "pending").
 		Where("menu_items.restaurant_id = ?", restaurantID).
+		Where("food_orders.order_date >= ? AND food_orders.order_date < ?", today, tomorrow).
 		Group("food_orders.id").
 		Order("food_orders.order_date ASC").
 		Find(&orders).Error
 
 	return orders, err
 }
+
 
 func (r *queueRepository) ListServedOrdersByRestaurant(ctx context.Context, restaurantID string) (int64, error) {
 	var count int64
