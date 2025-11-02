@@ -11,10 +11,22 @@ const notoThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
 });
 
+type UUID = string;
+
+type TableTimeSlot = {
+  id: UUID;
+  row: string;
+  col: string;
+  max_seats: number;
+  status: string;
+  reserved_seats: number;
+};
+
 export default function HomePage() {
   const [showPopup, setShowPopup] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-   const router = useRouter(); 
+  const [tableTimeSlots, setTableTimeSlots] = useState<TableTimeSlot[]>([]);
+  const router = useRouter(); 
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,6 +51,33 @@ export default function HomePage() {
     };
 
     fetchProfile();
+    }, []);
+
+    useEffect(() => {
+    const fetchTableSlots = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/table/table_timeslot/now");
+
+        if (!res.ok) throw new Error("Failed to fetch table timeslots");
+
+        const data = await res.json();
+
+        const formatted = data.table_timeslots.map((t: any) => ({
+          id: t.id,
+          row: t.table_row,
+          col: t.table_col,
+          max_seats: t.max_seats,
+          status: t.status,
+          reserved_seats: t.reserved_seats,
+        }));
+
+        setTableTimeSlots(formatted);
+      } catch (err) {
+        console.error("❌ Error fetching table slots:", err);
+      }
+    };
+
+    fetchTableSlots();
   }, []);
 
   const handleLogout = async () => {
@@ -97,14 +136,17 @@ export default function HomePage() {
           <img src="/qr.svg" width={20} height={20} />
           คิวอาโค้ดของฉัน
         </span>
-        <button>
+        <button onClick={() => router.push("/qr")}>
           <img src="/show.svg" width={25} height={25} />
           ดู
         </button>
       </div>
 
-      <div className={styles.headername}>โต๊ะตอนี้ </div>
-      <div className={styles.table}></div>
+      <div className={styles.headername}>
+        สถานะโต๊ะตอนนี้ 
+      </div>
+      <TableLayout tables={tableTimeSlots} />
+      {/* <div className={styles.table}></div> */}
       <button className={styles.tablebtn}>จองโต๊ะ</button>
 
       {/* Popup */}
@@ -157,4 +199,64 @@ export default function HomePage() {
       )}
     </div>
   );
+}
+
+function TableLayout({ tables }: { tables: TableTimeSlot[] }) {
+    const rows = Array.from(new Set(tables.map((t) => t.row))).sort();
+    const cols = Array.from(new Set(tables.map((t) => t.col))).sort(
+        (a, b) => Number(a) - Number(b)
+    );
+
+    return (
+        <div className={styles.layoutContainer}>
+            <div className={styles.tableContainer}>
+                <span></span>
+                {cols.map((c) => (
+                <span key={c}>{c}</span>
+                ))}
+            </div>
+
+            {rows.map((r) => (
+                <div key={r} className={`${styles.tableContainer} ${styles.tableRowContainer}`}>
+                    <span className={styles.rowLabel}>{r}</span>
+                    {cols.map((c) => {
+                        const table = tables.find((t) => t.row === r && t.col === c);
+                        return table ? (
+                        <TableIcon key={table.id} table={table} />
+                        ) : (
+                        <span key={`${r}${c}`}></span>
+                        );
+                    })}
+                </div>
+            ))}
+
+            <div className={styles.compassCon}>
+                <img src="./compass.svg" />
+                <p>W</p>
+            </div>
+        </div>
+    );
+}
+
+function TableIcon({ table }: { table: TableTimeSlot }) {
+    const router = useRouter();
+    const available = table.status === "available";
+
+    return (
+        <button
+        className={`${styles.tableIcon} ${
+            available ? styles.tableAvailable : styles.tableUnavailable
+        }`}
+        onClick={() =>
+            available &&
+            router.push(
+            `/reserveFillUsr?random=${encodeURIComponent(false)}&table_timeslot_id=${encodeURIComponent(table.id)}`
+            )
+        }
+        disabled={!available}
+        >
+            <img src={available ? "./table_layout_aval.svg" : "./table_layout_notaval.svg"}/>
+            <p>{table.reserved_seats}/{table.max_seats}</p>
+        </button>
+    );
 }
