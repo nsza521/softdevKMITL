@@ -136,13 +136,13 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         }
 
         // Prevent duplicate confirmation
-        if member.Status == "completed" {
+        if member.Status == "completed" || member.Status == "paid" {
             return fmt.Errorf("user already confirmed payment")
         }
 
         // Mark member as paid_pending
         // if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid_pending"); err != nil {
-        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid"); err != nil {
+        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid_pending"); err != nil {
             return fmt.Errorf("failed to mark member paid: %w", err)
         }
         fmt.Println("Member marked as paid")
@@ -156,7 +156,7 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         totalMembers := len(members)
         pendingMembers := 0
         for _, m := range members {
-            if m.Status == "paid" || m.Status == "completed" {
+            if m.Status == "paid" || m.Status == "completed" || m.Status == "paid_pending" {
                 pendingMembers++
             }
         }
