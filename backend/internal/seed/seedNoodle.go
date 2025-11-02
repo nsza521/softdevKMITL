@@ -35,8 +35,11 @@ func UploadSampleMenuImage(minioClient *minio.Client, filename string) (string, 
 	fileHeader.Header.Set("Content-Type", "image/png")
 
 	// upload to MinIO
-	objectName := fmt.Sprintf("restaurants/%s", fileHeader.Filename)
-	url, err := utils.UploadImage(file, fileHeader, "menu-items", objectName, minioClient)
+	objectName := fmt.Sprintf("menu-items/%s", fileHeader.Filename)
+	// restaurant-pictures/menu-items
+
+	// url, err := utils.UploadImage(file, fileHeader, "restaurant-pictures", objectName, minioClient)
+	url, err := utils.UploadImage(file, fileHeader, "restaurant-pictures", objectName, minioClient)
 	if err != nil {
 		return "", err
 	}
