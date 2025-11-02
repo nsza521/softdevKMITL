@@ -87,7 +87,7 @@ export default function LoginPage() {
           </div>
         </form>
       </div>
-      <div className={styles.logo}>Logo Banner</div>
+      <div className={styles.logo}><img src="/jongtohlogo.png" alt="" /></div>
     </div>
   );
 }

@@ -23,7 +23,6 @@
 .logo {
     order: 2; 
 
-
 }
 
 .loginbox {
@@ -206,11 +205,10 @@
         order: 0; /* logo จะอยู่บนสุด */
     }
 
-
     .loginbox {
         order: 1;
     }
-        .logo img {
+    .logo img {
   width: 100%;
   height: 100%;
   object-fit: cover;  /* ให้รูปขยายเต็มโดยไม่บิดเบี้ยว */

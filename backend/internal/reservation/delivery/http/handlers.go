@@ -250,3 +250,45 @@ func (h *TableReservationHandler) ConfirmMemberInTableReservation() gin.HandlerF
 		c.JSON(200, gin.H{"message": "Member confirmed in reservation successfully", "details": response})
 	}
 }
+
+func (h *TableReservationHandler) GetTableReservationStatus() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		statusDetail, err := h.tableReservationUsecase.GetTableReservationStatus(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status_detail": statusDetail})
+	}
+}
+
+func (h *TableReservationHandler) GetTableReservationTimeRemaining() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		timeDetail, err := h.tableReservationUsecase.GetTableReservationTimeRemaining(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"time_detail": timeDetail})
+	}
+}

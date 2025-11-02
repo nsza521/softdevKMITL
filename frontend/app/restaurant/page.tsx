@@ -13,6 +13,8 @@ export default function RestaurantPage() {
   const [activePage, setActivePage] = useState("order");
   const [username, setUsername] = useState("");
   const [isOnline, setIsOnline] = useState(true);
+  const [selectedMenu, setSelectedMenu] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -51,15 +53,19 @@ export default function RestaurantPage() {
    const renderContent = () => {
     switch (activePage) {
       case "order":
-        return <OrderMenu  isOnline={isOnline} onToggleStatus={handleToggleStatus} />;
+        return <OrderMenu  isOnline={isOnline} onToggleStatus={handleToggleStatus} setSelectedMenu={setSelectedMenu} setActivePage={setActivePage}   />;
       case "queue":
         return <QueuePage />;
       case "sales":
-        return <TotalSales />;
+        return <TotalSales username={username}/>;
       case "manage":
-        return <ManagePage username={username} isOnline={isOnline} onToggleStatus={handleToggleStatus} />;
+        return <ManagePage username={username} isOnline={isOnline} onToggleStatus={handleToggleStatus}  setSelectedMenu={setSelectedMenu} setActivePage={setActivePage} />;
       case "addmenu":
         return <AddmenuPage />;
+      case "menuDetail":
+        return (
+          <MenuDetailPage menu={selectedMenu} onBack={() => setActivePage("order")}/>
+        );
       default:
         return <OrderMenu username={username} isOnline={isOnline} onToggleStatus={handleToggleStatus} />;
     }
@@ -155,19 +161,20 @@ const handleLogout = async () => {
     if (!res.ok) throw new Error("Logout failed");
     localStorage.removeItem("token");
     alert("ออกจากระบบเรียบร้อย");
-    window.location.href = "/login";
+    window.location.href = "/loginrestaurant";
   } catch (err) {
     console.error("❌ Error:", err);
     alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
   }
 };
-function OrderMenu({ isOnline, onToggleStatus }: any) {
+function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }: any)  {
   const [types, setTypes] = useState<MenuType[]>([]);
   const [data, setData] = useState<MenuData | null>(null);
   const [error, setError] = useState("");
   const [username, setUsername] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("All"); // เพิ่ม state กรอง type
-
+  const [restaurantID, setRestaurantID] = useState<string | null>(null);
+  
   const [restaurantPic, setRestaurantPic] = useState<string>("");
   useEffect(() => {
 
@@ -184,6 +191,7 @@ function OrderMenu({ isOnline, onToggleStatus }: any) {
 
       if (jsonPayload.role === "restaurant") {
         setUsername(jsonPayload.username); // เอา username มาโชว์
+        setRestaurantID(jsonPayload.user_id);
         const restaurantID = jsonPayload.user_id;
         
         // -----------------------------------
@@ -294,139 +302,463 @@ function OrderMenu({ isOnline, onToggleStatus }: any) {
       <div className={styles.s_content_detail}>
         {error && <p style={{ color: "red" }}>{error}</p>}
         {!data && !error && <p>⌛ กำลังโหลดเมนู...</p>}
-        {filteredItems && filteredItems.map(item => (
-          <div key={item.id} className={styles.menu}>
-            <div className={styles.menuimg}>
-              {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-              <button className={styles.editBtn}>
-                <span className="material-symbols-outlined">info</span>
-              </button>
-            </div>
-            <div className={styles.menudetail}>
-              <p className={styles.price}>฿{item.price}</p>
-              <p>{item.name}</p>
-              <p className={styles.description}>{item.description}</p>
-            </div>
-          </div>
-        ))}
+        {filteredItems && filteredItems.map(item => {
+            return (
+              <div 
+                key={item.id} 
+                className={styles.menu}
+                onClick={async () => {
+                  console.log("👉 Clicked item id:", item.id);
+
+                  try {
+                    const token = localStorage.getItem("token");
+                    const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
+                      headers: { 
+                        'Authorization': `Bearer ${token}` 
+                      }
+                    });
+                    if (!res.ok) throw new Error("Failed to fetch menu detail");
+                    const data = await res.json();
+                    console.log("📦 menu detail:", data);
+
+                    setSelectedMenu(data); // ส่งข้อมูลเต็มไป MenuDetailPage
+                    setActivePage("menuDetail");
+                  } catch (err) {
+                    console.error(err);
+                    alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
+                  }
+                }}
+              >
+                <div className={styles.menuimg}>
+                  {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
+                  <button className={styles.editBtn}>
+                    <span className="material-symbols-outlined">info</span>
+                  </button>
+                </div>
+                <div className={styles.menudetail}>
+                  <p className={styles.price}>฿{item.price}</p>
+                  <p>{item.name}</p>
+                  <p className={styles.description}>{item.description}</p>
+                </div>
+              </div>
+            );
+          })}
       </div>
     </section>
   );
 }
 function QueuePage() {
-  const totalQueues = 20;
+  const baseUrl = "http://localhost:8080";
+  const [orders, setOrders] = useState<any[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [current, setCurrent] = useState(0);
+  const [activeChannel, setActiveChannel] = useState("walk_in");
+
   const visibleQueues = 7;
-  const [current, setCurrent] = useState(0); // index เริ่มจาก 0
-
   const half = Math.floor(visibleQueues / 2);
-  const queues = Array.from({ length: totalQueues }, (_, i) => i + 1);
 
-  // สร้าง array แสดงผลพร้อมช่องว่างถ้าเลยขอบ
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("❌ ไม่มี token กรุณา login ก่อน");
+      setLoading(false);
+      return;
+    }
+
+    async function fetchQueue() {
+      try {
+        const res = await fetch(`${baseUrl}/restaurant/order/queue`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูลได้");
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchQueue();
+  }, []);
+
+  useEffect(() => {
+    const filtered = orders.filter(o => o.channel === activeChannel);
+    setFilteredOrders(filtered);
+    setCurrent(0);
+  }, [orders, activeChannel]);
+
+  if (loading) return <p>กำลังโหลด...</p>;
+  if (error) return <p>เกิดข้อผิดพลาด: {error}</p>;
+
+  const totalQueues = filteredOrders.length;
+
   const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
     const index = current - half + i;
-    if (index < 0 || index >= totalQueues) return null; // ถ้าไม่มีคิว
-    return queues[index];
+    if (index < 0 || index >= totalQueues) return null;
+    return index + 1;
   });
-
-  const handleClick = (index: number) => {
-    setCurrent(index);
-  };
 
   return (
     <div className={styles.queuepagemanagement}>
+      {/* 🔹 Header — ไม่หายไม่ว่ามีคิวหรือไม่ */}
       <div className={styles.headerqueue}>
-        <button className={styles.activebtn}>Walk - in</button>
-        <button className={styles.noactivebtn}>Table</button>
+        <button
+          className={
+            activeChannel === "walk_in" ? styles.activebtn : styles.noactivebtn
+          }
+          onClick={() => setActiveChannel("walk_in")}
+        >
+          Walk-in
+        </button>
+        <button
+          className={
+            activeChannel === "reservation"
+              ? styles.activebtn
+              : styles.noactivebtn
+          }
+          onClick={() => setActiveChannel("reservation")}
+        >
+          Table
+        </button>
       </div>
 
-      <div className={styles.queueall}>
-        <div className={styles.queueno}>
-          {displayQueues.map((q, i) =>
-            q ? (
-              <button
-                key={q}
-                className={q === current + 1 ? styles.activeQueue : ""}
-                onClick={() => handleClick(q - 1)}
-              >
-                คิวที่ {String(q).padStart(3, "0")}
-              </button>
-            ) : (
-              <button key={`empty-${i}`} className={styles.emptyBtn} disabled>
-                {/* ช่องว่าง */}
-              </button>
-            )
-          )}
+      {/* 🔹 ถ้าไม่มีคิว */}
+      {filteredOrders.length === 0 ? (
+        <div className={styles.queueall}>
+           <div className={styles.queueno}>
+            <p className={styles.activeQueue}>ยังไม่มีคิวในช่อง {activeChannel === "walk_in" ? "Walk-in" : "Reservation"}</p>
+          </div>
         </div>
-
-        <div className={styles.queuesectiondetail}>
-          {/* ปุ่มย้อนกลับ */}
-          <div
-            className={styles.sliderclickleft}
-            onClick={() => setCurrent(prev => Math.max(prev - 1, 0))}
-          >
-            <span className="material-symbols-outlined">arrow_back_ios</span>
+      ) : (
+        /* 🔹 ถ้ามีคิวค่อยแสดงส่วนนี้ */
+        <div className={styles.queueall}>
+          <div className={styles.queueno}>
+            {displayQueues.map((q, i) =>
+              q ? (
+                <button
+                  key={q}
+                  className={q === current + 1 ? styles.activeQueue : ""}
+                  onClick={() => setCurrent(q - 1)}
+                >
+                  คิวที่ {String(q).padStart(3, "0")}
+                  <p>{filteredOrders[current].status}</p>
+                </button>
+              ) : (
+                <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
+              )
+            )}
           </div>
 
-          {/* แสดงคิวกลาง */}
-          <div className={styles.therealmenudetailed}>
-            <div className={styles.order_n}>
-              <div className={styles.imageorderholder}>
-                  <img src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg" alt="" />
-              </div>
-              <div className={styles.detailoforder}> </div>
+          <div className={styles.Notesofthisreseve}>
+            <p className={styles.description}>
+              NOTE : {filteredOrders[current].note}
+            </p>
+          </div>
+
+          <div className={styles.queuesectiondetail}>
+            <div
+              className={styles.sliderclickleft}
+              onClick={() => setCurrent(prev => Math.max(prev - 1, 0))}
+            >
+              <span className="material-symbols-outlined">arrow_back_ios</span>
             </div>
-            {/* {displayQueues[Math.floor(displayQueues.length / 2)]
-              ? `คิวที่ ${String(displayQueues[Math.floor(displayQueues.length / 2)]).padStart(3,"0")}`
-              : ""} */}
 
-          </div>
+            <div className={styles.therealmenudetailed}>
+              {filteredOrders[current] && (
+                <div key={filteredOrders[current].id} className={styles.order_n}>
+                  <div className={styles.imageorderholder}>
+                    <img
+                      src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
+                      alt="order"
+                    />
+                  </div>
 
-          {/* ปุ่มเลื่อนข้างหน้า */}
-          <div
-            className={styles.sliderclickright}
-            onClick={() => setCurrent(prev => Math.min(prev + 1, totalQueues - 1))}
-          >
-            <span className="material-symbols-outlined">arrow_forward_ios</span>
+                  <div className={styles.detailoforder}>
+                    <div className={styles.price2}>
+                      <p>฿ {filteredOrders[current].total_amount}</p>
+                    </div>
+
+                    {/* 🔹 วนลูปแสดงทุกเมนูในคิวนี้ */}
+                    {filteredOrders[current].items.map((item: any, i: number) => (
+                      <div key={i} className={styles.menuItem}>
+                        <p className={styles.mmmmmenu}>
+                          {item.menu_name}
+                          {item.time_taken_min && (
+                            <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
+                          )}
+                        </p>
+
+                        {item.note && (
+                          <p className={styles.description}>Note: {item.note}</p>
+                        )}
+
+                        <div className={styles.handlerwhateveristhisshit}>
+                          {item.options?.map((opt: any, j: number) => (
+                            <button key={j}>{opt.option_name}</button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={styles.statusofsomethingidontknow}>
+                    <button>
+                      {filteredOrders[current].status === "pending"
+                        ? "กำลังทำ"
+                        : filteredOrders[current].status}
+                      <span className="material-symbols-outlined">
+                        arrow_drop_down
+                      </span>
+                    </button>
+                    <button>
+                      ยกเลิก{" "}
+                      <span className="material-symbols-outlined">close_small</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div
+              className={styles.sliderclickright}
+              onClick={() =>
+                setCurrent(prev => Math.min(prev + 1, totalQueues - 1))
+              }
+            >
+              <span className="material-symbols-outlined">
+                arrow_forward_ios
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
-function TotalSales() {
+ function TotalSales({ username }: any) {
   const [showMoney, setShowMoney] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
+  const [balance, setBalance] = useState<number | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  // ✅ popup state
+  const [showPopupoftiHisButtonIsAmazaing, setShowPopupoftiHisButtonIsAmazaing] = useState(false);
+  const [withdrawData, setWithdrawData] = useState({
+    full_name: "",
+    bank_name: "KBANK",
+    bank_account_number: "",
+    withdraw_amount: "",
+  });
+
+  const token = localStorage.getItem("token");
+  console.log("token",token);
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setWithdrawData((prev) => ({ ...prev, [name]: value }));
+  };
+
+    useEffect(() => {
+    if (!token) return;
+
+    const fetchBalance = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/restaurant/balance", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดยอดเงินได้");
+        const data = await res.json();
+        setBalance(data.balance); // สมมติ API คืน { balance: 12540.75 }
+      } catch (err) {
+        console.error("❌ Fetch balance error:", err);
+      }
+    };
+
+    fetchBalance();
+  }, [token]);
+
+
+    useEffect(() => {
+    if (!token) return;
+
+    const fetchTransactions = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/payment/transaction/all", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดรายการธุรกรรมได้");
+        const data = await res.json();
+        setTransactions(data.transactions || []);
+      } catch (err) {
+        console.error("❌ Fetch transactions error:", err);
+      }
+    };
+
+    fetchTransactions();
+  }, [token]);  
+
+
+  const handleWithdraw = async () => {
+    if (!withdrawData.full_name || !withdrawData.bank_account_number || !withdrawData.withdraw_amount) {
+      alert("กรอกข้อมูลให้ครบก่อนครับ");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/payment/withdraw/wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...withdrawData,
+          withdraw_amount: Number(withdrawData.withdraw_amount),
+        }),
+      });
+
+      const data = await res.json();
+      console.log("📦 Withdraw response:", data);
+
+      if (!res.ok) {
+        alert("ถอนเงินไม่สำเร็จ: " + (data.message || "เกิดข้อผิดพลาด"));
+      } else {
+        alert("ถอนเงินสำเร็จ!");
+        setShowPopupoftiHisButtonIsAmazaing(false);
+        setWithdrawData({
+          full_name: "",
+          bank_name: "KBANK",
+          bank_account_number: "",
+          withdraw_amount: "",
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error:", err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    }
+  };
 
   return (
     <section className={styles.shopcontent}>
-        <div className={styles.sectionofcirclemoney}>
-              <h2 className={styles.headerstotalsales}>บัญชีของ [ชื่อร้านจ้า]</h2>
+      <div className={styles.sectionofcirclemoney}>
+        <h2 className={styles.headerstotalsales}>บัญชีของ {username}</h2>
 
-            {/* วงกลมยอดเงิน */}
-            <div className={styles.moneyCircle}>
-                <p className={styles.subText}>ยอดเงินคงเหลือ</p>
+        <div className={styles.moneyCircle}>
+          <p className={styles.subText}>ยอดเงินคงเหลือ</p>
+          <h1 className={styles.totalAmount}>
+             {showMoney
+            ? balance !== null
+              ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿`
+              : "กำลังโหลด..."
+            : "********"} 
+          </h1>
 
-                <h1 className={styles.totalAmount}>
-                {showMoney ? "12,540.75 ฿" : "********"}
-                </h1>
-
-                <button
-                className={styles.eyeButton}
-                onClick={() => setShowMoney(!showMoney)}
-                >
-                <span className="material-symbols-outlined">
-                    {showMoney ? "visibility" : "visibility_off"}
-                </span>
-                </button>
-            </div>
+          <button
+            className={styles.eyeButton}
+            onClick={() => setShowMoney(!showMoney)}
+          >
+            <span className="material-symbols-outlined">
+              {showMoney ? "visibility" : "visibility_off"}
+            </span>
+          </button>
         </div>
+      </div>
 
-      <button className={styles.withdrawButton}>ยื่นคำขอถอนเงิน</button>
+      {/* ปุ่มยื่นคำขอถอนเงิน */}
+      <button
+        className={styles.withdrawButton}
+        onClick={() => setShowPopupoftiHisButtonIsAmazaing(true)}
+      >
+        ยื่นคำขอถอนเงิน
+      </button>
 
-      {/* footer ภายใน section */}
+      {/* popup ถอนเงิน */}
+      {showPopupoftiHisButtonIsAmazaing && (
+        <div
+          className={styles.popupOverlay}
+          onClick={() => setShowPopupoftiHisButtonIsAmazaing(false)}
+        >
+          <div
+            className={styles.popupForm}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>ยื่นคำขอถอนเงิน</h3>
+
+            <label>
+              ชื่อ-นามสกุล:
+              <input
+                type="text"
+                name="full_name"
+                value={withdrawData.full_name}
+                onChange={handleChange}
+                placeholder="กรอกชื่อผู้ถอน"
+                required
+              />
+            </label>
+
+            <label>
+              ธนาคาร:
+              <select
+                name="bank_name"
+                value={withdrawData.bank_name}
+                onChange={handleChange}
+              >
+                <option value="KBANK"> กสิกรไทย (KBANK)</option>
+                <option value="SCB">ไทยพาณิชย์ (SCB)</option>
+                <option value="BBL">กรุงเทพ (BBL)</option>
+                <option value="KTB">กรุงไทย (KTB)</option>
+              </select>
+            </label>
+
+            <label>
+              เลขบัญชี:
+              <input
+                type="text"
+                name="bank_account_number"
+                value={withdrawData.bank_account_number}
+                onChange={handleChange}
+                placeholder="0123456789"
+              />
+            </label>
+
+            <label>
+              จำนวนเงินที่ต้องการถอน:
+              <input
+                type="number"
+                name="withdraw_amount"
+                value={withdrawData.withdraw_amount}
+                onChange={handleChange}
+                placeholder="10"
+                min="1"
+              />
+            </label>
+            
+            <div className={styles.popupActions}>
+              <button className={styles.confirmBtn} onClick={handleWithdraw}>
+                ยืนยันถอนเงิน
+              </button>
+              <button
+                className={styles.cancelBtnnnnnn}
+                onClick={() => setShowPopupoftiHisButtonIsAmazaing(false)}
+              >
+                ยกเลิก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* footer section */}
       <div className={styles.footerSection}>
-        {/* ปุ่มแท็บ */}
-        <div className={styles.tabButtons}>
+                <div className={styles.tabButtons}>
           <button
             className={`${styles.tabBtn} ${
               activeTab === "history" ? styles.activeTab : ""
@@ -438,44 +770,66 @@ function TotalSales() {
 
           <button
             className={`${styles.tabBtn} ${
-              activeTab === "summary" ? styles.activeTab : ""
-            }`}
-            onClick={() => setActiveTab("summary")}
-          >
-            สรุปรายรับ
-          </button>
-
-          <button
-            className={`${styles.tabBtn} ${
               activeTab === "withdraw" ? styles.activeTab : ""
             }`}
             onClick={() => setActiveTab("withdraw")}
           >
             ประวัติการถอนเงิน
           </button>
+                    <button
+            className={`${styles.tabBtn2} ${
+              activeTab === "summary" ? styles.activeTab : ""
+            }`}
+          >
+            {/* สรุปรายรับ */}
+          </button>
         </div>
 
-        {/* เนื้อหาแท็บ */}
         <div className={styles.tabContent}>
           {activeTab === "history" && <p>📜 รายการย้อนหลังของร้านทั้งหมด</p>}
-          {activeTab === "summary" && <p>📊 สรุปรายรับรายวัน / เดือน</p>}
-          {activeTab === "withdraw" && 
-          <div className={styles.historywithdrawflex}>
-            <div>สิงหาคม 2568 ▾</div>
-            <div>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
+{activeTab === "withdraw" && (
+  <div className={styles.withdrawHistoryWrapper}>
+    {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
+      <p>📭 ยังไม่มีรายการถอนเงิน</p>
+    ) : (
+      transactions
+        .filter(tx => tx.type === "withdraw")
+        .map((tx) => (
+          <div key={tx.transaction_id} className={styles.withdrawItem}>
+            <div className={styles.withdrawDate}>
+              {new Date(tx.created_at).toLocaleDateString("th-TH", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </div>
+            <div className={styles.withdrawInfo}>
+              <span className={styles.withdrawTime}>
+                {new Date(tx.created_at).toLocaleTimeString("th-TH", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              <span className={styles.withdrawAmount}>
+                -{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
+              </span>
+              <span className={styles.withdrawBank}>
+                ({tx.payment_method})
+              </span>
+              <span className={styles.withdrawStatus}>กำลังดำเนินการ</span>
             </div>
           </div>
-          }
-        </div>  
+        ))
+    )}
+  </div>
+)}
+
+        </div>
       </div>
     </section>
   );
 }
-function ManagePage({ username, isOnline, onToggleStatus }: any) {
+function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSelectedMenu}: any) {
   const [mode, setMode] = useState<"add" | "manage">("manage");
   const [menuList, setMenuList] = useState<MenuItem[]>([]);
   const [types, setTypes] = useState<MenuType[]>([]);
@@ -695,7 +1049,7 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
       price: editPrice,
       description: editDescription,
       time_taken: editTimeTaken,
-      menu_type_ids: editSelectedTypes,
+      // menu_type_ids: editSelectedTypes,
     };
 
     // PATCH menu item
@@ -861,7 +1215,29 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
         ) : (
           <div className={styles.menuList}>
             {filteredItems.length === 0 ? <p>ไม่มีเมนู</p> : filteredItems.map(item => (
-              <div key={item.id} className={styles.menu}>
+              <div key={item.id} className={styles.menu22}
+                //   onClick={async () => {
+                //   console.log("👉 Clicked item id:", item.id);
+
+                //   try {
+                //     const token = localStorage.getItem("token");
+                //     const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
+                //       headers: { 
+                //         'Authorization': `Bearer ${token}` 
+                //       }
+                //     });
+                //     if (!res.ok) throw new Error("Failed to fetch menu detail");
+                //     const data = await res.json();
+                //     console.log("📦 menu detail:", data);
+
+                //     setSelectedMenu(data); 
+                //     setActivePage("menuDetail");
+                //   } catch (err) {
+                //     console.error(err);
+                //     alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
+                //   }
+                // }}
+              >
                 <div className={styles.menuimg}>
                   {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
                   <button className={styles.editBtn} onClick={() => openEditPopup(item)}>
@@ -874,8 +1250,8 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
                   <p className={styles.description}>{item.description}</p>
                 </div>
                 {editingMenu && (
-                  <div className={styles.popupOverlay}>
-                    <div className={styles.popupForm}>
+                  <div className={styles.popupOverlay2}>
+                    <div className={styles.popupForm2}>
                       <h3>แก้ไขเมนู</h3>
                       <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="ชื่อเมนู" />
                       <input type="number" value={editPrice} onChange={e => setEditPrice(Number(e.target.value))} placeholder="ราคา" />
@@ -883,7 +1259,7 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
                       <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="รายละเอียด" />
 
                       <div>
-                        {types.map(t => (
+                        {/* {types.map(t => (
                           <label key={t.id} style={{ marginRight: "10px" }}>
                             <input
                               type="checkbox"
@@ -896,7 +1272,7 @@ function ManagePage({ username, isOnline, onToggleStatus }: any) {
                             />
                             {t.type}
                           </label>
-                        ))}
+                        ))} */}
                       </div>
 
                       <input type="file" onChange={e => e.target.files && setEditMenuPic(e.target.files[0])} />
@@ -1000,29 +1376,50 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-        <section>
-          <input type="file"onChange={(e) => e.target.files && setMenuPic(e.target.files[0])}/>
-                  <div>
-          {types.map((t) => (
-            <label key={t.id} style={{ marginRight: "10px" }}>
-              <input
-                type="checkbox"
-                value={t.id}
-                checked={selectedTypes.includes(t.id)}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedTypes((prev) =>
-                    prev.includes(id)
-                      ? prev.filter((x) => x !== id)
-                      : [...prev, id]
-                  );
-                }}
-              />
-              {t.type}
-            </label>
-          ))}
-        </div>
-        </section>
+<section>
+  <div className={styles.imageUploadBox}>
+    <label htmlFor="menuPic" className={styles.uploadLabel}>
+      {menuPic ? (
+        <img
+          src={URL.createObjectURL(menuPic)}
+          alt="Preview"
+          className={styles.previewImage}
+        />
+      ) : (
+        <span className={styles.uploadText}>📷 เลือกรูปเมนู</span>
+      )}
+    </label>
+    <input
+      id="menuPic"
+      type="file"
+      accept="image/*"
+      style={{ display: "none" }}
+      onChange={(e) => e.target.files && setMenuPic(e.target.files[0])}
+    />
+  </div>
+
+  <div style={{ marginTop: "15px" }}>
+    {types.map((t) => (
+      <label key={t.id} style={{ marginRight: "10px" }}>
+        <input
+          type="checkbox"
+          value={t.id}
+          checked={selectedTypes.includes(t.id)}
+          onChange={(e) => {
+            const id = e.target.value;
+            setSelectedTypes((prev) =>
+              prev.includes(id)
+                ? prev.filter((x) => x !== id)
+                : [...prev, id]
+            );
+          }}
+        />
+        {t.type}
+      </label>
+    ))}
+  </div>
+</section>
+
         <section className={styles.sectiongapaddmenu}>
           <div className={styles.Contenthandler}>
               <div>
@@ -1059,4 +1456,456 @@ function AddmenuPage() {
       </div>
     </section>
   );
+}
+function MenuDetailPage({ menu, onBack }: any) {
+  const [showGroupPopup, setShowGroupPopup] = useState(false);
+  const [showOptionPopup, setShowOptionPopup] = useState(false);
+  const [groupID, setGroupID] = useState<string | null>(null);
+  const [restaurantID, setRestaurantID] = useState<string | null>(null);
+  const [types, setTypes] = useState<any[]>([]);
+  const [selectedTypeID, setSelectedTypeID] = useState<string | null>(null);
+
+
+
+
+
+  const token = localStorage.getItem("token");
+
+
+
+
+  useEffect(() => {
+  if (!restaurantID || !token) return;
+
+  fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/types`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      console.log("📄 Available types:", json);
+      setTypes(json.types || []);
+    })
+    .catch((err) => console.error("❌ Fetch types error:", err));
+}, [restaurantID]);
+
+
+
+
+
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const payload = token.split('.')[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = JSON.parse(atob(base64));
+
+      if (jsonPayload.role === "restaurant") {
+        setRestaurantID(jsonPayload.user_id);
+        console.log("Restaurant ID:", jsonPayload.user_id);
+      } else {
+        console.error("Token ไม่ใช่ร้านอาหาร");
+      }
+    } catch (err) {
+      console.error("❌ JWT decode error:", err);
+    }
+  }, []);
+
+const [groupData, setGroupData] = useState({ 
+  name: "",
+  required: false,
+  min_select: 1,
+  max_select: 1,
+  allow_qty: false,
+});
+
+const [optionData, setOptionData] = useState({
+  name: "",
+  price_delta: 0,
+  is_default: false,
+  max_qty: 0,
+});
+
+const [options, setOptions] = useState<any[]>([]);
+
+if (!menu) return <p>ไม่พบข้อมูลเมนู</p>;
+
+              const handleGroupChange = (e: any) => {
+                const { name, value, type, checked } = e.target;
+                setGroupData((prev) => ({
+                  ...prev,
+                  [name]: type === "checkbox" ? checked : Number(value) || value, // convert number inputs
+                }));
+              };
+
+
+
+              const handleOptionChange = (e: any) => {
+                const { name, value, type, checked } = e.target;
+                setOptionData((prev) => ({
+                  ...prev,
+                  [name]:
+                    type === "checkbox"
+                      ? checked
+                      : name === "price_delta" || name === "max_qty"
+                      ? Number(value)
+                      : value,
+                }));
+              };
+
+
+const handleCreateGroup = async () => {
+  try {
+    console.log("✅ Creating AddOn Group:", groupData);
+    const res = await fetch(
+      `http://localhost:8080/restaurant/menu/${restaurantID}/addon-groups`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(groupData),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "สร้างกลุ่มไม่สำเร็จ");
+
+    setGroupID(data.id);
+    console.log("🎯 Group created:", data);
+
+    // 🔗 ลิงก์กับ type ถ้ามีเลือกไว้
+    if (selectedTypeID) {
+      const linkRes = await fetch(
+        `http://localhost:8080/restaurant/menu/addon-groups/${data.id}/types/${selectedTypeID}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const linkData = await linkRes.json();
+      console.log("🔗 Group linked with type:", linkData);
+    } else {
+      console.warn("⚠️ ยังไม่ได้เลือก type สำหรับ group นี้");
+    }
+
+    setShowGroupPopup(false);
+    setShowOptionPopup(true);
+
+  } catch (err) {
+    console.error("❌ Failed to create group:", err);
+    alert("สร้างกลุ่มไม่สำเร็จ");
+  }
+};
+
+
+          const handleAddOption = () => {
+            setOptions((prev) => [
+              ...prev,
+              {
+                ...optionData,
+                price_delta: Number(optionData.price_delta),
+                max_qty: Number(optionData.max_qty),
+              },
+            ]);
+            setOptionData({
+              name: "",
+              price_delta: 0,
+              is_default: false,
+              max_qty: 0,
+            });
+          };
+
+
+
+
+          
+            const handleSubmitOptions = async () => {
+              if (!groupID) return alert("ยังไม่มี group id");
+              try {
+                console.log("✅ Sending all options:", options);
+
+                for (const [index, opt] of options.entries()) {
+                  const payload = {
+                    ...opt,
+                    price_delta: Number(opt.price_delta),
+                    max_qty: Number(opt.max_qty),
+                  };
+
+                  const res = await fetch(
+                    `http://localhost:8080/restaurant/menu/addon-groups/${groupID}/options`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify(payload),
+                    }
+                  );
+
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => ({ message: "No JSON response" }));
+                    console.error(`❌ Failed to send option #${index + 1}:`, payload, errData);
+                    alert(`ส่ง Option "${opt.name}" ไม่สำเร็จ`);
+                    return;
+                  }
+
+                  const data = await res.json().catch(() => ({}));
+                  console.log(`✅ Option #${index + 1} saved:`, data);
+                }
+
+                // reset after all options sent
+                setOptions([]);
+                setOptionData({
+                  name: "",
+                  price_delta: 0,
+                  is_default: false,
+                  max_qty: 0,
+                });
+                setGroupID(null);
+                setShowOptionPopup(false);
+                alert("ส่ง options สำเร็จทั้งหมด ✅");
+              } catch (err) {
+                console.error("❌ Failed to submit options:", err);
+                alert("ส่ง options ไม่สำเร็จ");
+              }
+            };
+
+  
+
+  return (
+    <div className={styles.menuDetailPageWrapper}>
+      <button onClick={onBack} className={styles.menuDetailBackBtn}>
+        ← กลับ
+      </button>
+
+      <div className={styles.menuDetailContainer}>
+        <img src={menu.menu_pic || "https://via.placeholder.com/200"} alt={menu.name} />
+
+        <div className={styles.menuDetailInfo}>
+          <h2>{menu.name}</h2>
+          <p className={styles.menuDetailPrice}>฿{menu.price}</p>
+          <p>{menu.description}</p>
+          <p>⏱ ใช้เวลา {menu.time_taken} นาที</p>
+
+          <div className={styles.menuDetailTypeList}>
+            <h4>ประเภทเมนู:</h4>
+            {menu.types?.map((t: any, idx: number) => (
+              <span key={`${menu.id}-type-${t.id}-${idx}`} className={styles.menuDetailTypeTag}>{t.name}</span>
+            ))}
+          </div>
+
+          <div className={styles.menuDetailAddonSection}>
+            <h4 className={styles.handlerthisfkignstupidshit}>🍳 Add-ons (ตัวเลือกเพิ่มเติม) <button onClick={() => setShowGroupPopup(true)}  className={styles.addonsBTN}> <span className="material-symbols-outlined">add_circle</span>เพิ่ม Add-ons</button></h4>
+            {menu.addons && menu.addons.length > 0 ? (
+              menu.addons.map((a: any) => (
+                <div key={a.id} className={styles.menuDetailAddonItem}>
+                  <p><strong>{a.name}</strong></p>
+                  {a.options?.length > 0 && (
+                    <div>
+                      <ul>
+                        {a.options.map((o: any, idxO: number) => (
+                        <li key={`${menu.id}-addon-${a.id}-option-${o.id}-${idxO}`}>
+                          {o.name} {o.price ? `+฿${o.price}` : ""}
+                        </li>
+                      ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p>Required: {a.required ? "✅" : "❌"}</p>
+                  <p>From: {a.from}</p>
+                  <p>Max select: {a.max_select}, Min select: {a.min_select}</p>
+                  {a.allow_qty && <p>Allow quantity selection</p>}
+                  
+                </div>
+              ))
+            ) : (
+              <p>ไม่มี Add-on</p>
+            )}
+          </div>
+        </div>
+      </div>
+{showGroupPopup && (
+  <div className={styles.popupOverlay} onClick={() => setShowGroupPopup(false)}>
+    <div className={styles.popupForm} onClick={(e) => e.stopPropagation()}>
+      <h3>Add-Ons Group</h3>
+
+      <div className={styles.inlineInputs}>
+        <label>
+          ลิงก์กับประเภทเมนู: <span style={{ color: "red" }}>*</span>
+          <select
+            required
+            value={selectedTypeID || ""}
+            onChange={(e) => setSelectedTypeID(e.target.value)}
+          >
+            <option value="">-- เลือกประเภท --</option>
+            {types.map((t: any) => (
+              <option key={t.id} value={t.id}>
+                {t.type}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <label>
+        ชื่อกลุ่ม: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          name="name"
+          value={groupData.name}
+          onChange={handleGroupChange}
+          placeholder="กรอกชื่อกลุ่ม"
+        />
+      </label>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="required"
+          checked={groupData.required}
+          onChange={handleGroupChange}
+        />
+        <span>
+          Required (บังคับให้ลูกค้าเลือกอย่างน้อยหนึ่ง)
+        </span>
+      </label>
+
+      <div className={styles.inlineInputs}>
+        <label>
+          Min select: <span style={{ color: "red" }}>*</span>
+          <input
+            required
+            type="number"
+            name="min_select"
+            min={1}
+            value={groupData.min_select}
+            onChange={handleGroupChange}
+          />
+        </label>
+        <label>
+          Max select: <span style={{ color: "red" }}>*</span>
+          <input
+            required
+            type="number"
+            name="max_select"
+            min={1}
+            value={groupData.max_select}
+            onChange={handleGroupChange}
+          />
+        </label>
+      </div>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="allow_qty"
+          checked={groupData.allow_qty}
+          onChange={handleGroupChange}
+        />
+        <span>
+          เลือกจำนวนของ Add-on ได้ไหม เช่น เพิ่มชีส 2 ชุด
+        </span>
+      </label>
+
+      <div className={styles.popupActions}>
+        <button className={styles.confirmBtn} onClick={handleCreateGroup}>สร้าง Group</button>
+        <button className={styles.cancelBtnnnnnn} onClick={() => setShowGroupPopup(false)}>ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+{/* -------- Popup: Add Options -------- */}
+{showOptionPopup && (
+  <div className={styles.popupOverlay} onClick={() => setShowOptionPopup(false)}>
+    <div className={styles.popupForm} onClick={(e) => e.stopPropagation()}>
+      <h3>เพิ่ม Option ใน Group</h3>
+
+      <label>
+        ชื่อ Option: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          name="name"
+          value={optionData.name}
+          onChange={handleOptionChange}
+          placeholder="กรอกชื่อ Option เช่น เพิ่มชีส"
+        />
+      </label>
+
+      <label>
+        ราคาเพิ่ม (฿): <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          type="number"
+          name="price_delta"
+          min={0}
+          value={optionData.price_delta}
+          onChange={handleOptionChange}
+          placeholder="เช่น 10"
+        />
+      </label>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="is_default"
+          checked={optionData.is_default}
+          onChange={handleOptionChange}
+        />
+        <span>
+          เป็นค่าเริ่มต้น (เลือกให้อัตโนมัติ)
+        </span>
+      </label>
+
+      <label>
+        Max Quantity: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          type="number"
+          name="max_qty"
+          min={1}
+          value={optionData.max_qty}
+          onChange={handleOptionChange}
+          placeholder="เช่น 3"
+        />
+      </label>
+
+      <button className={styles.addOptionBtn} onClick={handleAddOption}>เพิ่ม Option</button>
+
+      {options.length > 0 && (
+        <ul className={styles.optionList}>
+          {options.map((opt, i) => (
+            <li key={i}>
+              {opt.name} (+฿{opt.price_delta})
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={styles.popupActions}>
+        <button className={styles.confirmBtn} onClick={handleSubmitOptions}>บันทึกทั้งหมด</button>
+        <button className={styles.cancelBtnnnnnn} onClick={() => setShowOptionPopup(false)}>ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
+
+    </div>
+  );
+  
 }
