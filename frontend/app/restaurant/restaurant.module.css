@@ -751,7 +751,7 @@
   transform: translateX(18px);
 }
 /* Overlay มืดเล็ก ๆ แบบธีม */
-.popupOverlay {
+.popupOverlay2 {
   position: fixed;
   top:0; left:0; right:0; bottom:0;
   background: rgba(0, 0, 0, 0.1); /* เพิ่มความเข้มให้เด่น */
@@ -763,7 +763,7 @@
 }
 
 /* Popup Form หลัก */
-.popupForm {
+.popupForm2 {
   background: #E7D5B3; /* ธีมสีหลักของมึง */
   padding: 30px 25px;
   border-radius: 20px; /* มุมโค้งสวย */
@@ -778,7 +778,7 @@
 }
 
 /* Header / Title ของ Popup */
-.popupForm h3  {
+.popupForm2 h3  {
   margin: 0;
   font-size: 22px;
   color: #D77948; /* ใช้สีเข้มของธีม */
@@ -788,8 +788,8 @@
 }
 
 /* Input / Textarea */
-.popupForm input,
-.popupForm textarea {
+.popupForm2 input,
+.popupForm2 textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
@@ -800,8 +800,8 @@
   transition: all 0.03s ease;
 }
 
-.popupForm input:focus,
-.popupForm textarea:focus {
+.popupForm2 input:focus,
+.popupForm2 textarea:focus {
   box-shadow: 0 0 5px #D77948;
 }
 
@@ -810,6 +810,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 40px;
 }
 
 .popupActions button {
@@ -837,12 +838,11 @@
 }
 
 .popupActions .confirmBtn:hover {
-  background-color: #E4CE8E;
-  color: #000;
+  opacity: 0.8;
 }
 
 /* Animation */
-@keyframes fadeIn {
+/* @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -850,7 +850,7 @@
 @keyframes slideDown {
   from { transform: translateY(-10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
-}
+} */
 .queuepagemanagement{
   width: 100%;
   height: 100%;
@@ -1370,6 +1370,7 @@
   font-size: 14px;
 }
 
+input[type="number"]
 .inlineInputs {
   display: flex;
   justify-content: space-between;
@@ -1379,9 +1380,18 @@
 .checkboxRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  width: 100%;
 }
-
+.checkboxRow input {
+  flex:1;
+}
+.checkboxRow span {
+  flex:9;
+}
+.checkboxRow input:focus {
+  outline: none;
+  box-shadow: none;
+}
 .popupButtons {
   display: flex;
   justify-content: space-between;
@@ -1420,4 +1430,157 @@
 @keyframes popupEnter {
   from { transform: scale(0.9); opacity: 0 }
   to { transform: scale(1); opacity: 1 }
+}
+.popupOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.popupForm {
+  background-color: #FFFAE3;
+  border-radius: 18px;
+  padding: 28px 32px;
+  width: 420px;
+  max-width: 90%;
+  box-shadow: 0px 8px 24px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideIn 0.25s ease-out;
+}
+
+.popupForm h3 {
+  text-align: center;
+  color: #000000;
+  margin-bottom: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.popupForm input,
+.popupForm select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  background-color: #f5e8d8;
+  font-size: 14px;
+  transition: 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.popupForm input:focus,
+.popupForm select:focus {
+}
+
+.popupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirmBtn {
+  background-color: #D77948;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.confirmBtn:hover {
+  opacity: 0.8;
+}
+
+.cancelBtnnnnnn{
+  background-color: #666666;
+  color: rgb(248, 248, 248);
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.cancelBtnnnnnn:hover{
+  opacity: 0.8;
+}
+.inlineInputs label{
+  width: 100%;
+}
+.cancelBtn:hover {
+  background-color: #555;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-10px); opacity: 0 }
+  to { transform: translateY(0); opacity: 1 }
+}
+
+.popupForm input[type="checkbox"] {
+  accent-color: #D77948; /* ตั้งสี custom (เช่นส้มโทนเดียวกับปุ่ม) */
+  outline: none;
+}
+.addOptionBtn{
+    background-color: #e4ce8e;
+  color: black;
+  font-weight: bolder;
+  height: 40px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.addOptionBtn:hover{
+  opacity: 0.8;
+}
+.imageUploadBox {
+  position: relative;
+  width: 260px;
+  height: 200px;
+  background-color: #E7D5B3;
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.imageUploadBox:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadLabel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.uploadText {
+  color: #7a5c2d;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  opacity: 0.8;
 }

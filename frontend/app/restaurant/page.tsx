@@ -619,6 +619,7 @@ function TotalSales({username}:any) {
       </div>
     </section>
   );
+
 }
 function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSelectedMenu}: any) {
   const [mode, setMode] = useState<"add" | "manage">("manage");
@@ -1041,8 +1042,8 @@ function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSele
                   <p className={styles.description}>{item.description}</p>
                 </div>
                 {editingMenu && (
-                  <div className={styles.popupOverlay}>
-                    <div className={styles.popupForm}>
+                  <div className={styles.popupOverlay2}>
+                    <div className={styles.popupForm2}>
                       <h3>แก้ไขเมนู</h3>
                       <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="ชื่อเมนู" />
                       <input type="number" value={editPrice} onChange={e => setEditPrice(Number(e.target.value))} placeholder="ราคา" />
@@ -1167,29 +1168,50 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-        <section>
-          <input type="file"onChange={(e) => e.target.files && setMenuPic(e.target.files[0])}/>
-                  <div>
-          {types.map((t) => (
-            <label key={t.id} style={{ marginRight: "10px" }}>
-              <input
-                type="checkbox"
-                value={t.id}
-                checked={selectedTypes.includes(t.id)}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedTypes((prev) =>
-                    prev.includes(id)
-                      ? prev.filter((x) => x !== id)
-                      : [...prev, id]
-                  );
-                }}
-              />
-              {t.type}
-            </label>
-          ))}
-        </div>
-        </section>
+<section>
+  <div className={styles.imageUploadBox}>
+    <label htmlFor="menuPic" className={styles.uploadLabel}>
+      {menuPic ? (
+        <img
+          src={URL.createObjectURL(menuPic)}
+          alt="Preview"
+          className={styles.previewImage}
+        />
+      ) : (
+        <span className={styles.uploadText}>📷 เลือกรูปเมนู</span>
+      )}
+    </label>
+    <input
+      id="menuPic"
+      type="file"
+      accept="image/*"
+      style={{ display: "none" }}
+      onChange={(e) => e.target.files && setMenuPic(e.target.files[0])}
+    />
+  </div>
+
+  <div style={{ marginTop: "15px" }}>
+    {types.map((t) => (
+      <label key={t.id} style={{ marginRight: "10px" }}>
+        <input
+          type="checkbox"
+          value={t.id}
+          checked={selectedTypes.includes(t.id)}
+          onChange={(e) => {
+            const id = e.target.value;
+            setSelectedTypes((prev) =>
+              prev.includes(id)
+                ? prev.filter((x) => x !== id)
+                : [...prev, id]
+            );
+          }}
+        />
+        {t.type}
+      </label>
+    ))}
+  </div>
+</section>
+
         <section className={styles.sectiongapaddmenu}>
           <div className={styles.Contenthandler}>
               <div>
@@ -1232,8 +1254,37 @@ function MenuDetailPage({ menu, onBack }: any) {
   const [showOptionPopup, setShowOptionPopup] = useState(false);
   const [groupID, setGroupID] = useState<string | null>(null);
   const [restaurantID, setRestaurantID] = useState<string | null>(null);
+  const [types, setTypes] = useState<any[]>([]);
+  const [selectedTypeID, setSelectedTypeID] = useState<string | null>(null);
+
+
+
+
 
   const token = localStorage.getItem("token");
+
+
+
+
+  useEffect(() => {
+  if (!restaurantID || !token) return;
+
+  fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/types`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((json) => {
+      console.log("📄 Available types:", json);
+      setTypes(json.types || []);
+    })
+    .catch((err) => console.error("❌ Fetch types error:", err));
+}, [restaurantID]);
+
+
+
+
+
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -1297,33 +1348,51 @@ if (!menu) return <p>ไม่พบข้อมูลเมนู</p>;
               };
 
 
+const handleCreateGroup = async () => {
+  try {
+    console.log("✅ Creating AddOn Group:", groupData);
+    const res = await fetch(
+      `http://localhost:8080/restaurant/menu/${restaurantID}/addon-groups`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(groupData),
+      }
+    );
 
-            const handleCreateGroup = async () => {
-              try {
-                console.log("✅ Creating AddOn Group:", groupData);
-                const res = await fetch(
-                  `http://localhost:8080/restaurant/menu/${restaurantID}/addon-groups`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                    method: "POST",
-                    body: JSON.stringify(groupData),
-                  }
-                );
-                const data = await res.json();
-                setGroupID(data.id); // เอา id จริงจาก backend
-                console.log(data);
-                setShowGroupPopup(false);
-                setShowOptionPopup(true);
-              } catch (err) {
-                console.error("❌ Failed to create group:", err);
-                alert("สร้างกลุ่มไม่สำเร็จ");
-              }
-            };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "สร้างกลุ่มไม่สำเร็จ");
 
+    setGroupID(data.id);
+    console.log("🎯 Group created:", data);
 
+    // 🔗 ลิงก์กับ type ถ้ามีเลือกไว้
+    if (selectedTypeID) {
+      const linkRes = await fetch(
+        `http://localhost:8080/restaurant/menu/addon-groups/${data.id}/types/${selectedTypeID}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const linkData = await linkRes.json();
+      console.log("🔗 Group linked with type:", linkData);
+    } else {
+      console.warn("⚠️ ยังไม่ได้เลือก type สำหรับ group นี้");
+    }
+
+    setShowGroupPopup(false);
+    setShowOptionPopup(true);
+
+  } catch (err) {
+    console.error("❌ Failed to create group:", err);
+    alert("สร้างกลุ่มไม่สำเร็จ");
+  }
+};
 
 
           const handleAddOption = () => {
@@ -1453,124 +1522,181 @@ if (!menu) return <p>ไม่พบข้อมูลเมนู</p>;
           </div>
         </div>
       </div>
-            {showGroupPopup && (
-        <div className={styles.popupOverlay} onClick={() => setShowGroupPopup(false)}>
-          <div className={styles.popupContainer} onClick={(e) => e.stopPropagation()}>
-            <h3>เพิ่ม Add-On Group</h3>
+{showGroupPopup && (
+  <div className={styles.popupOverlay} onClick={() => setShowGroupPopup(false)}>
+    <div className={styles.popupForm} onClick={(e) => e.stopPropagation()}>
+      <h3>Add-Ons Group</h3>
 
-            <label>
-              ชื่อกลุ่ม:
-              <input name="name" value={groupData.name} onChange={handleGroupChange} />
-            </label>
+      <div className={styles.inlineInputs}>
+        <label>
+          ลิงก์กับประเภทเมนู: <span style={{ color: "red" }}>*</span>
+          <select
+            required
+            value={selectedTypeID || ""}
+            onChange={(e) => setSelectedTypeID(e.target.value)}
+          >
+            <option value="">-- เลือกประเภท --</option>
+            {types.map((t: any) => (
+              <option key={t.id} value={t.id}>
+                {t.type}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                name="required"
-                checked={groupData.required}
-                onChange={handleGroupChange}
-              />
-              Required
-            </label>
+      <label>
+        ชื่อกลุ่ม: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          name="name"
+          value={groupData.name}
+          onChange={handleGroupChange}
+          placeholder="กรอกชื่อกลุ่ม"
+        />
+      </label>
 
-            <div className={styles.inlineInputs}>
-              <label>
-                Min select:
-                <input
-                  type="number"
-                  name="min_select"
-                  value={groupData.min_select}
-                  onChange={handleGroupChange}
-                />
-              </label>
-              <label>
-                Max select:
-                <input
-                  type="number"
-                  name="max_select"
-                  value={groupData.max_select}
-                  onChange={handleGroupChange}
-                />
-              </label>
-            </div>
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="required"
+          checked={groupData.required}
+          onChange={handleGroupChange}
+        />
+        <span>
+          Required (บังคับให้ลูกค้าเลือกอย่างน้อยหนึ่ง)
+        </span>
+      </label>
 
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                name="allow_qty"
-                checked={groupData.allow_qty}
-                onChange={handleGroupChange}
-              />
-              Allow quantity selection
-            </label>
+      <div className={styles.inlineInputs}>
+        <label>
+          Min select: <span style={{ color: "red" }}>*</span>
+          <input
+            required
+            type="number"
+            name="min_select"
+            min={1}
+            value={groupData.min_select}
+            onChange={handleGroupChange}
+          />
+        </label>
+        <label>
+          Max select: <span style={{ color: "red" }}>*</span>
+          <input
+            required
+            type="number"
+            name="max_select"
+            min={1}
+            value={groupData.max_select}
+            onChange={handleGroupChange}
+          />
+        </label>
+      </div>
 
-            <div className={styles.popupButtons}>
-              <button onClick={handleCreateGroup}>✅ สร้าง Group</button>
-              <button onClick={() => setShowGroupPopup(false)}>❌ ยกเลิก</button>
-            </div>
-          </div>
-        </div>
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="allow_qty"
+          checked={groupData.allow_qty}
+          onChange={handleGroupChange}
+        />
+        <span>
+          เลือกจำนวนของ Add-on ได้ไหม เช่น เพิ่มชีส 2 ชุด
+        </span>
+      </label>
+
+      <div className={styles.popupActions}>
+        <button className={styles.confirmBtn} onClick={handleCreateGroup}>สร้าง Group</button>
+        <button className={styles.cancelBtnnnnnn} onClick={() => setShowGroupPopup(false)}>ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+{/* -------- Popup: Add Options -------- */}
+{showOptionPopup && (
+  <div className={styles.popupOverlay} onClick={() => setShowOptionPopup(false)}>
+    <div className={styles.popupForm} onClick={(e) => e.stopPropagation()}>
+      <h3>เพิ่ม Option ใน Group</h3>
+
+      <label>
+        ชื่อ Option: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          name="name"
+          value={optionData.name}
+          onChange={handleOptionChange}
+          placeholder="กรอกชื่อ Option เช่น เพิ่มชีส"
+        />
+      </label>
+
+      <label>
+        ราคาเพิ่ม (฿): <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          type="number"
+          name="price_delta"
+          min={0}
+          value={optionData.price_delta}
+          onChange={handleOptionChange}
+          placeholder="เช่น 10"
+        />
+      </label>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          name="is_default"
+          checked={optionData.is_default}
+          onChange={handleOptionChange}
+        />
+        <span>
+          เป็นค่าเริ่มต้น (เลือกให้อัตโนมัติ)
+        </span>
+      </label>
+
+      <label>
+        Max Quantity: <span style={{ color: "red" }}>*</span>
+        <input
+          required
+          type="number"
+          name="max_qty"
+          min={1}
+          value={optionData.max_qty}
+          onChange={handleOptionChange}
+          placeholder="เช่น 3"
+        />
+      </label>
+
+      <button className={styles.addOptionBtn} onClick={handleAddOption}>เพิ่ม Option</button>
+
+      {options.length > 0 && (
+        <ul className={styles.optionList}>
+          {options.map((opt, i) => (
+            <li key={i}>
+              {opt.name} (+฿{opt.price_delta})
+            </li>
+          ))}
+        </ul>
       )}
 
-      {/* -------- Popup: Add Options -------- */}
-      {showOptionPopup && (
-        <div className={styles.popupOverlay} onClick={() => setShowOptionPopup(false)}>
-          <div className={styles.popupContainer} onClick={(e) => e.stopPropagation()}>
-            <h3>เพิ่ม Option ใน Group</h3>
+      <div className={styles.popupActions}>
+        <button className={styles.confirmBtn} onClick={handleSubmitOptions}>บันทึกทั้งหมด</button>
+        <button className={styles.cancelBtnnnnnn} onClick={() => setShowOptionPopup(false)}>ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+)}
 
-            <label>
-              ชื่อ Option:
-              <input name="name" value={optionData.name} onChange={handleOptionChange} />
-            </label>
-            <label>
-              ราคาเพิ่ม (฿):
-              <input
-                type="number"
-                name="price_delta"
-                value={optionData.price_delta}
-                onChange={handleOptionChange}
-              />
-            </label>
 
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                name="is_default"
-                checked={optionData.is_default}
-                onChange={handleOptionChange}
-              />
-              เป็นค่าเริ่มต้น
-            </label>
 
-            <label>
-              Max Quantity:
-              <input
-                type="number"
-                name="max_qty"
-                value={optionData.max_qty}
-                onChange={handleOptionChange}
-              />
-            </label>
 
-            <button onClick={handleAddOption}>➕ เพิ่ม Option</button>
 
-            {options.length > 0 && (
-              <ul>
-                {options.map((opt, i) => (
-                  <li key={i}>
-                    {opt.name} ({opt.price_delta}฿)
-                  </li>
-                ))}
-              </ul>
-            )}
 
-            <div className={styles.popupButtons}>
-              <button onClick={handleSubmitOptions}>✅ บันทึกทั้งหมด</button>
-              <button onClick={() => setShowOptionPopup(false)}>❌ ปิด</button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
   
