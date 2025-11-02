@@ -397,11 +397,11 @@ function QueuePage() {
 
   const totalQueues = filteredOrders.length;
 
-  const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
+const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
     const index = current - half + i;
     if (index < 0 || index >= totalQueues) return null;
-    return index + 1;
-  });
+    return index; // <-- เก็บ index แทน
+});
 
   return (
     <div className={styles.queuepagemanagement}>
@@ -438,20 +438,20 @@ function QueuePage() {
         /* 🔹 ถ้ามีคิวค่อยแสดงส่วนนี้ */
         <div className={styles.queueall}>
           <div className={styles.queueno}>
-            {displayQueues.map((q, i) =>
-              q ? (
-                <button
-                  key={q}
-                  className={q === current + 1 ? styles.activeQueue : ""}
-                  onClick={() => setCurrent(q - 1)}
-                >
-                  คิวที่ {String(q).padStart(3, "0")}
-                  <p>{filteredOrders[current].status}</p>
-                </button>
+            {displayQueues.map((idx, i) =>
+              idx !== null ? (
+                  <button
+                      key={filteredOrders[idx].id}
+                      className={idx === current ? styles.activeQueue : ""}
+                      onClick={() => setCurrent(idx)}
+                  >
+                      คิวที่ {String(idx + 1).padStart(3, "0")}
+                      <p>{filteredOrders[idx].status}</p>
+                  </button>
               ) : (
-                <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
+                  <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
               )
-            )}
+          )}
           </div>
 
           <div className={styles.Notesofthisreseve}>
@@ -467,63 +467,65 @@ function QueuePage() {
             >
               <span className="material-symbols-outlined">arrow_back_ios</span>
             </div>
+<div className={styles.therealmenudetailed}>
+  {filteredOrders[current] && 
+    filteredOrders[current].items.map((item: any, i: number) => (
+      <div key={i} className={styles.order_n}>
+        {/* รูป */}
+        <div className={styles.imageorderholder}>
+          <img
+            src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
+            alt="order"
+          />
+        </div>
 
-            <div className={styles.therealmenudetailed}>
-              {filteredOrders[current] && (
-                <div key={filteredOrders[current].id} className={styles.order_n}>
-                  <div className={styles.imageorderholder}>
-                    <img
-                      src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
-                      alt="order"
-                    />
-                  </div>
+        {/* รายละเอียดเมนู */}
+        <div className={styles.detailoforder}>
+          <div className={styles.price2}>
+            <p>฿ {filteredOrders[current].total_amount}</p>
+          </div>
 
-                  <div className={styles.detailoforder}>
-                    <div className={styles.price2}>
-                      <p>฿ {filteredOrders[current].total_amount}</p>
-                    </div>
-
-                    {/* 🔹 วนลูปแสดงทุกเมนูในคิวนี้ */}
-                    {filteredOrders[current].items.map((item: any, i: number) => (
-                      <div key={i} className={styles.menuItem}>
-                        <p className={styles.mmmmmenu}>
-                          {item.menu_name}
-                          {item.time_taken_min && (
-                            <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
-                          )}
-                        </p>
-
-                        {item.note && (
-                          <p className={styles.description}>Note: {item.note}</p>
-                        )}
-
-                        <div className={styles.handlerwhateveristhisshit}>
-                          {item.options?.map((opt: any, j: number) => (
-                            <button key={j}>{opt.option_name}</button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={styles.statusofsomethingidontknow}>
-                    <button>
-                      {filteredOrders[current].status === "pending"
-                        ? "กำลังทำ"
-                        : filteredOrders[current].status}
-                      <span className="material-symbols-outlined">
-                        arrow_drop_down
-                      </span>
-                    </button>
-                    <button>
-                      ยกเลิก{" "}
-                      <span className="material-symbols-outlined">close_small</span>
-                    </button>
-                  </div>
-                </div>
+          <div className={styles.menuItem}>
+            <p className={styles.mmmmmenu}>
+              {item.menu_name}
+              {item.time_taken_min && (
+                <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
               )}
-            </div>
+            </p>
 
+            {item.note && (
+              <p className={styles.description}>Note: {item.note}</p>
+            )}
+
+            <div className={styles.handlerwhateveristhisshit}>
+              {item.options?.map((opt: any, j: number) => (
+                <button key={j}>{opt.option_name}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* สถานะรวม */}
+        <div className={styles.statusofsomethingidontknow}>
+          <button>
+            {filteredOrders[current].status === "pending"
+              ? "กำลังทำ"
+              : filteredOrders[current].status}
+            <span className="material-symbols-outlined">
+              arrow_drop_down
+            </span>
+          </button>
+          <button>
+            ยกเลิก{" "}
+            <span className="material-symbols-outlined">close_small</span>
+          </button>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+                      {/* dfjdshisaodpsadlpadposa */}
             <div
               className={styles.sliderclickright}
               onClick={() =>
