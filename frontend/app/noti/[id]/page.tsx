@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./[id].module.css";
-import { useParams } from "next/navigation";
+import { useParams , useRouter} from "next/navigation";
 
 
 interface NotiCon {
@@ -25,8 +25,9 @@ interface NotiAttributes {
 
 export default function NotificationDetailPage (){
   const params = useParams();
-   const id = params.id as string;
+  const id = params.id as string;
   const [notiContent, setNotiContent] = useState<NotiCon | null>(null);
+  const router = useRouter();
 
   const handleConfirm = () => {
     alert("คุณกดยืนยันเรียบร้อยแล้ว!");
@@ -89,7 +90,7 @@ export default function NotificationDetailPage (){
                 const reserveId = notiContent.attributes.reserveId;
                
                 const res = await fetch(
-                  "http://localhost:8080/table/reservation/${reserveId}/confirm_member",
+                  `http://localhost:8080/table/reservation/${reserveId}/confirm_member`,
                   {
                     method: "POST",
                     headers: {
@@ -104,13 +105,14 @@ export default function NotificationDetailPage (){
                   throw new Error(err);
                 }
 
-                alert("ยืนยันการจองโต๊ะสำเร็จ!");
-              } catch (error) {
-                console.error(error);
-                alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");
-              }
-            }}
-          >
+                  alert("ยืนยันการจองโต๊ะสำเร็จ!");
+                  router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
+                      } catch (error) {
+                        console.error(error);
+                        alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");
+                      }
+                    }}
+                  >
         ยืนยัน
       </button>
                   <button className={styles.cancleBtn}>ยกเลิก</button>
