@@ -1,4 +1,4 @@
-"use client"; // 👈 ถ้าใช้ Next.js 13+ (App Router) ต้องใส่
+"use client";
 
 import { useState } from "react";
 import styles from "./login.module.css";
@@ -13,35 +13,44 @@ const notoThai = Noto_Sans_Thai({
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState<"customer" | "restaurant">("customer");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // กัน reload หน้า
+    e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/customer/login", {
+      // 🟢 เลือก endpoint ตามประเภทผู้ใช้
+      const url =
+        userType === "restaurant"
+          ? "http://localhost:8080/restaurant/login"
+          : "http://localhost:8080/customer/login";
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
-      if (!res.ok) {
-        throw new Error("Login failed");
-      }
+      if (!res.ok) throw new Error("Login failed");
 
       const data = await res.json();
       console.log("✅ Login success:", data);
 
-      // เก็บ token ลง localStorage ก็ได้
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userType", userType);
 
       alert("Login Success!");
-      // redirect ไปหน้าอื่นก็ได้ เช่น /dashboard
-      window.location.href = "/home";
 
+      // 🔀 Redirect ตามประเภทผู้ใช้
+      if (userType === "restaurant") {
+        window.location.href = "/restaurant";
+      } else {
+        window.location.href = "/home";
+      }
     } catch (err) {
       console.error("❌ Error:", err);
       setError("Username หรือ Password ไม่ถูกต้อง");
@@ -55,6 +64,7 @@ export default function LoginPage() {
       <div className={styles.loginbox}>
         <form className={styles.logininbox} onSubmit={handleLogin}>
           <h2>Login</h2>
+
 
           <div className={styles.logininputbox}>
             <p>Username</p>
@@ -76,14 +86,52 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className={styles.roleSection}>
+            {/* <p>เข้าสู่ระบบในฐานะ</p> */}
+
+            <div className={styles.roleToggle}>
+              <button
+                type="button"
+                className={`${styles.roleBtn} ${userType === "customer" ? styles.activeRole : ""
+                  }`}
+                onClick={() => setUserType("customer")}
+              >
+                ลูกค้า
+                <span className={styles.roleSub}>Customer</span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.roleBtn} ${userType === "restaurant" ? styles.activeRole : ""
+                  }`}
+                onClick={() => setUserType("restaurant")}
+              >
+                ร้านอาหาร
+                <span className={styles.roleSub}>Restaurant</span>
+              </button>
+            </div>
+          </div>
+
+
           <button type="submit" className={styles.submitbtn} disabled={loading}>
-            {loading ? "Logging in..." : <><span>Log In</span> <span className="material-symbols-outlined">arrow_forward</span></>}
+            {loading ? (
+              "Logging in..."
+            ) : (
+              <>
+                <span>Log In</span>{" "}
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </>
+            )}
           </button>
 
           {error && <p style={{ color: "red" }}>{error}</p>}
 
-          <div className={styles.doyouhaveacc}>   
-            <div><span><a href="">Forget Password ?</a></span></div>
+          <div className={styles.doyouhaveacc}>
+            <div>
+              <span>
+                <a href="">Forget Password ?</a>
+              </span>
+            </div>
           </div>
         </form>
       </div>
