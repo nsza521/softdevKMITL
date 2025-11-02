@@ -205,7 +205,10 @@
      .logo {
         order: 0; /* logo จะอยู่บนสุด */
     }
-
+    .roleToggle{
+    width: 250px;
+        margin-top: 20px;
+    }
 
     .loginbox {
         order: 1;
@@ -215,4 +218,37 @@
   height: 100%;
   object-fit: cover;  /* ให้รูปขยายเต็มโดยไม่บิดเบี้ยว */
 }
+
+}
+.roleToggle{
+    background-color: #F0F0F0;
+    border-radius: 20px;
+    overflow: hidden;
+    padding: 2px;
+    gap: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.roleBtn{
+    width: 180px;
+    height: 60px;
+    color: rgb(0, 0, 0);
+}
+.roleBtn .roleSub{
+    color: rgb(0, 0, 0);
+}
+
+
+.activeRole{
+    border-radius: 20px;
+    background-color: black;
+}
+.activeRole .roleSub{
+    color: #c5c5c5;
+    font-weight: 500;
+}
+.activeRole .roleSub1{
+    color: #ffffff;
+    font-weight: 500;
 }

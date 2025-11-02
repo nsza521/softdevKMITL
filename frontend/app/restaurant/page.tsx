@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import styles from "./restaurant.module.css";
 import { Noto_Sans_Thai } from "next/font/google";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+
 
 const notoThai = Noto_Sans_Thai({
   subsets: ["thai"],
@@ -64,7 +67,7 @@ export default function RestaurantPage() {
         return <AddmenuPage />;
       case "menuDetail":
         return (
-          <MenuDetailPage menu={selectedMenu} onBack={() => setActivePage("order")}/>
+          <MenuDetailPage menu={selectedMenu} onBack={() => setActivePage("manage")}/>
         );
       default:
         return <OrderMenu username={username} isOnline={isOnline} onToggleStatus={handleToggleStatus} />;
@@ -139,6 +142,8 @@ interface MenuItem {
   description: string;
   menu_pic?: string;
   types: MenuType[]; // เพิ่มตรงนี้
+  addons: Addon[]
+  onAdd?: () => void
 }
 interface MenuData {
   items: MenuItem[];
@@ -148,6 +153,41 @@ interface MenuType {
   restaurant_id: string;
   type: string;
 }
+
+type UUID = string;
+
+interface CartItem {
+  item: MenuItem
+  quantity: number
+  selectedAddons: Addon[]
+}
+
+interface Addon {
+  id: UUID
+  name: string
+  required: boolean
+  options: Option[]
+}
+
+interface Option {
+  id: UUID
+  name: string
+  price_delta: string
+  is_default?: boolean
+}
+
+interface CartProps {
+  cart: CartItem[]
+}
+
+interface MenuPopupProps {
+  isOpen: boolean
+  onClose: () => void
+  item: MenuItem
+  cartItem?: CartItem | null
+  onAddToCart: (item: MenuItem, quantity: number, selectedAddons: Addon[]) => void
+}
+
 const handleLogout = async () => {
   try {
     const token = localStorage.getItem("token");
@@ -161,7 +201,7 @@ const handleLogout = async () => {
     if (!res.ok) throw new Error("Logout failed");
     localStorage.removeItem("token");
     alert("ออกจากระบบเรียบร้อย");
-    window.location.href = "/loginrestaurant";
+    window.location.href = "/login";
   } catch (err) {
     console.error("❌ Error:", err);
     alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
@@ -174,8 +214,20 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
   const [username, setUsername] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("All"); // เพิ่ม state กรอง type
   const [restaurantID, setRestaurantID] = useState<string | null>(null);
-  
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+
+
   const [restaurantPic, setRestaurantPic] = useState<string>("");
+  
+  const handleAddItem = (menuItem: MenuItem) => {
+    setSelectedItem(menuItem);
+    setIsPopupOpen(true);
+  };
+
+
+
   useEffect(() => {
 
     const token = localStorage.getItem("token");
@@ -245,6 +297,23 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
     }
   }, []);
 
+  const handleAddToCart = (item: MenuItem, quantity: number, selectedAddons: Addon[]) => {
+    setCart((prev) => {
+      if (quantity === 0) {
+        return prev.filter(ci => ci.item.id !== item.id);
+      }
+
+      const index = prev.findIndex(ci => ci.item.id === item.id);
+
+      if (index >= 0) {
+        const updated = [...prev];
+        updated[index] = { item, quantity, selectedAddons };
+        return updated;
+      }
+
+      return [...prev, { item, quantity, selectedAddons }];
+    });
+  };
 
   const filteredItems = data?.items.filter(item => {
     if (selectedType === "All") return true;
@@ -303,49 +372,303 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
         {error && <p style={{ color: "red" }}>{error}</p>}
         {!data && !error && <p>⌛ กำลังโหลดเมนู...</p>}
         {filteredItems && filteredItems.map(item => {
+            const cartItem = cart.find(ci => ci.item.id === item.id);
+            const quantity = cartItem?.quantity ?? 0;
             return (
-              <div 
-                key={item.id} 
-                className={styles.menu}
-                onClick={async () => {
-                  console.log("👉 Clicked item id:", item.id);
-
-                  try {
-                    const token = localStorage.getItem("token");
-                    const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
-                      headers: { 
-                        'Authorization': `Bearer ${token}` 
-                      }
-                    });
-                    if (!res.ok) throw new Error("Failed to fetch menu detail");
-                    const data = await res.json();
-                    console.log("📦 menu detail:", data);
-
-                    setSelectedMenu(data); // ส่งข้อมูลเต็มไป MenuDetailPage
-                    setActivePage("menuDetail");
-                  } catch (err) {
-                    console.error(err);
-                    alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
-                  }
-                }}
-              >
+              <div key={item.id} className={styles.menu}>
+                
                 <div className={styles.menuimg}>
                   {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-                  <button className={styles.editBtn}>
-                    <span className="material-symbols-outlined">info</span>
-                  </button>
                 </div>
-                <div className={styles.menudetail}>
-                  <p className={styles.price}>฿{item.price}</p>
-                  <p>{item.name}</p>
-                  <p className={styles.description}>{item.description}</p>
+                <div className={styles.menuCon}>
+                  <div className={styles.menudetail}>
+                    <p className={styles.price}>฿{item.price}</p>
+                    <p>{item.name}</p>
+                    <p className={styles.description}>{item.description}</p>
+                  </div>
+                    
+                  <button
+                    className={styles.addBtn}
+                    onClick={() => handleAddItem(item)}
+                  >
+                    {quantity === 0 ? (
+                      <img src="/Add_Plus_Circle.svg" />
+                    ) : (
+                      <span className={styles.cartQtyCircle}>{quantity}</span>
+                    )}
+                  </button>
                 </div>
               </div>
             );
           })}
+          {selectedItem && (
+            <MenuPopup
+              isOpen={isPopupOpen}
+              onClose={() => setIsPopupOpen(false)}
+              item={selectedItem}
+              cartItem={cart.find(ci => ci.item.id === selectedItem.id) ?? null}
+              onAddToCart={handleAddToCart}
+            />
+          )}
       </div>
+      <Cart cart={cart} />
+
     </section>
   );
+}
+function Cart({ cart }: CartProps) {
+  const router = useRouter();
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+  // const reservation_id = searchParam.get("reservationId") || "";
+
+  if (cart.length === 0) return null;
+
+  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0);
+  const itemCost = cart.reduce((sum, ci) => {
+    // ✅ รองรับทั้ง number และ string
+    const basePrice = typeof ci.item.price === "number"
+      ? ci.item.price
+      : parseFloat(ci.item.price);
+
+    const addonTotal =
+      ci.selectedAddons?.reduce((addonSum, addon) => {
+        const optionTotal = addon.options.reduce((optSum, opt) => {
+          const delta = typeof opt.price_delta === "number"
+            ? opt.price_delta
+            : parseFloat(opt.price_delta);
+          return optSum + delta;
+        }, 0);
+
+        return addonSum + optionTotal;
+      }, 0) ?? 0;
+
+    return sum + (basePrice + addonTotal) * ci.quantity;
+  }, 0);
+
+
+  const handleCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Token not found");
+      return;
+    }
+
+    const items = cart.map(ci => ({
+      menu_item_id: ci.item.id,
+      quantity: ci.quantity,
+      selections: ci.selectedAddons.flatMap(addon =>
+        addon.options.map(opt => {
+          if (addon.required === false) {
+            return {
+              group_id: addon.id,
+              option_id: opt.id,
+              qty: 1
+            };
+          }
+
+          return {
+            group_id: addon.id,
+            option_id: opt.id
+          };
+        })
+      )
+    }));
+
+    const body = {
+      items
+    };
+    // console.log("Cart", cart);
+    // console.log("Order request items:", items);
+
+    try {
+      const res = await fetch("http://localhost:8080/restaurant/order", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        alert("ส่งคำสั่งซื้อไม่สำเร็จ");
+        return;
+      }
+      const resp = await res.json();
+      console.log("Order response:", resp);
+
+      // router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
+
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
+
+  return (
+    <button className={styles.cartCon} onClick={handleCheckout}>
+      <div className={styles.cartItemCon}>
+        <img src="/Shopping_Cart_Black.svg" />
+        <span>{itemNum}</span>
+      </div>
+      <span>ตะกร้าของฉัน</span>
+      <span>฿ {itemCost}</span>
+    </button>
+  );
+}
+function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupProps) {
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+
+  const [quantity, setQuantity] = useState(1);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<MenuItem | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken || !isOpen) return;
+
+    async function fetchDetail() {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/restaurant/menu/${restaurant_id}/${item.id}/detail`,
+          { headers: { Authorization: `Bearer ${storedToken}` } }
+        )
+        if (!res.ok) throw new Error("Failed to fetch detail");
+
+        const data: MenuItem = await res.json();
+        setDetail(data);
+
+        // ถ้ามี cartItem ให้ใช้ cartItem.selectedAddons ไม่ใช้ default
+        if (!cartItem) {
+          const init = data.addons?.map(addon => ({
+            ...addon,
+            options: addon.options.filter(opt => !!opt.is_default)
+          })) ?? []
+          setSelectedAddons(init)
+        }
+        // ถ้ามี cartItem จะใช้ useEffect ตัวที่ handle cartItem อยู่แล้ว
+      } catch (err) {
+        console.error(err)
+        setError("โหลดรายละเอียดเมนูไม่สำเร็จ");
+      }
+    }
+
+    fetchDetail()
+  }, [isOpen, item.id, cartItem])
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (cartItem) {
+      setQuantity(cartItem.quantity)
+      setSelectedAddons(cartItem.selectedAddons.map(a => ({
+        ...a,
+        options: [...a.options]
+      })))
+    } else {
+      setQuantity(1)
+      setSelectedAddons([])
+    }
+  }, [isOpen, cartItem])
+
+  const isInCart = !!cartItem
+  const isRemove = isInCart && quantity === 0
+  const buttonLabel = !isInCart
+    ? "เพิ่มลงตะกร้า"
+    : isRemove
+      ? "นำออก"
+      : "อัปเดตตะกร้า"
+
+  const handleAdd = () => {
+    onAddToCart(item, isRemove ? 0 : quantity, selectedAddons)
+    onClose()
+    // console.log("Added to cart:", item, quantity, selectedAddons);
+  }
+
+  if (error) return <p style={{ color: "red" }}>{error}</p>
+  if (!isOpen || !detail) return null
+
+  return (
+    <div className={styles.popupOverlay}>
+      <div className={styles.popupCon}>
+        <button className={styles.closeBt} onClick={onClose}>
+          <img src="/Close_LG.svg" />
+        </button>
+
+        <img src={detail.menu_pic ?? "/placeholder.png"} className={styles.menuImg} />
+
+        <div className={styles.popupOptionsCon}>
+          <h3>
+            {detail.addons?.length > 0
+              ? `ตัวเลือกเพิ่มเติมสำหรับ ${detail.name}`
+              : detail.name}
+          </h3>
+          <div className={styles.optionsList}>
+            {detail.addons?.map((addon) => (
+              <div key={addon.id} className={styles.addonGroup}>
+                <p className={styles.addonTitle}>{addon.name}{addon.required ? "" : " [optional]"}</p>
+
+                {addon.options.map(opt => {
+                  const isSelected = selectedAddons
+                    .find(a => a.id === addon.id)
+                    ?.options.some(o => o.id === opt.id)
+
+                  return (
+                    <label key={opt.id}>
+                      <input
+                        type={addon.required ? "radio" : "checkbox"}
+                        name={addon.required ? addon.id : opt.id}
+                        checked={!!isSelected}
+                        onChange={() => {
+                          setSelectedAddons(prev => prev.map(a => {
+                            if (a.id !== addon.id) return a
+                            if (addon.required) {
+                              return { ...a, options: [opt] } // radio
+                            } else {
+                              const exists = a.options.find(o => o.id === opt.id)
+                              const newOptions = exists
+                                ? a.options.filter(o => o.id !== opt.id)
+                                : [...a.options, opt]
+                              return { ...a, options: newOptions }
+                            }
+                          }))
+                        }}
+                      />
+                      <div style={{ display: "flex", justifyContent: "space-between", width: "150px" }}>
+                        <span>{opt.name}</span>
+                        <span>{opt.price_delta} ฿</span>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.popupBottomCon}>
+          <div className={styles.quantityCon}>
+            <button className={styles.bt} onClick={() => setQuantity(q => Math.max(0, q - 1))}>
+              <img src="/Remove_Minus.svg" />
+            </button>
+            <span>{quantity}</span>
+            <button className={styles.bt} onClick={() => setQuantity(q => q + 1)}>
+              <img src="/Add_Plus.svg" />
+            </button>
+          </div>
+
+          <button className={styles.addCartBt} onClick={handleAdd}>
+            <img src="/Shopping_Cart_White.svg" />
+            {buttonLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 function QueuePage() {
   const baseUrl = "http://localhost:8080";
@@ -359,13 +682,13 @@ function QueuePage() {
   const visibleQueues = 7;
   const half = Math.floor(visibleQueues / 2);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("❌ ไม่มี token กรุณา login ก่อน");
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setError("❌ ไม่มี token กรุณา login ก่อน");
+    setLoading(false);
+    return;
+  }
 
     async function fetchQueue() {
       try {
@@ -374,6 +697,7 @@ function QueuePage() {
         });
         if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูลได้");
         const data = await res.json();
+        console.log("somethingwhateveridontknowfuckmaybethisisqueue",data);
         setOrders(data.orders || []);
       } catch (err: any) {
         setError(err.message);
@@ -385,6 +709,47 @@ function QueuePage() {
     fetchQueue();
   }, []);
 
+
+
+
+
+const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) return alert("❌ ไม่มี token");
+
+  console.log("🛰️ updateOrderStatus ->", `${baseUrl}/restaurant/order/orders/${orderId}/status`, "status:", newStatus);
+
+  try {
+    const res = await fetch(`${baseUrl}/restaurant/order/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ Backend response:", text);
+      throw new Error("ไม่สามารถอัปเดตสถานะได้");
+    }
+
+    setOrders(prev =>
+      prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+
+  } catch (err) {
+    console.error("🔥 updateOrderStatus error:", err);
+    alert("❌ ไม่สามารถอัปเดตสถานะได้");
+  }
+};
+
+
+
+
+
+  
   useEffect(() => {
     const filtered = orders.filter(o => o.channel === activeChannel);
     setFilteredOrders(filtered);
@@ -396,11 +761,11 @@ function QueuePage() {
 
   const totalQueues = filteredOrders.length;
 
-  const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
+const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
     const index = current - half + i;
     if (index < 0 || index >= totalQueues) return null;
-    return index + 1;
-  });
+    return index; // <-- เก็บ index แทน
+});
 
   return (
     <div className={styles.queuepagemanagement}>
@@ -437,25 +802,34 @@ function QueuePage() {
         /* 🔹 ถ้ามีคิวค่อยแสดงส่วนนี้ */
         <div className={styles.queueall}>
           <div className={styles.queueno}>
-            {displayQueues.map((q, i) =>
-              q ? (
-                <button
-                  key={q}
-                  className={q === current + 1 ? styles.activeQueue : ""}
-                  onClick={() => setCurrent(q - 1)}
-                >
-                  คิวที่ {String(q).padStart(3, "0")}
-                  <p>{filteredOrders[current].status}</p>
-                </button>
+            {displayQueues.map((idx, i) =>
+              idx !== null ? (
+                  <button
+                      key={filteredOrders[idx].id}
+                      className={idx === current ? styles.activeQueue : styles.activeQueue2}
+                      onClick={() => setCurrent(idx)}
+                  >
+                      คิวที่ {String(idx + 1).padStart(3, "0")}
+                      <p></p>
+                          <select className={styles.selectofstauts}
+                                value={filteredOrders[idx].status}
+                           onChange={(e) => updateOrderStatus(filteredOrders[idx].id, e.target.value)}>
+                            <option value="paid">Paid</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="served">Served</option>
+                      </select>
+                  </button>
+                  
               ) : (
-                <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
+                  <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
               )
-            )}
+          )}
           </div>
 
           <div className={styles.Notesofthisreseve}>
             <p className={styles.description}>
               NOTE : {filteredOrders[current].note}
+              
             </p>
           </div>
 
@@ -466,63 +840,65 @@ function QueuePage() {
             >
               <span className="material-symbols-outlined">arrow_back_ios</span>
             </div>
+<div className={styles.therealmenudetailed}>
+  {filteredOrders[current] && 
+    filteredOrders[current].items.map((item: any, i: number) => (
+      <div key={i} className={styles.order_n}>
+        {/* รูป */}
+        <div className={styles.imageorderholder}>
+          <img
+            src={item.menu_pic}
+            alt="order"
+          />
+        </div>
 
-            <div className={styles.therealmenudetailed}>
-              {filteredOrders[current] && (
-                <div key={filteredOrders[current].id} className={styles.order_n}>
-                  <div className={styles.imageorderholder}>
-                    <img
-                      src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
-                      alt="order"
-                    />
-                  </div>
+        {/* รายละเอียดเมนู */}
+        <div className={styles.detailoforder}>
+          <div className={styles.price2}>
+            <p>฿ {filteredOrders[current].total_amount}</p>
+          </div>
 
-                  <div className={styles.detailoforder}>
-                    <div className={styles.price2}>
-                      <p>฿ {filteredOrders[current].total_amount}</p>
-                    </div>
-
-                    {/* 🔹 วนลูปแสดงทุกเมนูในคิวนี้ */}
-                    {filteredOrders[current].items.map((item: any, i: number) => (
-                      <div key={i} className={styles.menuItem}>
-                        <p className={styles.mmmmmenu}>
-                          {item.menu_name}
-                          {item.time_taken_min && (
-                            <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
-                          )}
-                        </p>
-
-                        {item.note && (
-                          <p className={styles.description}>Note: {item.note}</p>
-                        )}
-
-                        <div className={styles.handlerwhateveristhisshit}>
-                          {item.options?.map((opt: any, j: number) => (
-                            <button key={j}>{opt.option_name}</button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={styles.statusofsomethingidontknow}>
-                    <button>
-                      {filteredOrders[current].status === "pending"
-                        ? "กำลังทำ"
-                        : filteredOrders[current].status}
-                      <span className="material-symbols-outlined">
-                        arrow_drop_down
-                      </span>
-                    </button>
-                    <button>
-                      ยกเลิก{" "}
-                      <span className="material-symbols-outlined">close_small</span>
-                    </button>
-                  </div>
-                </div>
+          <div className={styles.menuItem}>
+            <p className={styles.mmmmmenu}>
+              {item.menu_name}
+              {item.time_taken_min && (
+                <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
               )}
-            </div>
+            </p>
 
+            {item.note && (
+              <p className={styles.description}>Note: {item.note}</p>
+            )}
+
+            <div className={styles.handlerwhateveristhisshit}>
+              {item.options?.map((opt: any, j: number) => (
+                <button key={j}>{opt.option_name}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* สถานะรวม */}
+        <div className={styles.statusofsomethingidontknow}>
+          <button>
+            {filteredOrders[current].status === "pending"
+              ? "กำลังทำ"
+              : filteredOrders[current].status}
+            <span className="material-symbols-outlined">
+              arrow_drop_down
+            </span>
+          </button>
+          <button>
+            ยกเลิก{" "}
+            <span className="material-symbols-outlined">close_small</span>
+          </button>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+                      {/* dfjdshisaodpsadlpadposa */}
             <div
               className={styles.sliderclickright}
               onClick={() =>
@@ -539,11 +915,12 @@ function QueuePage() {
     </div>
   );
 }
- function TotalSales({ username }: any) {
+function TotalSales({ username }: any) {
   const [showMoney, setShowMoney] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
   const [balance, setBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
   // ✅ popup state
   const [showPopupoftiHisButtonIsAmazaing, setShowPopupoftiHisButtonIsAmazaing] = useState(false);
   const [withdrawData, setWithdrawData] = useState({
@@ -600,10 +977,9 @@ function QueuePage() {
       } catch (err) {
         console.error("❌ Fetch transactions error:", err);
       }
-    };
-
-    fetchTransactions();
-  }, [token]);  
+      };
+      fetchTransactions();
+    }, [token]);  
 
 
   const handleWithdraw = async () => {
@@ -646,6 +1022,27 @@ function QueuePage() {
     }
   };
 
+
+   useEffect(() => {
+    if (!token) return;
+
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/restaurant/order/history?date=2025-11-03`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดรายการสั่งอาหารได้");
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } catch (err) {
+        console.error("❌ Fetch orders error:", err);
+      }
+    };
+    fetchOrders();
+  }, [token]);
   return (
     <section className={styles.shopcontent}>
       <div className={styles.sectionofcirclemoney}>
@@ -785,46 +1182,72 @@ function QueuePage() {
           </button>
         </div>
 
-        <div className={styles.tabContent}>
-          {activeTab === "history" && <p>📜 รายการย้อนหลังของร้านทั้งหมด</p>}
-{activeTab === "withdraw" && (
-  <div className={styles.withdrawHistoryWrapper}>
-    {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
-      <p>📭 ยังไม่มีรายการถอนเงิน</p>
-    ) : (
-      transactions
-        .filter(tx => tx.type === "withdraw")
-        .map((tx) => (
-          <div key={tx.transaction_id} className={styles.withdrawItem}>
-            <div className={styles.withdrawDate}>
-              {new Date(tx.created_at).toLocaleDateString("th-TH", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-            </div>
-            <div className={styles.withdrawInfo}>
-              <span className={styles.withdrawTime}>
-                {new Date(tx.created_at).toLocaleTimeString("th-TH", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-              <span className={styles.withdrawAmount}>
-                -{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
-              </span>
-              <span className={styles.withdrawBank}>
-                ({tx.payment_method})
-              </span>
-              <span className={styles.withdrawStatus}>กำลังดำเนินการ</span>
-            </div>
-          </div>
-        ))
-    )}
-  </div>
-)}
+          <div className={styles.tabContent}>
 
-        </div>
+            {activeTab === "history" && (
+              <div className={styles.orderHistory}>
+                {orders.length === 0 ? (
+                  <p>ยังไม่มีรายการสั่งซื้อ</p>
+                ) : (
+                  orders.map((order) => (
+                    <div key={order.order_id} className={styles.orderCardSSSS}>
+                      {/* <h4>Order #{order.order_id.slice(0, 8)}</h4> */}
+                        {order.items.map((item: any, idx: number) => (
+                          <span key={idx} className={styles.data1ofwhatvevrearasd}>
+                            {item.menu_name} x{item.quantity} ({item.options.map((o: any) => o.option_name).join(", ")})
+                          </span>
+                        ))}
+                      <p className={styles.adasdsadsssssssssssssssa}>{new Date(order.order_time).toLocaleString("th-TH")}</p>
+                      <p  className={styles.asdasdsadsasassssqqq}>รวม {order.total_amount.toLocaleString()} ฿</p>
+                      <ul>
+
+                      </ul>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === "withdraw" && (
+              <div className={styles.withdrawHistoryWrapper}>
+                {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
+                  <p>ยังไม่มีรายการถอนเงิน</p>
+                ) : (
+                  
+                  transactions
+                    .filter(tx => tx.type === "withdraw")
+                    .map((tx) => (
+                      <div key={tx.transaction_id} className={styles.withdrawItem}>
+                        <div className={styles.withdrawDate}>
+                          {new Date(tx.created_at).toLocaleDateString("th-TH", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <div className={styles.withdrawInfo}>
+                          <span className={styles.withdrawBank}>
+                            ({tx.payment_method})
+                          </span>
+                          <span className={styles.withdrawTime}>
+                            {new Date(tx.created_at).toLocaleTimeString("th-TH", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <span className={styles.withdrawAmount}>
+                            {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
+                          </span>
+
+                          <span className={styles.withdrawStatus}>เสร็จสิ้น</span>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+         </div>
+        
       </div>
     </section>
   );
@@ -1216,27 +1639,27 @@ function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSele
           <div className={styles.menuList}>
             {filteredItems.length === 0 ? <p>ไม่มีเมนู</p> : filteredItems.map(item => (
               <div key={item.id} className={styles.menu22}
-                //   onClick={async () => {
-                //   console.log("👉 Clicked item id:", item.id);
+                  onClick={async () => {
+                  console.log("👉 Clicked item id:", item.id);
 
-                //   try {
-                //     const token = localStorage.getItem("token");
-                //     const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
-                //       headers: { 
-                //         'Authorization': `Bearer ${token}` 
-                //       }
-                //     });
-                //     if (!res.ok) throw new Error("Failed to fetch menu detail");
-                //     const data = await res.json();
-                //     console.log("📦 menu detail:", data);
+                  try {
+                    const token = localStorage.getItem("token");
+                    const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
+                      headers: { 
+                        'Authorization': `Bearer ${token}` 
+                      }
+                    });
+                    if (!res.ok) throw new Error("Failed to fetch menu detail");
+                    const data = await res.json();
+                    console.log("📦 menu detail:", data);
 
-                //     setSelectedMenu(data); 
-                //     setActivePage("menuDetail");
-                //   } catch (err) {
-                //     console.error(err);
-                //     alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
-                //   }
-                // }}
+                    setSelectedMenu(data); 
+                    setActivePage("menuDetail");
+                  } catch (err) {
+                    console.error(err);
+                    alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
+                  }
+                }}
               >
                 <div className={styles.menuimg}>
                   {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
@@ -1376,7 +1799,7 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-<section>
+<div className={styles.asdasdsadsadsadsaaaaaaaa}>
   <div className={styles.imageUploadBox}>
     <label htmlFor="menuPic" className={styles.uploadLabel}>
       {menuPic ? (
@@ -1418,7 +1841,7 @@ function AddmenuPage() {
       </label>
     ))}
   </div>
-</section>
+</div>
 
         <section className={styles.sectiongapaddmenu}>
           <div className={styles.Contenthandler}>

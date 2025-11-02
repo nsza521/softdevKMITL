@@ -36,6 +36,12 @@ func main() {
 		log.Fatalf("Error initializing MinIO: %v", err)
 	}
 
+	err = seed.InitAllSeedData(db, minioClient)
+	if err != nil {
+		log.Fatalf("Error seeding database: %v", err)
+	}
+	log.Println("Seeding completed successfully")
+
 	application := app.NewApp(db, minioClient)
 	if err := application.Run(); err != nil {
 		log.Fatalf("Error starting app: %v", err)
@@ -95,12 +101,12 @@ func initMySQL() (*gorm.DB, error) {
 	}
 	log.Println("Database connected and migrated successfully")
 
-	err = seed.InitAllSeedData(db)
-	if err != nil {
-		return nil, fmt.Errorf("error seeding database: %v", err)
-	}
+	// err = seed.InitAllSeedData(db)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error seeding database: %v", err)
+	// }
 
-	log.Println("Database seeding completed successfully")
+	// log.Println("Database seeding completed successfully")
 
 	return db, nil
 }

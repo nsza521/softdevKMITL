@@ -75,11 +75,13 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
         return dto.CreateFoodOrderResp{}, errors.New("no items")
     }
 
+    var status string = "paid" // 2) กำหนดสถานะเริ่มต้น
 
     var reservationIDPtr uuid.UUID
     if req.ReservationID != nil {
         fmt.Printf("Reservation ID: %s\n", *req.ReservationID)
         reservationIDPtr = *req.ReservationID
+        
     }
 
     var customerPtr uuid.UUID
@@ -93,19 +95,21 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
     channel := "walk_in"
     if reservationIDPtr != uuid.Nil {
         channel = "reservation"
+        status = "pending"
     }
 
     order := &models.FoodOrder{
         ID:             uuid.New(),
         ReservationID:  reservationIDPtr, // ← nil ได้
         CustomerID:     customerPtr,      // ← nil ได้ (ถ้าเก็บระดับ order)
-        Status:         "pending",
+        Status:         status,
         OrderDate:      u.nowFn(),
         Note:           req.Note,
         Channel:        channel,
         // CreatedByUserID: <--- ใส่ actor จาก JWT ฝั่ง handler ก่อนเรียก usecase (ควรมี)
     }
 
+    fmt.Printf("Creating order ID %s with channel %s and status %s\n", order.ID.String(), order.Channel, order.Status)
     var orderItems []models.FoodOrderItem
     var orderOpts  []models.FoodOrderItemOption
     var total      float64

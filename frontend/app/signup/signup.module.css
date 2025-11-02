@@ -1,99 +1,164 @@
-
+:root {
+  --dev-color-login: #ffffff;  
+  --dev-color-logo: #D77948;    
+  --dev-color-loginTEXT: #000000;
+  --dev-color-use_passTEXT: #000000;
+  --dev-color-haveacc: #000000;
+  --dev-color-link: #6D6D6D;    
+  --dev-color-inputbox: #D9D9D9;
+}
 
 .container {
-    user-select: none;      
-    -webkit-user-select: none; 
-    -moz-user-select: none; 
-    -ms-user-select: none;  
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--dev-color-login);
+}
 
+/* ฝั่ง logo */
+.logo {
+  order: 2;
+  width: 45%;
+  background-color: var(--dev-color-logo);
+  border-radius: 48px 0 0 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.registerbox{
-    height: 72%;
-    display: flex;
-    justify-content: center;
+.logo img {
+  width: 60%;
+  height: auto;
 }
-.registerbox h2{
-    align-self: start;
-    margin-bottom: 20px;
-    font-size: 28px;
+
+/* ฝั่ง signup box */
+.signupbox {
+  order: 1;
+  width: 55%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.logo{
-    height: 28%;
-    /* สีฝั่งซ้าย (logo section) */
-    display: flex;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 400;
-    padding-top: 24%;
-    object-fit: cover;
+.signupinbox {
+  width: 53%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
-.logo div{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 65%;
-    height: 100px;
-    background-color: #D77948;
-        overflow: hidden; /* ป้องกันรูปเกิน */
-    border-radius: 16px; /* ถ้าอยากให้ขอบโค้ง */
+.signupinbox h2 {
+  margin-bottom: 12px;
+  font-size: 32px;
+  font-weight: 800;
+  width: 100%;
+  color: var(--dev-color-loginTEXT);
 }
-.registerbox form{
-    width: 78%;
-    height: 470px;
-    background-color: #E6E6E6;
-    border-radius: 30px;
-    padding: 8% 10% 12% 10%;
+
+/* ช่อง input */
+.signupinputbox {
+  width: 100%;
+  height: 16%;
+  padding: 8px 0;
+}
+.signupinputbox p {
+  color: var(--dev-color-use_passTEXT);
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.signupinputbox input {
+  width: 100%;
+  height: 58%;
+  border-radius: 24px;
+  border: none;
+  background-color: var(--dev-color-inputbox);
+  padding: 20px;
+  font-size: 14px;
+}
+.signupinputbox input:focus {
+  outline: none;
+}
+
+/* ปุ่ม */
+.submitbtn {
+  width: 42%;
+  height: 38px;
+  border: none;
+  background-color: black;
+  color: white;
+  border-radius: 16px;
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.submitbtn span:nth-child(1) {
+  font-size: 14px;
+}
+.submitbtn span:nth-child(2) {
+  font-size: 16px;
+  padding-left: 4px;
+}
+
+/* ลิงก์ */
+.doyouhaveacc {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.doyouhaveacc span {
+  color: var(--dev-color-haveacc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.doyouhaveacc span a {
+  text-decoration: none;
+  color: var(--dev-color-link);
+}
+.doyouhaveacc span a:hover {
+  text-decoration: underline;
+}
+
+/* 📱 Responsive */
+@media (max-width: 768px) {
+  .container {
     flex-direction: column;
-    align-items: center;
-    display: flex;
-     box-shadow: 
-        -4px -4px 4px 0px #00000040,
-         4px  4px 4px 0px #00000040;
-}
-.submitbtn{
-    width: 50%;
-    height: 38px;
-    border: none;
-    background-color: black;
-    color: white;
-    border-radius: 20px;
-    margin-top: 24px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0px 4px 4px 0px #00000040; 
-}
-.submitbtn span{
-     height: 100%;
-     display: flex;
-     justify-content: center;
-     align-items: center;
-}
-.submitbtn  span:nth-child(1) {
-    font-size: 13px;
-}
-.submitbtn  span:nth-child(2) {
-    font-size: 15px;
-    padding-left: 4px;
-}
-.registerbox input{
-    border: none;
-    border-bottom: 1px solid gray;
-    background-color: #ffffff00;
-    font-size: 14px;
+  }
+
+  .logo {
     width: 100%;
-    margin: 12px;
-    padding: 0px 0px 8px 4px;
-}
-.registerbox input:focus {
-  outline: none;       /* กัน outline โผล่มา */
-  border-bottom: 1px solid black; /* จะใส่สีเข้มขึ้นตอนกดก็ได้ */
-}
-.logo img{
-    width: 200px;
+    height: 33%;
+    border-radius: 0 0 48px 48px;
+  }
+
+  .signupbox {
+    width: 100%;
+    height: 67%;
+  }
+
+  .signupinbox {
+    width: 80%;
+    height: 100%;
+  }
+
+  .signupinputbox input {
+    border-radius: 20px;
+  }
+
+  .submitbtn {
+    border-radius: 20px;
+    margin-top: 36px;
+  }
+
+  .logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
