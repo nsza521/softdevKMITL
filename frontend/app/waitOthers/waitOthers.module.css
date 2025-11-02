@@ -3,7 +3,7 @@
     color: var(--color1);
     width: 100%;
     min-height: 100vh;
-    padding: 10vh 0;
+    /* padding: 5vh 0; */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,11 +11,39 @@
     gap: 20px;
 }
 
-.modeCon {
+.modeCon1 {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 0 10vw;
+    padding: 0 5vw;
     text-align: center;
+}
+
+.modeCon2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 5vw;
+    text-align: center;
+    gap: 60px;
+}
+
+.histBt {
+    background-color: var(--color1);
+    color: var(--color5);
+    font-size: 16px;
+    /* width: 100%; */
+    padding: 10px 85px;
+    display: flex;
+    align-items: center;
+    border-radius: 20px;
+    text-wrap: nowrap;
+}
+
+.buttonCon {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }

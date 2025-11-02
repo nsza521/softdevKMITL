@@ -60,7 +60,7 @@ export default function OrderMenuSummaryPage() {
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
-                console.log("Order Data:", data)
+                // console.log("Order Data:", data)
 
                 const formattedOrder: Order = {
                     order_id: data.order_id,
@@ -102,7 +102,7 @@ export default function OrderMenuSummaryPage() {
 
     const total_price = order.orders.reduce((sum, item) => sum + item.total_price, 0);
 
-    console.log("Rendered Order:", order);
+    // console.log("Rendered Order:", order);
 
     const handleCancel = () => {
 
@@ -122,7 +122,7 @@ export default function OrderMenuSummaryPage() {
         }
 
         try {
-            const confirm = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/confirm`, {
+            const paid_res = await fetch(`http://localhost:8080/payment/paid/${order_id}`, {
                 method: "POST",
                 headers: {
                 "Authorization": `Bearer ${token}`,
@@ -130,12 +130,12 @@ export default function OrderMenuSummaryPage() {
                 },
             });
 
-            if (!confirm.ok) {
-                setError("cannot confirm reservation")
+            if (!paid_res.ok) {
+                setError("cannot paid")
             }
 
-            const confirm_res = await confirm.json();
-            console.log(confirm_res)
+            const paid = await paid_res.json();
+            console.log(paid)
 
             router.push(`/waitOthers?reservationId=${reservation_id}`)
 
@@ -200,7 +200,7 @@ export default function OrderMenuSummaryPage() {
                     <h2>My Balance</h2>
                     <div className={styles.blogBalance}>
                         <p>ยอดเงินคงเหลือ {walletBalance} บาท</p>
-                        <button className={styles.topUpBtn}>
+                        <button className={styles.topUpBtn} onClick={() => router.push("/topup")}>
                             <img src="/plus.svg" width={15} height={15} />
                             เติมเงิน
                         </button>

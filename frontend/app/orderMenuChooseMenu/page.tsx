@@ -376,7 +376,7 @@ function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupPr
   const handleAdd = () => {
     onAddToCart(item, isRemove ? 0 : quantity, selectedAddons)
     onClose()
-    console.log("Added to cart:", item, quantity, selectedAddons);
+    // console.log("Added to cart:", item, quantity, selectedAddons);
   }
 
   if (error) return <p style={{ color: "red" }}>{error}</p>
