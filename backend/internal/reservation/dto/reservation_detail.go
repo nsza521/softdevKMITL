@@ -33,3 +33,9 @@ type OwnerDetail struct {
 	OwnerFirstname  string    `json:"owner_firstname"`
 	TableTimeslotID uuid.UUID `json:"table_timeslot_id"`
 }
+
+type ReservationStatusDetail struct {
+	ReservationStatus   string   `json:"reservation_status"`
+	TotalPeople         int      `json:"total_people"`
+	ConfirmedPaidPeople int      `json:"confirmed_paid_people"`
+}
