@@ -1,0 +1,162 @@
+.container{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap :20px;
+}
+.headername{
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* border: 1px solid black; */
+}
+.headernameedit{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:10px
+}
+.headernameedit button{
+    background-color: #6d6d6d00;
+}
+.logoutbtn{
+    background-color: #6d6d6d00;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    width: 80px;
+    height: 36px;
+}
+.logoutbtn:hover{
+    text-decoration: underline;
+}
+.boxs{
+    font-size: 16px;
+    width: 80%;
+    background-color: #6D6D6D;
+    height: 60px;
+    border-radius: 5px;
+    display: flex;
+    color: white;
+    align-items: center;
+    padding: 0% 4%;
+    justify-content: space-between;
+}
+.boxspan{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap:10px;
+}
+.boxs button{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 15px;
+  width: 30%;
+  height: 50%;
+  border-radius: 5px;
+  gap:10px;
+}
+.table{
+    width: 80%;
+    background-color: #6D6D6D;
+    height: 444px;
+}
+.tablebtn{
+    width: 40%;
+    height: 40px;
+    border-radius: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #6D6D6D;
+    box-shadow: 0px  2px 4px 0px #00000040;
+}
+.popupbg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px); 
+}
+.popup{
+    width: 90%;
+    height: 554px;
+    background-color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.popup h2{
+  height: 12%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  gap:20px;
+  
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  margin-bottom: 5px;
+}
+
+.formGroup input {
+  padding-left: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #D9D9D9;
+  border-radius: 20px;
+  height: 44px;
+}
+.formGroup input::placeholder {
+  color: #999; 
+  opacity: 1; 
+}
+.buttonGroup {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.submitBtn {
+  background: #000000;
+  width: 150px;
+  height: 40px;
+  color: white;
+  border-radius: 20px;
+  box-shadow: 0px  4px 4px 0px #00000040;
+}
+
+.cancelBtn {
+  background: #6D6D6D;
+  color: white;
+  width: 150px;
+  height: 40px;
+  border-radius: 20px;
+  box-shadow: 0px  4px 4px 0px #00000040;
+}

@@ -1,0 +1,32 @@
+/* Reset ทุก element */
+* {
+  font-family: "Noto Sans Thai", sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  /* font-family: Arial, sans-serif; */
+  background-color: var(--color5);
+}
+
+:root{
+  --color1: #393E46;
+  --color2: #D77948;
+  --color3: #E4CE8E;
+  --color4: #E7D5B3;
+  --color5: #FFFAE3;
+  --color6: #FCF9F4;
+}
+
+.fullscreen-layout{
+  
+}
+
+.mobile-layout{
+  min-height: 100vh;
+  margin: 0 auto;
+  max-width: 440px;   
+  background-color: var(--color1);
+}

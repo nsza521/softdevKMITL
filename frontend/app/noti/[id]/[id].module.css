@@ -1,0 +1,48 @@
+
+.container {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color5);
+    height: 100vh;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    width: 480px;
+    position: absolute;
+    margin-top: 48px;
+    padding: 20px;
+
+}
+
+.descibe {
+    color: grey;
+}
+
+.member {
+    display: flex;
+}
+.confirmBtn {
+    position: absolute;
+    top: 470px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    .acceptBtn {
+        width: 400px;
+        height: 40px;
+        border-radius: 20px;
+        background-color: var(--color2);
+    }
+
+    .cancleBtn {
+        width: 400px;
+        height: 40px;
+        border-radius: 20px;
+        background-color: var(--color5);
+        border: solid 1px var(--color2);
+    }
+    }
