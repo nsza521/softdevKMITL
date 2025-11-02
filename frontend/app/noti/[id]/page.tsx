@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./[id].module.css";
-import { useParams } from "next/navigation";
+import { useParams, useRouter  } from "next/navigation";
 import Link from "next/link";
 
 
@@ -28,6 +28,7 @@ export default function NotificationDetailPage (){
   const params = useParams();
    const id = params.id as string;
   const [notiContent, setNotiContent] = useState<NotiCon | null>(null);
+  const router = useRouter();
  
   const handleConfirm = () => {
     alert("คุณกดยืนยันเรียบร้อยแล้ว!");
@@ -106,6 +107,7 @@ export default function NotificationDetailPage (){
                         }
 
                         alert("ยืนยันการจองโต๊ะสำเร็จ!");
+                        router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
                       } catch (error) {
                         console.error(error);
                         alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");
