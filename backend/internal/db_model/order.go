@@ -33,6 +33,7 @@ type FoodOrderItem struct {
 
 	// Snapshot จากเมนูตอนสั่ง
 	MenuName     string  `gorm:"type:varchar(255);not null"`
+	MenuPic      *string `gorm:"type:varchar(512);"`
 	UnitPrice    float64 `gorm:"not null"`
 	TimeTakenMin int     `gorm:"not null"`
 

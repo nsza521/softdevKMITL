@@ -209,6 +209,7 @@ func (u *orderUsecase) Create(ctx context.Context, req dto.CreateFoodOrderReq, c
             Quantity:     it.Quantity,
             Subtotal:     lineSubtotal,
             Note:         it.Note,
+            MenuPic:      detail.MenuPic,
         }
 
         for i := range itemOpts {

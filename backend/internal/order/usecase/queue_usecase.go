@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
-	"backend/internal/order/dto"
 	"backend/internal/db_model"
+	"backend/internal/order/dto"
 	"backend/internal/order/repository"
 )
 
@@ -63,6 +64,11 @@ func mapFoodOrderToDTO(fo models.FoodOrder) dto.QueueOrderDTO {
 		Note:            fo.Note,
 		Items:           make([]dto.QueueItemDTO, 0, len(fo.Items)),
 	}
+	fmt.Printf("Mapping FoodOrder ID %s with %d items\n", fo.ID.String(), len(fo.Items))
+
+	for _, it := range fo.Items {
+		fmt.Printf("  Item ID %s: MenuName=%s, Quantity=%d, UnitPrice=%.2f, MenuPic=%s\n", it.ID.String(), it.MenuName, it.Quantity, it.UnitPrice, it.MenuPic)
+	}
 
 	for _, it := range fo.Items {
 		itemDTO := dto.QueueItemDTO{
@@ -74,6 +80,7 @@ func mapFoodOrderToDTO(fo models.FoodOrder) dto.QueueOrderDTO {
 			TimeTakenMin: it.TimeTakenMin,
 			Note:         it.Note,
 			Options:      make([]dto.QueueItemOptionDTO, 0, len(it.Options)),
+			MenuPic:      it.MenuPic,
 		}
 
 		for _, opt := range it.Options {
