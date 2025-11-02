@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"github.com/google/uuid"
 
 	"backend/internal/payment/dto"
@@ -108,4 +109,136 @@ func (u *PaymentUsecase) GetAllTransactions(userID uuid.UUID) ([]dto.Transaction
 	}
 
 	return transactionDetails, nil
+}
+
+func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, reservationID uuid.UUID) (*dto.PaymentSummary, error) {
+    var summary *dto.PaymentSummary
+
+    err := u.paymentRepository.RunInTransaction(func(tx *gorm.DB) error {
+        fmt.Printf("💳 [START] PaidForFoodOrder - user: %s, reservation: %s\n", userID, reservationID)
+
+        // 1️⃣ ตรวจสอบว่า user เป็นสมาชิกของ reservation นี้ไหม
+        member, err := u.paymentRepository.GetTableReservationMemberByCustomerID(reservationID, userID)
+        if err != nil {
+            fmt.Printf("❌ Failed to get reservation member: %v\n", err)
+            return err
+        }
+        if member == nil {
+            return fmt.Errorf("user is not a member of this reservation")
+        }
+        if member.Status == "paid" {
+            return fmt.Errorf("user has already paid")
+        }
+
+        // 2️⃣ โหลด FoodOrder ของโต๊ะนี้
+        order, err := u.paymentRepository.GetFoodOrderByReservationID(reservationID)
+        if err != nil {
+            fmt.Printf("❌ Failed to get food order: %v\n", err)
+            return err
+        }
+        if order == nil {
+            return fmt.Errorf("no food order found for this reservation")
+        }
+
+        // 3️⃣ รวมยอดอาหารของลูกค้าคนนี้
+        userTotal, err := u.paymentRepository.GetTotalAmountForCustomerInOrder(order.ID, userID)
+        if err != nil {
+            fmt.Printf("❌ Failed to calculate user's total: %v\n", err)
+            return err
+        }
+        if userTotal <= 0 {
+            return fmt.Errorf("no food items found for this user in the order")
+        }
+        fmt.Printf("🧾 User total: %.2f\n", userTotal)
+
+        // 4️⃣ ตรวจสอบยอดใน Wallet
+        customer, err := u.customerRepository.GetByID(userID)
+        if err != nil {
+            fmt.Printf("❌ Failed to get customer: %v\n", err)
+            return err
+        }
+        fmt.Printf("👛 Current wallet: %.2f\n", customer.WalletBalance)
+        if float64(customer.WalletBalance) < userTotal {
+            return fmt.Errorf("insufficient balance: need %.2f, have %.2f", userTotal, customer.WalletBalance)
+        }
+
+        // 5️⃣ หักเงินออกจาก Wallet
+        newBalance := customer.WalletBalance - float32(userTotal)
+		customer.WalletBalance = newBalance
+        if err := u.customerRepository.Update(customer); err != nil {
+            fmt.Printf("❌ Failed to update wallet balance: %v\n", err)
+            return err
+        }
+        fmt.Printf("✅ Wallet updated: %.2f → %.2f\n", customer.WalletBalance, newBalance)
+
+        // 6️⃣ สร้าง Transaction
+        transaction := &models.Transaction{
+            UserID:          userID,
+            PaymentMethodID: uuid.Nil,
+            Amount:          float32(userTotal),
+            Type:            "paid",
+        }
+        if err := u.paymentRepository.CreateTransaction(transaction); err != nil {
+            fmt.Printf("❌ Failed to create transaction: %v\n", err)
+            return err
+        }
+        fmt.Println("🧾 Transaction created successfully")
+
+        // 7️⃣ อัปเดต member เป็น “paid”
+        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid"); err != nil {
+            fmt.Printf("❌ Failed to update reservation member: %v\n", err)
+            return err
+        }
+        fmt.Println("✅ Member marked as paid")
+
+        // 8️⃣ ตรวจสอบว่าทุกคนจ่ายครบหรือยัง
+        members, err := u.paymentRepository.GetAllMembersByTableReservationID(reservationID)
+        if err != nil {
+            fmt.Printf("❌ Failed to get reservation members: %v\n", err)
+            return err
+        }
+
+        totalMembers := len(members)
+        paidMembers := 0
+        for _, m := range members {
+            if m.CustomerID == userID {
+                m.Status = "paid"
+            }
+            if m.Status == "paid" {
+                paidMembers++
+            }
+        }
+        fmt.Printf("👥 Paid members: %d/%d\n", paidMembers, totalMembers)
+
+        // 9️⃣ ถ้าทุกคนจ่ายครบ
+        if paidMembers == totalMembers {
+            if err := u.paymentRepository.UpdateTableReservationStatus(reservationID, "paid"); err != nil {
+                fmt.Printf("❌ Failed to update reservation: %v\n", err)
+                return err
+            }
+            if err := u.paymentRepository.UpdateFoodOrderStatus(order.ID, "paid"); err != nil {
+                fmt.Printf("❌ Failed to update food order: %v\n", err)
+                return err
+            }
+            fmt.Println("🎉 All members paid! Reservation and order marked as 'paid'")
+        }
+
+        summary = &dto.PaymentSummary{
+            ReservationID: reservationID,
+            FoodOrderID:   order.ID,
+            TotalMembers:  totalMembers,
+            PaidMembers:   paidMembers,
+        }
+
+        fmt.Println("✅ [COMMIT] Transaction success")
+        return nil
+    })
+
+    if err != nil {
+        fmt.Printf("🚨 [ROLLBACK] Transaction failed: %v\n", err)
+        return nil, err
+    }
+
+    fmt.Println("💰 [END] PaidForFoodOrder completed successfully")
+    return summary, nil
 }

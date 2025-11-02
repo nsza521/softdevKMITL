@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"gorm.io/gorm"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 
@@ -22,6 +23,15 @@ type PaymentRepository interface {
 	GetPaymentMethodsByType(methodType string) ([]models.PaymentMethod, error)
 	GetAllTransactionsByUserID(userID uuid.UUID) ([]models.Transaction, error)
 	GetAllPaymentMethods() ([]models.PaymentMethod, error)
+
+	GetTableReservationMemberByCustomerID(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error)
+	GetTotalAmountForCustomerInOrder(orderID uuid.UUID, customerID uuid.UUID) (float64, error)
+	GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error)
+	UpdateTableReservationMemberStatus(memberID uuid.UUID, status string) error
+	GetAllMembersByTableReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
+	UpdateTableReservationStatus(reservationID uuid.UUID, status string) error
+	UpdateFoodOrderStatus(orderID uuid.UUID, status string) error
+	RunInTransaction(fn func(tx *gorm.DB) error) error
 }
 
 type PaymentUsecase interface {
