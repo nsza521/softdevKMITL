@@ -742,7 +742,8 @@ func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uui
 	// If all members have paid → update reservation status to "paid"
 	allPaid := true
 	for _, member := range members {
-		if member.Status != "paid" && member.Status != "paid_pending" {
+		// if member.Status != "paid" && member.Status != "paid_pending" {
+		if member.Status != "paid" {
 			allPaid = false
 			break
 		}
