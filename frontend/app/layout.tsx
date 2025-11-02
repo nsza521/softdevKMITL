@@ -18,6 +18,8 @@ const titleGroups: Record<string, string[]> = {
   "ประวัติ" : ["/history"],
   "เติมเงิน": ["/topup"],
   "รายการแจ้งเตือน" : ["/noti"],
+  "สั่งอาหาร": ["/orderMenuChooseRes", "/orderMenuChooseMenu"],
+  "สรุปการสั่งซื้อ": ["/orderMenuSummary", "/waitOthers"]
 };
 
 function getTitle(pathname: string): string {
@@ -31,9 +33,9 @@ export default function RootLayout({ children, metadata }: any) {
   const pathname = usePathname();
 
   // กำหนด path ที่ไม่ต้องการ Navbar + Footer
-  const hiddenLayoutRoutes = ["/login", "/signup", "/restaurant"];
+  const hiddenLayoutRoutes = ["/login", "/signup", "/restaurant" , "/loginrestaurant"];
   const isHiddenLayout = hiddenLayoutRoutes.includes(pathname);
-  const fullScreenLayoutRoutes = ["/restaurant"];
+  const fullScreenLayoutRoutes = ["/login", "/signup", "/restaurant","/loginrestaurant"];
   const isFullScreen = fullScreenLayoutRoutes.includes(pathname);
 
   return (

@@ -102,6 +102,7 @@ export default function MenuPage() {
 
   return (
     <div className={styles.container}>
+      
       <header className={styles.header}>
         <h1>Welcome to {restaurantName}</h1>
       </header>
