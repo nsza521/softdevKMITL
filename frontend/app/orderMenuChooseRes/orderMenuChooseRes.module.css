@@ -1,9 +1,10 @@
 
 
 .container{
-    padding: 10vh 0;
+    margin-top: 48px;
+    padding: 0;
     box-sizing: border-box;
-    min-height: 100vh;
+    height: 87vh;
     overflow: scroll;
     scrollbar-width: none;
     background-color: var(--color5);

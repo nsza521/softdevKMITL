@@ -245,11 +245,8 @@ type Table = {
 
 function TableInfo({ table, selectedMemberIndex, random }: { table: Table, selectedMemberIndex: number, random: boolean }) {
     const [allowOthers, setAllowOthers] = useState(false);
-    
-    let occupied = selectedMemberIndex;
-    if (random) {
-        occupied = table.reserved_seats;
-    }
+
+    const occupied = selectedMemberIndex;
     const min_allow = table.max_seats * 0.8;
     const canClick = (occupied >= min_allow && occupied < table.max_seats) || !random;
     const isChecked = occupied < min_allow ? true : allowOthers;
