@@ -524,7 +524,7 @@ const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
         {/* รูป */}
         <div className={styles.imageorderholder}>
           <img
-            src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
+            src={filteredOrders[current].menu_pic}
             alt="order"
           />
         </div>
@@ -1429,7 +1429,7 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-<section>
+<section >
   <div className={styles.imageUploadBox}>
     <label htmlFor="menuPic" className={styles.uploadLabel}>
       {menuPic ? (
