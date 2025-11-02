@@ -54,7 +54,7 @@ func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, request *dto.TopupReque
 	if err != nil {
 		return err
 	}
-	if paymentMethod.Type != "topup" && paymentMethod.Type != "all" {
+	if paymentMethod.Type != "topup" && paymentMethod.Type != "all" && paymentMethod.Type != "both"{
 		return fmt.Errorf("Invalid payment method for top-up")
 	}
 
@@ -136,7 +136,7 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         }
 
         // Prevent duplicate confirmation
-        if member.Status == "paid" || member.Status == "completed" {
+        if member.Status == "completed" {
             return fmt.Errorf("user already confirmed payment")
         }
 
@@ -155,7 +155,7 @@ func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUI
         totalMembers := len(members)
         pendingMembers := 0
         for _, m := range members {
-            if m.Status == "paid_pending" || m.Status == "paid" {
+            if m.Status == "paid_pending" || m.Status == "paid" || m.Status == "completed" {
                 pendingMembers++
             }
         }

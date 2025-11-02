@@ -83,7 +83,7 @@ func (r *PaymentRepository) GetFoodOrderByID(orderID uuid.UUID) (*models.FoodOrd
 func (r *PaymentRepository) GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error) {
 	var order models.FoodOrder
 	err := r.db.Where("reservation_id = ?", reservationID).
-		Order("created_at DESC").
+		Order("order_date DESC").
 		First(&order).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -93,6 +93,7 @@ func (r *PaymentRepository) GetFoodOrderByReservationID(reservationID uuid.UUID)
 	}
 	return &order, nil
 }
+
 
 func (r *PaymentRepository) UpdateFoodOrderStatus(orderID uuid.UUID, status string) error {
 	return r.db.Model(&models.FoodOrder{}).
