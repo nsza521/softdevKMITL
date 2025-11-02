@@ -47,8 +47,14 @@ func (r *PaymentRepository) GetPaymentMethodByID(paymentMethodID uuid.UUID) (*mo
 
 func (r *PaymentRepository) GetPaymentMethodsByType(methodType string) ([]models.PaymentMethod, error) {
 	var methods []models.PaymentMethod
-	if err := r.db.Where("type IN ?", []string{methodType, "all"}).Find(&methods).Error; err != nil {
-		return nil, err
+	if methodType == "paid" {
+		if err := r.db.Where("type IN ?", []string{methodType, "all"}).Find(&methods).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := r.db.Where("type IN ?", []string{methodType, "all", "both"}).Find(&methods).Error; err != nil {
+			return nil, err
+		}
 	}
 	return methods, nil
 }
@@ -62,6 +68,17 @@ func (r *PaymentRepository) GetAllPaymentMethods() ([]models.PaymentMethod, erro
 }
 
 /* -------------------- FOOD ORDER -------------------- */
+func (r *PaymentRepository) GetFoodOrderByID(orderID uuid.UUID) (*models.FoodOrder, error) {
+	var order models.FoodOrder
+	err := r.db.First(&order, "id = ?", orderID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &order, nil
+}
 
 func (r *PaymentRepository) GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error) {
 	var order models.FoodOrder
@@ -91,6 +108,22 @@ func (r *PaymentRepository) GetTotalAmountForCustomerInOrder(orderID uuid.UUID, 
 		Scan(&total).Error
 	return total, err
 }
+
+// ดึงร้านจาก FoodOrder
+func (r *PaymentRepository) GetRestaurantByFoodOrderID(orderID uuid.UUID) (*models.Restaurant, error) {
+    var restaurant models.Restaurant
+    err := r.db.Table("restaurants").
+        Joins("JOIN menu_items ON menu_items.restaurant_id = restaurants.id").
+        Joins("JOIN food_order_items ON food_order_items.menu_item_id = menu_items.id").
+        Where("food_order_items.food_order_id = ?", orderID).
+        Limit(1).
+        Scan(&restaurant).Error
+    if err != nil {
+        return nil, err
+    }
+    return &restaurant, nil
+}
+
 
 /* -------------------- TABLE RESERVATION -------------------- */
 
