@@ -117,7 +117,39 @@ export default function NotificationDetailPage (){
         ยืนยัน
       </button>
                   <button className={styles.cancleBtn}
-                    // onClick={}
+                    onClick={
+                      async () => {
+                        try {
+                        const token = localStorage.getItem("token");
+                        if (!token) {
+                          alert("กรุณาเข้าสู่ระบบก่อน");
+                          return;
+                        }
+                        const reserveId = notiContent.attributes.reserveId;
+                        const res = await fetch(
+                          `http://localhost:8080/table/reservation/${reserveId}/cancel`,
+                          {
+                            method: "DELETE",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                          }
+                        );
+
+                        if (!res.ok) {
+                          const err = await res.text();
+                          throw new Error(err);
+                        }
+
+                        alert("ยกเลิกการจองโต๊ะเรียบร้อย");
+                        router.push("/home");
+                      } catch (error) {
+                        console.error(error);
+                        alert("เกิดข้อผิดพลาด");
+                      }
+                      }
+                    }
                   >ยกเลิก</button>
                 </div>
               </div>
@@ -142,7 +174,9 @@ export default function NotificationDetailPage (){
                 <p className={styles.descibe}>* คิวของคุณจะไม่ถูกเลื่อนออกไปแต่อาหารที่คุณเปลี่ยน
                     หากราคาแตกต่างเราจะทำการหักเงิน/คืนของคุณใน
                     ระบบ</p>
+                <div className={styles.confirmBtn}>
                 <button className={styles.acceptBtn}>เปลี่ยนคำสั่งซื้อ</button>
+                </div>
               </div>
             )}
             {notiContent.type === "RESERVE_SUCCESS" && (
