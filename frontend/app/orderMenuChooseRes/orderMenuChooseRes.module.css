@@ -9,6 +9,18 @@
     background-color: var(--color5);
 }
 
+.timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: fixed;
+    z-index: 9999;
+    top: 12px;
+    left: 890px;
+    color: white;
+}
+
 .blog_item{
     display: flex;
     /* justify-content: center; */

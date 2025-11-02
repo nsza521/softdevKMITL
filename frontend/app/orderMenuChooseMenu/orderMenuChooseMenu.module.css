@@ -10,6 +10,18 @@
     overflow-x: hidden;
 }
 
+.timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: fixed;
+    z-index: 9999;
+    top: 12px;
+    left: 890px;
+    color: white;
+}
+
 .header h1 {
     padding: 0 40px;
     font-size: 20px;
@@ -182,10 +194,6 @@
     gap: 4px;
 }
 
-.addonGroup {
-    /* padding: 10px 0; */
-    /* border-bottom: 1px solid var(--color5); */
-}
 
 .menuImg {
     width: 100%;
