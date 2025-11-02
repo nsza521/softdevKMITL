@@ -374,6 +374,7 @@ function QueuePage() {
         });
         if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูลได้");
         const data = await res.json();
+        console.log("somethingwhateveridontknowfuckmaybethisisqueue",data);
         setOrders(data.orders || []);
       } catch (err: any) {
         setError(err.message);
