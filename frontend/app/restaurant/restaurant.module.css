@@ -919,6 +919,15 @@
   transform: scale(1.3);
   position: relative;
   bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.activeQueue2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
 }
 
 .emptyBtn {
@@ -926,6 +935,8 @@
   height: 40px;
   background-color: transparent;
   border: none;
+  display: flex;
+  align-items: center;
 }
 .queuesectiondetail{
   width: 100%;
@@ -1585,4 +1596,17 @@ input[type="number"]
   opacity: 0.8;
 }
 .bankjaisus option img{
+}
+.selectofstauts{
+   background-color: #e4ce8e00;
+   border: none;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+.selectofstauts{
+  width: 70px;
+   background-color: #e4ce8e00;
+   border: none;
+   display: flex;
 }

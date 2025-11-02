@@ -359,13 +359,13 @@ function QueuePage() {
   const visibleQueues = 7;
   const half = Math.floor(visibleQueues / 2);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("❌ ไม่มี token กรุณา login ก่อน");
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setError("❌ ไม่มี token กรุณา login ก่อน");
+    setLoading(false);
+    return;
+  }
 
     async function fetchQueue() {
       try {
@@ -386,6 +386,47 @@ function QueuePage() {
     fetchQueue();
   }, []);
 
+
+
+
+
+const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) return alert("❌ ไม่มี token");
+
+  console.log("🛰️ updateOrderStatus ->", `${baseUrl}/restaurant/order/orders/${orderId}/status`, "status:", newStatus);
+
+  try {
+    const res = await fetch(`${baseUrl}/restaurant/order/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ Backend response:", text);
+      throw new Error("ไม่สามารถอัปเดตสถานะได้");
+    }
+
+    setOrders(prev =>
+      prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+
+  } catch (err) {
+    console.error("🔥 updateOrderStatus error:", err);
+    alert("❌ ไม่สามารถอัปเดตสถานะได้");
+  }
+};
+
+
+
+
+
+  
   useEffect(() => {
     const filtered = orders.filter(o => o.channel === activeChannel);
     setFilteredOrders(filtered);
@@ -442,12 +483,20 @@ const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
               idx !== null ? (
                   <button
                       key={filteredOrders[idx].id}
-                      className={idx === current ? styles.activeQueue : ""}
+                      className={idx === current ? styles.activeQueue : styles.activeQueue2}
                       onClick={() => setCurrent(idx)}
                   >
                       คิวที่ {String(idx + 1).padStart(3, "0")}
-                      <p>{filteredOrders[idx].status}</p>
+                      <p></p>
+                          <select className={styles.selectofstauts}
+                                value={filteredOrders[idx].status}
+                           onChange={(e) => updateOrderStatus(filteredOrders[idx].id, e.target.value)}>
+                            <option value="paid">Paid</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="served">Served</option>
+                      </select>
                   </button>
+                  
               ) : (
                   <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
               )
@@ -457,6 +506,7 @@ const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
           <div className={styles.Notesofthisreseve}>
             <p className={styles.description}>
               NOTE : {filteredOrders[current].note}
+              
             </p>
           </div>
 
