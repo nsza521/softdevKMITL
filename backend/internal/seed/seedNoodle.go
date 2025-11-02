@@ -4,7 +4,10 @@ package seed
 import (
 	"fmt"
 	"time"
-
+	"os"
+	"path/filepath"
+	"mime/multipart"
+	"net/textproto"
 	models "backend/internal/db_model"
 	"backend/internal/utils"
 
@@ -12,6 +15,33 @@ import (
 	"gorm.io/gorm"
 	"github.com/minio/minio-go/v7"
 )
+
+func UploadSampleMenuImage(minioClient *minio.Client, filename string) (string, error) {
+	basePath, _ := os.Getwd() // current working directory ของ process
+	filePath := filepath.Join(basePath, "internal", "assets", "images", "Menu", filename)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("open file error: %v", err)
+	}
+	defer file.Close()
+
+	fileInfo, _ := file.Stat()
+	fileHeader := &multipart.FileHeader{
+		Filename: filepath.Base(filePath),
+		Size:     fileInfo.Size(),
+		Header:   make(textproto.MIMEHeader),
+	}
+	fileHeader.Header.Set("Content-Type", "image/png")
+
+	// upload to MinIO
+	objectName := fmt.Sprintf("restaurants/%s", fileHeader.Filename)
+	url, err := utils.UploadImage(file, fileHeader, "menu-items", objectName, minioClient)
+	if err != nil {
+		return "", err
+	}
+	return url, nil
+}
 
 // เรียกจาก InitAllSeedData(db) หลัง seed ร้านพื้นฐานแล้ว
 func seedFixedForNoodleShop(db *gorm.DB, minioClient *minio.Client) error {
@@ -84,17 +114,28 @@ func seedFixedForNoodleShop(db *gorm.DB, minioClient *minio.Client) error {
 		{"ก๋วยเตี๋ยวต้มยำกุ้ง", 70, 6, "เผ็ดเปรี้ยวกลมกล่อม", []string{"เมนูเส้น", "ก๋วยเตี๋ยวต้มยำ"}},
 		{"ก๋วยเตี๋ยวเนื้อตุ๋น", 80, 7, "เนื้อตุ๋นเปื่อยนุ่ม", []string{"เมนูเส้น"}},
 		{"เกี๊ยวทอด", 35, 3, "กรอบอร่อย", []string{}},
-		{"ชาดำเย็น", 25, 2, "หวานหอม ดับกระหาย", []string{}},
 	}
 
+	// filename := fmt.Sprintf("MenuNoodle_%d.png", i)
+	// imgURL, err := uploadSampleRestaurantImage(minioClient, filename)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to upload image for %s: %v", name, err)
+	// }
 	// 3) สร้าง MenuItem ใหม่ “สำหรับร้านนี้” และผูก Tag เฉพาะ type ของร้านนี้
-	for _, it := range items {
+	for i, it := range items {
+
+		filename := fmt.Sprintf("MenuNoodle_%d.png", i+1)
+	imgURL, err := UploadSampleMenuImage(minioClient, filename)
+	if err != nil {
+		return fmt.Errorf("failed to upload image for %s: %v", it.Name, err)
+	}
 		mi := models.MenuItem{
 			RestaurantID: rest.ID, // << สำคัญ: ลงร้านนี้
 			Name:         it.Name,
 			Price:        it.Price,
 			TimeTaken:    it.TimeTaken,
 			Description:  it.Description,
+			MenuPic:      &imgURL,
 		}
 		if mi.TimeTaken == 0 {
 			mi.TimeTaken = 1
