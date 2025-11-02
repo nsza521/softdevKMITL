@@ -24,6 +24,7 @@ type menuItemRow struct {
 	Name         string
 	Price        float64
 	TimeTakenMin int `gorm:"column:time_taken"`
+	MenuPic      string
 }
 
 type addOnRow struct {
@@ -125,6 +126,7 @@ type menuItemSnapshot struct {
 	MenuName     string
 	UnitPrice    float64
 	TimeTakenMin int
+	MenuPic      string
 }
 
 // snapshot addon -> ใช้สร้าง FoodOrderItemOption
@@ -245,6 +247,7 @@ func seedOneOrderIfNotExists(
 			Subtotal:     itemSubtotal,
 			Note:         strPtr(itemNote),
 			Options:      optionsForItem,
+			MenuPic:      strPtr(mirow.MenuPic),
 		})
 
 		order.TotalAmount += itemSubtotal
@@ -282,7 +285,7 @@ func listMenuItemsForRestaurant(db *gorm.DB, restaurantID uuid.UUID, limit int) 
 	var rows []menuItemRow
 	err := db.
 		Table("menu_items").
-		Select("id, name, price, time_taken").
+		Select("id, name, price, time_taken", "menu_pic").
 		Where("restaurant_id = ?", restaurantID).
 		Order("id").
 		Limit(limit).
