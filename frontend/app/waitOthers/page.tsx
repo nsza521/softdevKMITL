@@ -12,13 +12,23 @@ export default function WaitOthers() {
   const [mode, setMode] = useState<1 | 2>(1); 
 
   useEffect(() => {
+    const token = localStorage.getItem("token")
     //polling ทุก 2 วินาที
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`);
+        const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`, {
+            headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }});
+        if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
         const data = await res.json();
 
-        if (data.status === true) {
+        // console.log(data)
+        const reserve_status = data.reservation.status
+        // const 
+
+        if (reserve_status === "completed") {
           setMode(2);
           clearInterval(interval); //หยุด polling ไม่จำเป็นต้องเรียกแล้ว
         }

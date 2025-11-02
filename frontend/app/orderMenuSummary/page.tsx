@@ -60,7 +60,7 @@ export default function OrderMenuSummaryPage() {
                 if (!res.ok) throw new Error("โหลดข้อมูลออเดอร์ไม่สำเร็จ")
                 
                 const data = await res.json()
-                console.log("Order Data:", data)
+                // console.log("Order Data:", data)
 
                 const formattedOrder: Order = {
                     order_id: data.order_id,
@@ -102,7 +102,7 @@ export default function OrderMenuSummaryPage() {
 
     const total_price = order.orders.reduce((sum, item) => sum + item.total_price, 0);
 
-    console.log("Rendered Order:", order);
+    // console.log("Rendered Order:", order);
 
     const handleCancel = () => {
 
