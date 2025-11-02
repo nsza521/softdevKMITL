@@ -12,6 +12,12 @@ const notoThai = Noto_Sans_Thai({
 
 
 const amounts = [100, 200, 300, 500];
+const bankImages: Record<string, string> = {
+  KBANK: "/kbank.png",
+  SCB: "/scb.png",
+  Promtpay: "/promtpay.png",
+};
+
 
 interface Balance {
      wallet_balance : number;
@@ -178,6 +184,11 @@ export default function TopUpPage(){
                             }`}
                             onClick={() => [setBank(mth.payment_method_id),setNameBank(mth.name)]}
                             >
+                           <img
+                            src={bankImages[mth.name] || "/default.png"}
+                            alt={mth.name}
+                            className={styles.bankLogo}
+                            />   
                         {mth.name}
                     </button>
                     ))}
