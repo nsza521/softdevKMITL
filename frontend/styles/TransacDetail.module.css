@@ -1,13 +1,10 @@
 .container {
     display: grid;
-    grid-template-columns: 1fr 2.5fr 1fr;
+    grid-template-columns: 0.75fr 2.75fr 0.75fr;
     height: 92px;
     border-bottom: solid 1px;
     margin-bottom: 3px;
-    
-    
 }
-
 
 
 .left_content {

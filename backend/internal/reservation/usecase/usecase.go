@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"fmt"
-	// "time"
+	"time"
 	
 	"github.com/google/uuid"
 	"backend/internal/db_model"
@@ -537,36 +537,124 @@ func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUI
 		return err
 	}
 
-	reservationMember, err := u.tableReservationRepository.GetTableReservationMember(reservationID, customerID)
-	if err != nil {
-		return err
-	}
+	// reservationMember, err := u.tableReservationRepository.GetTableReservationMember(reservationID, customerID)
+	// if err != nil {
+	// 	return err
+	// }
 
 	status := "completed"
-	if reservationMember.Status == status {
-		return fmt.Errorf("Customer has already confirmed the reservation")
-	}
-
-	reservationMember.Status = status
-	err = u.tableReservationRepository.UpdateTableReservationMember(reservationMember)
+	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
 	if err != nil {
 		return err
 	}
 
-	if u.isAllMembersConfirmed(reservationID) {
-		reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
-		if err != nil {
-			return err
-		}
-
-		reservation.Status = status
-		err = u.tableReservationRepository.UpdateTableReservation(reservation)
+	for _, member := range members {
+		member.Status = status
+		err = u.tableReservationRepository.UpdateTableReservationMember(&member)
 		if err != nil {
 			return err
 		}
 	}
+
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return err
+	}
+
+	reservation.Status = status
+	err = u.tableReservationRepository.UpdateTableReservation(reservation)
+	if err != nil {
+		return err
+	}
+
+	// if reservationMember.Status == status {
+	// 	return fmt.Errorf("Customer has already confirmed the reservation")
+	// }
+
+	// reservationMember.Status = status
+	// err = u.tableReservationRepository.UpdateTableReservationMember(reservationMember)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if u.isAllMembersConfirmed(reservationID) {
+	// 	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	reservation.Status = status
+	// 	err = u.tableReservationRepository.UpdateTableReservation(reservation)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
+
+func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationStatusDetail, error) {
+	err := u.isCustomerInReservation(reservationID, customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	var paidMembersCount int = 0
+	for _, member := range members {
+		if member.Status == "paid" || member.Status == "paid_pending" {
+			paidMembersCount++
+		}
+	}
+
+	return &dto.ReservationStatusDetail{
+		ReservationStatus:   reservation.Status,
+		TotalPeople:         reservation.ReservePeople,
+		ConfirmedPaidPeople: paidMembersCount,
+	}, nil
+}
+
+func (u *TableReservationUsecase) GetTableReservationTimeRemaining(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationTime, error) {
+
+	if err := u.isCustomerInReservation(reservationID, customerID); err != nil {
+		return nil, err
+	}
+
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// now := time.Now()
+
+	// Expiration time is 5 minutes after creation
+	expirationTime := reservation.CreatedAt.Add(5 * time.Minute)
+	timeRemaining := time.Until(expirationTime)
+	timeout := timeRemaining <= 0
+
+	var formattedRemaining string
+	if timeout {
+		formattedRemaining = "00:00"
+	} else {
+		minutes := int(timeRemaining.Minutes())
+		seconds := int(timeRemaining.Seconds()) % 60
+		formattedRemaining = fmt.Sprintf("%02d:%02d", minutes, seconds)
+	}
+
+	return &dto.ReservationTime{
+		TimeRemaining: formattedRemaining,
+		Timeout:       timeout,
+	}, nil
+}
+
 
 func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uuid.UUID, username string, status string) error {
 	customer , err := u.customerRepository.GetByUsername(username)
@@ -586,13 +674,11 @@ func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uui
 }
 
 func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error {
-	err := u.isCustomerInReservation(reservationID, customerID)
-	if err != nil {
+	if err := u.isCustomerInReservation(reservationID, customerID); err != nil {
 		return err
 	}
 
-	err = u.tableReservationRepository.DeleteReservationMember(reservationID, customerID)
-	if err != nil {
+	if err := u.tableReservationRepository.DeleteReservationMember(reservationID, customerID); err != nil {
 		return err
 	}
 
@@ -600,6 +686,8 @@ func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uui
 	if err != nil {
 		return err
 	}
+
+	// Check if reservation is already cancelled
 	if reservation.Status == "cancelled" {
 		return nil
 	}
@@ -607,16 +695,17 @@ func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uui
 		return fmt.Errorf("Cannot cancel a confirmed reservation")
 	}
 
-	// Decrease reserve people by 1
 	reservation.ReservePeople -= 1
 	if reservation.ReservePeople < 0 {
 		reservation.ReservePeople = 0
 	}
-	err = u.tableReservationRepository.UpdateTableReservation(reservation)
-	if err != nil {
+
+	// Update reservation information
+	if err := u.tableReservationRepository.UpdateTableReservation(reservation); err != nil {
 		return err
 	}
 
+	// Update TableTimeslot
 	tableTimeslot, err := u.tableRepository.GetTableTimeslotByID(reservation.TableTimeslotID)
 	if err != nil {
 		return err
@@ -632,21 +721,42 @@ func (u *TableReservationUsecase) CancelTableReservationMember(reservationID uui
 	}
 
 	tableTimeslot.Status = u.getTableTimeslotStatus(tableTimeslot.ReservedSeats, table.MaxSeats, false)
-
-	err = u.tableRepository.UpdateTableTimeslot(tableTimeslot)
-	if err != nil {	
+	if err := u.tableRepository.UpdateTableTimeslot(tableTimeslot); err != nil {
 		return err
 	}
 
-	if reservation.ReservePeople == 0 {
-		err = u.tableReservationRepository.DeleteTableReservation(reservationID)
-		if err != nil {
+	// Get all members of the reservation
+	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
+	if err != nil {
+		return err
+	}
+
+	// If there are no remaining members → delete the entire reservation
+	if len(members) == 0 {
+		if err := u.tableReservationRepository.DeleteTableReservation(reservationID); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// If all members have paid → update reservation status to "paid"
+	allPaid := true
+	for _, member := range members {
+		if member.Status != "paid" {
+			allPaid = false
+			break
+		}
+	}
+	if allPaid {
+		reservation.Status = "paid"
+		if err := u.tableReservationRepository.UpdateTableReservation(reservation); err != nil {
 			return err
 		}
 	}
 
 	return nil
 }
+
 
 func (u *TableReservationUsecase) GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error) {
 	return u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
