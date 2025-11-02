@@ -265,3 +265,11 @@ func (u *RestaurantUsecase) Logout(token string, expiry time.Time) error {
 	utils.BlacklistToken(token, expiry.Unix())
 	return nil
 }
+
+func (u *RestaurantUsecase) GetBalance(restaurantID uuid.UUID) (float32, error) {
+	restaurant, err := u.restaurantRepository.GetByID(restaurantID)
+	if err != nil {
+		return 0, err
+	}
+	return restaurant.WalletBalance, nil
+}

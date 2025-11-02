@@ -25,6 +25,8 @@ type RestaurantHandler interface {
 
 	EditInfo() gin.HandlerFunc
 	UpdateName() gin.HandlerFunc
+	GetBalance() gin.HandlerFunc
+
 }
 
 type RestaurantRepository interface {
@@ -56,4 +58,5 @@ type RestaurantUsecase interface {
 	ChangeStatus(restaurantID uuid.UUID, request *dto.ChangeStatusRequest) error
 	EditInfo(restaurantID uuid.UUID, request *dto.EditRestaurantRequest) (*dto.EditRestaurantResponse, error)
 	UpdateRestaurantName(ctx context.Context, id uuid.UUID, name string) (*models.Restaurant, error)
+	GetBalance(restaurantID uuid.UUID) (float32, error)
 }
