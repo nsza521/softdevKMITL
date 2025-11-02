@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"gorm.io/gorm"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 
@@ -13,6 +14,9 @@ type PaymentHandler interface {
 	GetTopupPaymentMethods() gin.HandlerFunc
 	TopupToWallet() gin.HandlerFunc
 	GetAllTransactions() gin.HandlerFunc
+	PaidForFoodOrder() gin.HandlerFunc
+	GetWithdrawPaymentMethods() gin.HandlerFunc
+	WithdrawFromWallet() gin.HandlerFunc
 }
 
 type PaymentRepository interface {
@@ -22,10 +26,24 @@ type PaymentRepository interface {
 	GetPaymentMethodsByType(methodType string) ([]models.PaymentMethod, error)
 	GetAllTransactionsByUserID(userID uuid.UUID) ([]models.Transaction, error)
 	GetAllPaymentMethods() ([]models.PaymentMethod, error)
+
+	GetFoodOrderByID(orderID uuid.UUID) (*models.FoodOrder, error)
+	GetTableReservationMemberByCustomerID(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error)
+	GetTotalAmountForCustomerInOrder(orderID uuid.UUID, customerID uuid.UUID) (float64, error)
+	GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error)
+	GetRestaurantByFoodOrderID(orderID uuid.UUID) (*models.Restaurant, error)
+	UpdateTableReservationMemberStatus(memberID uuid.UUID, status string) error
+	GetAllMembersByTableReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
+	UpdateTableReservationStatus(reservationID uuid.UUID, status string) error
+	UpdateFoodOrderStatus(orderID uuid.UUID, status string) error
+	RunInTransaction(fn func(tx *gorm.DB) error) error
 }
 
 type PaymentUsecase interface {
 	GetTopupPaymentMethods(userID uuid.UUID) ([]dto.PaymentMethodDetail, error)
 	TopupToWallet(userID uuid.UUID, request *dto.TopupRequest) error
 	GetAllTransactions(userID uuid.UUID) ([]dto.TransactionDetail, error)
+	PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUID) (*dto.PaymentSummary, error)
+	GetWithdrawPaymentMethods(userID uuid.UUID) ([]dto.PaymentMethodDetail, error)
+	WithdrawFromWallet(userID uuid.UUID, request *dto.WithdrawRequest) (*dto.WithdrawResponse, error)
 }
