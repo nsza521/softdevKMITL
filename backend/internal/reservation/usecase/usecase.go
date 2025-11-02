@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"fmt"
-	// "time"
+	"time"
 	
 	"github.com/google/uuid"
 	"backend/internal/db_model"
@@ -586,7 +586,7 @@ func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.U
 
 	var paidMembersCount int = 0
 	for _, member := range members {
-		if member.Status == "paid" {
+		if member.Status == "paid" || member.Status == "paid_pending" {
 			paidMembersCount++
 		}
 	}
@@ -597,6 +597,40 @@ func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.U
 		ConfirmedPaidPeople: paidMembersCount,
 	}, nil
 }
+
+func (u *TableReservationUsecase) GetTableReservationTimeRemaining(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationTime, error) {
+
+	if err := u.isCustomerInReservation(reservationID, customerID); err != nil {
+		return nil, err
+	}
+
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// now := time.Now()
+
+	// Expiration time is 5 minutes after creation
+	expirationTime := reservation.CreatedAt.Add(5 * time.Minute)
+	timeRemaining := time.Until(expirationTime)
+	timeout := timeRemaining <= 0
+
+	var formattedRemaining string
+	if timeout {
+		formattedRemaining = "00:00"
+	} else {
+		minutes := int(timeRemaining.Minutes())
+		seconds := int(timeRemaining.Seconds()) % 60
+		formattedRemaining = fmt.Sprintf("%02d:%02d", minutes, seconds)
+	}
+
+	return &dto.ReservationTime{
+		TimeRemaining: formattedRemaining,
+		Timeout:       timeout,
+	}, nil
+}
+
 
 func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uuid.UUID, username string, status string) error {
 	customer , err := u.customerRepository.GetByUsername(username)

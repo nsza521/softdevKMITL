@@ -39,3 +39,8 @@ type ReservationStatusDetail struct {
 	TotalPeople         int      `json:"total_people"`
 	ConfirmedPaidPeople int      `json:"confirmed_paid_people"`
 }
+
+type ReservationTime struct {
+	TimeRemaining string `json:"time_remaining"`
+	Timeout       bool   `json:"timeout"`
+}
