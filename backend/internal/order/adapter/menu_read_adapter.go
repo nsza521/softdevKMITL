@@ -3,6 +3,7 @@ package adapter
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 
@@ -45,7 +46,7 @@ func (a *MenuReadAdapter) GetMenuDetail(ctx context.Context, id uuid.UUID) (*ord
 		TimeTaken:    res.TimeTaken,
 		Description:  &res.Description,
 	}
-
+	fmt.Printf("MenuReadAdapter: Fetched menu detail: %+v\n", md)
 	// types
 	for _, t := range res.Types {
 		md.Types = append(md.Types, struct {

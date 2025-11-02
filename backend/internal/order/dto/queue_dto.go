@@ -18,6 +18,7 @@ type QueueItemDTO struct {
 	TimeTakenMin int                  `json:"time_taken_min"`
 	Note         *string              `json:"note"`
 	Options      []QueueItemOptionDTO `json:"options"`
+	MenuPic      *string              `json:"menu_pic"`
 }
 
 type QueueOrderDTO struct {

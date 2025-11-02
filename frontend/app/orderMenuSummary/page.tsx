@@ -48,6 +48,9 @@ export default function OrderMenuSummaryPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    const [time, setTime] = useState("00:00");
+    const [timeout, setTimeoutStatus] = useState(false);
+
     useEffect(() => {
         const fetchOrder = async () => {
             const token = localStorage.getItem("token")
@@ -86,6 +89,19 @@ export default function OrderMenuSummaryPage() {
                 const walletData = await walletRes.json();
                 setWalletBalance(walletData.wallet_balance);
 
+                const resTimer = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/time`,{
+                headers: { Authorization: `Bearer ${token}` },
+                })
+
+                const dataTime = await resTimer.json();
+                const timeRemaining = dataTime?.time_detail?.time_remaining ?? "00:00";
+                const isTimeout = dataTime?.time_detail?.timeout ?? false;
+                console.log(isTimeout)
+                setTime(timeRemaining);
+                setTimeoutStatus(isTimeout);
+
+                
+
             } catch (err: any) {
                 setError(err.message)
             } finally {
@@ -94,7 +110,43 @@ export default function OrderMenuSummaryPage() {
         }
 
         fetchOrder()
+        const interval = setInterval(fetchOrder, 1000);
+        return () => clearInterval(interval);
     }, [order_id])
+
+    useEffect(() => {
+        if (timeout) {
+          (async () => {
+            try {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+    
+              const res = await fetch(
+                `http://localhost:8080/table/reservation/${reservation_id}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+    
+              if (!res.ok) {
+                const err = await res.text();
+                throw new Error(err);
+              }
+    
+              alert("หมดเวลา — ระบบได้ยกเลิกการจองแล้ว");
+              router.push("/home");
+            } catch (error) {
+              console.error("Error deleting reservation:", error);
+              alert("เกิดข้อผิดพลาดในการยกเลิกการจอง");
+              router.push("/");
+            }
+          })();
+        }
+      }, [timeout, router, reservation_id]);
 
     if (loading) return <p>กำลังโหลดข้อมูล...</p>
     if (error) return <p style={{color:"red"}}>{error}</p>
@@ -146,8 +198,14 @@ export default function OrderMenuSummaryPage() {
 
     }
 
+    
+
     return (
         <div className={styles.container}>
+            <div className={styles.timer}>
+                <img src="Clock.svg" alt="" />
+                <p>{time}</p>
+            </div>
             <div className={styles.myOrder}>
                 <h2>My Order</h2>
 

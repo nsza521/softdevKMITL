@@ -281,13 +281,14 @@ func (uc *CustomerUsecase) GetMyOrderHistory(c *gin.Context) ([]dto.OrderHistory
                 Options:   opts,
             })
         }
-
+		// format order time 02-11-2025 18:11:00
         dayBuckets[dayKey].Orders = append(dayBuckets[dayKey].Orders, dto.OrderHistoryItem{
             OrderID:     o.ID.String(),
             Channel:     o.Channel,
             Note:        stringValue(o.Note),
             TotalAmount: o.TotalAmount,
-            OrderTime:   o.OrderDate.Format(time.RFC3339),
+            // OrderTime:   o.OrderDate.Format(time.RFC3339),
+			OrderTime:   o.OrderDate.Format("02-01-2006 15:04:05"),
             Items:       lineItems,
         })
     }

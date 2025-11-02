@@ -8,9 +8,70 @@ import styles from "./waitOthers.module.css";
 export default function WaitOthers() {
   const searchParams = useSearchParams();
   const reservation_id = searchParams.get("reservationId")  || "";
+  const router = useRouter();
   const [mode, setMode] = useState<1 | 2>(1); 
   const [confirmed_paid_people, setConfirmed_paid_people] = useState<number>(0)
   const [total_people, setTotal_people] = useState<number>(0)
+
+  const [time, setTime] = useState("00:00");
+  const [timeout, setTimeoutStatus] = useState(false);
+
+  useEffect(()=>{
+    const fetchTimer = async () =>{
+        try{
+            const token = localStorage.getItem("token");
+            const resTimer = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/time`,{
+            headers: { Authorization: `Bearer ${token}` },
+            })
+
+            const dataTime = await resTimer.json();
+            const timeRemaining = dataTime?.time_detail?.time_remaining ?? "00:00";
+            const isTimeout = dataTime?.time_detail?.timeout ?? false;
+            console.log(isTimeout)
+            setTime(timeRemaining);
+            setTimeoutStatus(isTimeout);
+            }catch(err){
+                console.log(err);
+            }
+    };
+    fetchTimer();
+    const interval = setInterval(fetchTimer, 1000);
+    return () => clearInterval(interval);
+  })
+
+  useEffect(() => {
+      if (timeout) {
+        (async () => {
+          try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+  
+            const res = await fetch(
+              `http://localhost:8080/table/reservation/${reservation_id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+  
+            if (!res.ok) {
+              const err = await res.text();
+              throw new Error(err);
+            }
+  
+            alert("หมดเวลา — ระบบได้ยกเลิกการจองแล้ว");
+            router.push("/home");
+          } catch (error) {
+            console.error("Error deleting reservation:", error);
+            alert("เกิดข้อผิดพลาดในการยกเลิกการจอง");
+            router.push("/");
+          }
+        })();
+      }
+    }, [timeout, router, reservation_id]);
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -56,7 +117,7 @@ export default function WaitOthers() {
   return (
     <div className={styles.container}>
       {mode === 1 ? (
-        <Mode1 confirmed_paid_people={confirmed_paid_people} total_people={total_people}/>
+        <Mode1 confirmed_paid_people={confirmed_paid_people} total_people={total_people} timer={time}/>
       ) : (
         <Mode2 />
       )}
@@ -64,11 +125,18 @@ export default function WaitOthers() {
   );
 }
 
-function Mode1( { confirmed_paid_people, total_people }: { confirmed_paid_people: number, total_people: number } ) {
+function Mode1( { confirmed_paid_people, total_people, timer }: { confirmed_paid_people: number, total_people: number , timer: string }) {
   return (
     <div className={styles.modeCon1}>
-      <h2>ระบบกำลังรอสมาชิกท่านอื่นสั่งอาหาร</h2>
-      <h2>{confirmed_paid_people}/{total_people}</h2>
+        <div className="styles top_content">
+            <h2>ระบบกำลังรอสมาชิกท่านอื่นสั่งอาหาร</h2>
+            <h2>{confirmed_paid_people}/{total_people}</h2>
+        </div>
+            <h2>เหลือเวลาอีก</h2>
+        <div className={styles.timer}>
+            <img src="Clock_black.svg" alt="" />
+            <h2>{timer}</h2>
+        </div>
     </div>
   );
 }

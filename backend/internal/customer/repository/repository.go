@@ -80,12 +80,15 @@ func (r *CustomerRepository) ListServedOrdersByCustomer(
     customerID string,
 ) ([]models.FoodOrder, error) {
 
-    var orders []models.FoodOrder
+	statuses := []string{"served", "paid"}
 
+    var orders []models.FoodOrder
+	
     err := r.db.Debug().WithContext(ctx).
         Preload("Items.Options"). // <-- ปรับชื่อ Preload ให้ตรงกับ model คุณ
         Where("customer_id = ?", customerID).
-        Where("status = ?", "paid").
+        // Where("status = ?", "paid").
+		Where("status IN ?", statuses).
         Order("order_date DESC").
         Find(&orders).Error
 
