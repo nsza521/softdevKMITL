@@ -109,6 +109,16 @@ func (r *PaymentRepository) GetTotalAmountForCustomerInOrder(orderID uuid.UUID, 
 	return total, err
 }
 
+func (r *PaymentRepository) GetTotalAmountByReservationID(reservationID uuid.UUID) (float64, error) {
+    var total float64
+    err := r.db.Model(&models.FoodOrder{}).
+        Where("reservation_id = ?", reservationID).
+        Select("COALESCE(SUM(total_amount), 0)").
+        Scan(&total).Error
+    return total, err
+}
+
+
 // ดึงร้านจาก FoodOrder
 func (r *PaymentRepository) GetRestaurantByFoodOrderID(orderID uuid.UUID) (*models.Restaurant, error) {
     var restaurant models.Restaurant

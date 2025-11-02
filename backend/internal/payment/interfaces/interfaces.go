@@ -30,6 +30,7 @@ type PaymentRepository interface {
 	GetFoodOrderByID(orderID uuid.UUID) (*models.FoodOrder, error)
 	GetTableReservationMemberByCustomerID(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error)
 	GetTotalAmountForCustomerInOrder(orderID uuid.UUID, customerID uuid.UUID) (float64, error)
+	GetTotalAmountByReservationID(reservationID uuid.UUID) (float64, error)
 	GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error)
 	GetRestaurantByFoodOrderID(orderID uuid.UUID) (*models.Restaurant, error)
 	UpdateTableReservationMemberStatus(memberID uuid.UUID, status string) error
