@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import styles from "./[id].module.css";
-import { useParams , useRouter} from "next/navigation";
+import { useParams, useRouter  } from "next/navigation";
+import Link from "next/link";
 
 
 interface NotiCon {
@@ -28,7 +29,7 @@ export default function NotificationDetailPage (){
   const id = params.id as string;
   const [notiContent, setNotiContent] = useState<NotiCon | null>(null);
   const router = useRouter();
-
+ 
   const handleConfirm = () => {
     alert("คุณกดยืนยันเรียบร้อยแล้ว!");
     
@@ -46,6 +47,7 @@ export default function NotificationDetailPage (){
         const found = data.items.find((item: NotiCon) => item.id === id);
         setNotiContent(found || null);
         console.log("reserveId:", found?.attributes.reserveId);
+        
       }
       catch(err){
         console.error(err);
@@ -79,34 +81,33 @@ export default function NotificationDetailPage (){
                       โปรดยืนยันเพื่อดำเนินการต่อ</p>
                 <div className={styles.confirmBtn}>
                   <button
-            className={styles.acceptBtn}
-            onClick={async () => {
-              try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                  alert("กรุณาเข้าสู่ระบบก่อน");
-                  return;
-                }
-                const reserveId = notiContent.attributes.reserveId;
-               
-                const res = await fetch(
-                  `http://localhost:8080/table/reservation/${reserveId}/confirm_member`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                  }
-                );
+                    className={styles.acceptBtn}
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem("token");
+                        if (!token) {
+                          alert("กรุณาเข้าสู่ระบบก่อน");
+                          return;
+                        }
+                        const reserveId = notiContent.attributes.reserveId;
+                        const res = await fetch(
+                          `http://localhost:8080/table/reservation/${reserveId}/confirm_member`,
+                          {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                          }
+                        );
 
-                if (!res.ok) {
-                  const err = await res.text();
-                  throw new Error(err);
-                }
+                        if (!res.ok) {
+                          const err = await res.text();
+                          throw new Error(err);
+                        }
 
-                  alert("ยืนยันการจองโต๊ะสำเร็จ!");
-                  router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
+                        alert("ยืนยันการจองโต๊ะสำเร็จ!");
+                        router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
                       } catch (error) {
                         console.error(error);
                         alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");
@@ -141,6 +142,7 @@ export default function NotificationDetailPage (){
                 <p className={styles.descibe}>* คิวของคุณจะไม่ถูกเลื่อนออกไปแต่อาหารที่คุณเปลี่ยน
                     หากราคาแตกต่างเราจะทำการหักเงิน/คืนของคุณใน
                     ระบบ</p>
+                <button className={styles.acceptBtn}>เปลี่ยนคำสั่งซื้อ</button>
               </div>
             )}
             {notiContent.type === "RESERVE_SUCCESS" && (
@@ -165,14 +167,18 @@ export default function NotificationDetailPage (){
                 <p>รายละเอียด :&nbsp;{notiContent.content}</p>
                 <p>โต๊ะที่ {notiContent.attributes.tableNo}</p>
                 <p>วันที่ {notiContent.attributes.when}</p>
-                <div className={styles.member}>
+                {/* <div className={styles.member}>
                   <p>สมาชิก :&nbsp;</p>
                   <div>
                     {notiContent.attributes.members.map((member, index) => (
                       <p key={index}>{member}</p>
                     ))}
                   </div>
-                </div>
+                </div> */}
+                <Link href={`http://localhost:3000/reserveSelectTime`} className={styles.confirmBtn}>
+                    <button className={styles.acceptBtn}>จองอีกครั้ง</button>
+                </Link>
+                
               </div>
             )}
         </div>
@@ -180,3 +186,4 @@ export default function NotificationDetailPage (){
     </div>
   );
 }
+
