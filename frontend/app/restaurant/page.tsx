@@ -376,28 +376,28 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
             const quantity = cartItem?.quantity ?? 0;
             return (
               <div key={item.id} className={styles.menu}>
-                <div>
-                  <div className={styles.menuimg}>
-                    {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-                  </div>
-
+                
+                <div className={styles.menuimg}>
+                  {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
+                </div>
+                <div className={styles.menuCon}>
                   <div className={styles.menudetail}>
                     <p className={styles.price}>฿{item.price}</p>
                     <p>{item.name}</p>
                     <p className={styles.description}>{item.description}</p>
                   </div>
+                    
+                  <button
+                    className={styles.addBtn}
+                    onClick={() => handleAddItem(item)}
+                  >
+                    {quantity === 0 ? (
+                      <img src="/Add_Plus_Circle.svg" />
+                    ) : (
+                      <span className={styles.cartQtyCircle}>{quantity}</span>
+                    )}
+                  </button>
                 </div>
-              
-                <button
-                  className={styles.addBtn}
-                  onClick={() => handleAddItem(item)}
-                >
-                  {quantity === 0 ? (
-                    <img src="/Add_Plus_Circle.svg" />
-                  ) : (
-                    <span className={styles.cartQtyCircle}>{quantity}</span>
-                  )}
-                </button>
               </div>
             );
           })}

@@ -1621,5 +1621,25 @@ input[type="number"]
 
 .addBtn {
   background-color: transparent;
-  
+  width: 26px;
+  height: 26px;
+}
+
+.menuCon {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.cartQtyCircle {
+  background: var(--color2);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
 }
