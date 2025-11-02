@@ -18,6 +18,8 @@ const titleGroups: Record<string, string[]> = {
   "ประวัติ" : ["/history"],
   "เติมเงิน": ["/topup"],
   "รายการแจ้งเตือน" : ["/noti"],
+  "สั่งอาหาร": ["/orderMenuChooseRes", "/orderMenuChooseMenu"],
+  "สรุปการสั่งซื้อ": ["/orderMenuSummary", "/waitOthers"]
 };
 
 function getTitle(pathname: string): string {
