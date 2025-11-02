@@ -32,6 +32,13 @@ interface Topup {
     created_at :string;
 }
 
+interface Order {
+    order_id : string;
+    channel : string;
+    total_amount : number;
+    order_time : string;
+}
+
 export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
     const [history, setHistroy] = useState<Histroy[]>([]);
@@ -92,14 +99,14 @@ export default function HistoryPage(){
 
             {active === "อาหาร" &&(
                 <div className={styles.detail_container}>
-                    {Array.from({ length: 10 }).map((_, index) => (
+                    {[...topup].reverse().map((n) => (
                         <TransacDetail
-                            key={index} // key ต้องไม่ซ้ำ
-                            head="กะเพราหมูกรอบ"
-                            detail="จำนวน 1"
-                            date="19 ส.ค. 2025"
-                            price="100 บาท"
-                            imgsrc={icon.food}
+                            key={n.transaction_id}  
+                            head="เติมเงิน"
+                            detail={"ผ่าน " + n.payment_method}
+                            date={n.created_at}
+                            price={n.amount + " บาท"}
+                            imgsrc={icon.wallet}
                         />
                         ))}
                 </div>
