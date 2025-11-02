@@ -320,99 +320,100 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
     return item.types.some(t => t.type === selectedType);
   });
  return (
-    <section className={styles.shopcontent}>
-      <div className={styles.shophead}>
-        <div className={styles.restaurantname}>
-          <div>
-            <img  src={restaurantPic || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3XvhUCa5aaC8-riZfbBSudQ_nfCHJA-lbAw&s"}  alt="" />
-            <span className={isOnline ? styles.statusdot : styles.statusdotoff}></span>
-            <h2>Welcome To {username || "[ชื่อร้านจ้า]"} 
-              <div>
-                  <p className={isOnline ? styles.online : styles.offline}>
-                    {isOnline ? "ออนไลน์" : "ออฟไลน์"}
-                  </p>
-                  <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={isOnline}
-                    onChange={onToggleStatus}
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div> </h2>
-          {/* <button><span className="material-symbols-outlined">edit</span></button> */}
-        </div>
-        <div></div>
-        </div>
-        <section className={styles.category}>
-          <section className={styles.all}>
-            <button
-              className={selectedType === "All" ? styles.activeTypeBtn : ""}
-              onClick={() => setSelectedType("All")}
-            >
-              All
-            </button>
-          </section>
-
-          <section className={styles.cate}>
-            {types.length > 0 ? types.map((type) => (
+    <section className={styles.pangContain}>
+      <section className={styles.shopcontent}>
+        <div className={styles.shophead}>
+          <div className={styles.restaurantname}>
+            <div>
+              <img  src={restaurantPic || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3XvhUCa5aaC8-riZfbBSudQ_nfCHJA-lbAw&s"}  alt="" />
+              <span className={isOnline ? styles.statusdot : styles.statusdotoff}></span>
+              <h2>Welcome To {username || "[ชื่อร้านจ้า]"} 
+                <div>
+                    <p className={isOnline ? styles.online : styles.offline}>
+                      {isOnline ? "ออนไลน์" : "ออฟไลน์"}
+                    </p>
+                    <label className={styles.switch}>
+                    <input
+                      type="checkbox"
+                      checked={isOnline}
+                      onChange={onToggleStatus}
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div> </h2>
+            {/* <button><span className="material-symbols-outlined">edit</span></button> */}
+          </div>
+          <div></div>
+          </div>
+          <section className={styles.category}>
+            <section className={styles.all}>
               <button
-                key={type.id}
-                className={selectedType === type.type ? styles.activeTypeBtn : ""}
-                onClick={() => setSelectedType(type.type)}
+                className={selectedType === "All" ? styles.activeTypeBtn : ""}
+                onClick={() => setSelectedType("All")}
               >
-                {type.type}
+                All
               </button>
-            )) : <p>ไม่มีประเภทเมนู</p>}
+            </section>
+
+            <section className={styles.cate}>
+              {types.length > 0 ? types.map((type) => (
+                <button
+                  key={type.id}
+                  className={selectedType === type.type ? styles.activeTypeBtn : ""}
+                  onClick={() => setSelectedType(type.type)}
+                >
+                  {type.type}
+                </button>
+              )) : <p>ไม่มีประเภทเมนู</p>}
+            </section>
           </section>
-        </section>
-      </div>
+        </div>
 
-      <div className={styles.s_content_detail}>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        {!data && !error && <p>⌛ กำลังโหลดเมนู...</p>}
-        {filteredItems && filteredItems.map(item => {
-            const cartItem = cart.find(ci => ci.item.id === item.id);
-            const quantity = cartItem?.quantity ?? 0;
-            return (
-              <div key={item.id} className={styles.menu}>
-                
-                <div className={styles.menuimg}>
-                  {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-                </div>
-                <div className={styles.menuCon}>
-                  <div className={styles.menudetail}>
-                    <p className={styles.price}>฿{item.price}</p>
-                    <p>{item.name}</p>
-                    <p className={styles.description}>{item.description}</p>
+        <div className={styles.s_content_detail}>
+          {error && <p style={{ color: "red" }}>{error}</p>}
+          {!data && !error && <p>⌛ กำลังโหลดเมนู...</p>}
+          {filteredItems && filteredItems.map(item => {
+              const cartItem = cart.find(ci => ci.item.id === item.id);
+              const quantity = cartItem?.quantity ?? 0;
+              return (
+                <div key={item.id} className={styles.menu}>
+                  
+                  <div className={styles.menuimg}>
+                    {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
                   </div>
-                    
-                  <button
-                    className={styles.addBtn}
-                    onClick={() => handleAddItem(item)}
-                  >
-                    {quantity === 0 ? (
-                      <img src="/Add_Plus_Circle.svg" />
-                    ) : (
-                      <span className={styles.cartQtyCircle}>{quantity}</span>
-                    )}
-                  </button>
+                  <div className={styles.menuCon}>
+                    <div className={styles.menudetail}>
+                      <p className={styles.price}>฿{item.price}</p>
+                      <p>{item.name}</p>
+                      <p className={styles.description}>{item.description}</p>
+                    </div>
+                      
+                    <button
+                      className={styles.addBtn}
+                      onClick={() => handleAddItem(item)}
+                    >
+                      {quantity === 0 ? (
+                        <img src="/Add_Plus_Circle.svg" />
+                      ) : (
+                        <span className={styles.cartQtyCircle}>{quantity}</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-          {selectedItem && (
-            <MenuPopup
-              isOpen={isPopupOpen}
-              onClose={() => setIsPopupOpen(false)}
-              item={selectedItem}
-              cartItem={cart.find(ci => ci.item.id === selectedItem.id) ?? null}
-              onAddToCart={handleAddToCart}
-            />
-          )}
-      </div>
+              );
+            })}
+            {selectedItem && (
+              <MenuPopup
+                isOpen={isPopupOpen}
+                onClose={() => setIsPopupOpen(false)}
+                item={selectedItem}
+                cartItem={cart.find(ci => ci.item.id === selectedItem.id) ?? null}
+                onAddToCart={handleAddToCart}
+              />
+            )}
+        </div>
+      </section>
       <Cart cart={cart} />
-
     </section>
   );
 }
@@ -478,8 +479,6 @@ function Cart({ cart }: CartProps) {
     const body = {
       items
     };
-    // console.log("Cart", cart);
-    // console.log("Order request items:", items);
 
     try {
       const res = await fetch("http://localhost:8080/restaurant/order", {
@@ -498,8 +497,8 @@ function Cart({ cart }: CartProps) {
       }
       const resp = await res.json();
       console.log("Order response:", resp);
-
-      // router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
+      alert("สั่งอาหารสำเร็จ")
+      window.location.reload();
 
     } catch (err) {
       console.error(err);
@@ -507,16 +506,59 @@ function Cart({ cart }: CartProps) {
     }
   };
 
-  return (
-    <button className={styles.cartCon} onClick={handleCheckout}>
-      <div className={styles.cartItemCon}>
-        <img src="/Shopping_Cart_Black.svg" />
-        <span>{itemNum}</span>
-      </div>
-      <span>ตะกร้าของฉัน</span>
-      <span>฿ {itemCost}</span>
+return (
+  <div className={styles.cartBox}>
+    <h3 className={styles.cartHeader}>My Order</h3>
+
+    <div className={styles.orderList}>
+      {cart.map((ci) => {
+        const basePrice = typeof ci.item.price === "number"
+          ? ci.item.price
+          : parseFloat(ci.item.price);
+
+        const addonTotal = ci.selectedAddons.reduce((sum, addon) => {
+          return sum + addon.options.reduce((optSum, opt) => {
+            const delta = typeof opt.price_delta === "number"
+              ? opt.price_delta
+              : parseFloat(opt.price_delta);
+            return optSum + delta;
+          }, 0);
+        }, 0);
+
+        const finalPrice = (basePrice + addonTotal) * ci.quantity;
+
+        return (
+          <div key={ci.item.id} className={styles.orderItem}>
+            <div className={styles.qtyBox}>{ci.quantity}</div>
+
+            <div className={styles.menuInfo}>
+              <p className={styles.menuName}>{ci.item.name}</p>
+
+              <p className={styles.addonText}>
+                {ci.selectedAddons
+                  .flatMap(addon => addon.options.map(opt => opt.name))
+                  .join(", ")}
+              </p>
+
+            </div>
+
+            <p className={styles.menuPrice}>฿ {finalPrice}</p>
+          </div>
+        );
+      })}
+    </div>
+
+    <div className={styles.summaryBox}>
+      <p className={styles.totalText}>รวมทั้งหมด</p>
+      <p className={styles.totalAmount}>฿ {itemCost}</p>
+    </div>
+
+    <button className={styles.payBtn} onClick={handleCheckout}>
+      ชำระเงิน
     </button>
-  );
+  </div>
+);
+
 }
 function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupProps) {
   const searchParam = useSearchParams();
@@ -638,10 +680,11 @@ function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupPr
                           }))
                         }}
                       />
-                      <div style={{ display: "flex", justifyContent: "space-between", width: "150px" }}>
+                      <div className={styles.addonOptionRow}>
                         <span>{opt.name}</span>
                         <span>{opt.price_delta} ฿</span>
                       </div>
+
                     </label>
                   )
                 })}

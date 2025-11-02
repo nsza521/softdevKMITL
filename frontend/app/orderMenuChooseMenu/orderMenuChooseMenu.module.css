@@ -87,6 +87,8 @@
     border-radius: 10px;
     width: 110px;
     height: 110px;
+    object-fit: cover;      /* ✅ ครอปภาพ */
+    object-position: center;
 }
 
 .menuItemInfoCon h3 {
@@ -188,8 +190,10 @@
 }
 
 .menuImg {
-    width: 100%;
-    height: auto;
+    width: 440px;
+    height: 244px;
+    object-fit: cover;      /* ✅ ครอปภาพ */
+    object-position: center;
 }
 
 .cartCon {
