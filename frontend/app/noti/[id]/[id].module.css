@@ -31,7 +31,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    text-decoration: none;
     .acceptBtn {
         width: 400px;
         height: 40px;
