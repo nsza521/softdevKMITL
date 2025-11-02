@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"context"
 	// "fmt"
 	"gorm.io/gorm"
 	"github.com/google/uuid"
-
+	
 	"backend/internal/db_model"
 )
 
@@ -72,4 +73,25 @@ func (r *CustomerRepository) GetByID(id uuid.UUID) (*models.Customer, error) {
 
 func (r *CustomerRepository) Update(customer *models.Customer) error {
 	return r.db.Save(customer).Error
+}
+
+func (r *CustomerRepository) ListServedOrdersByCustomer(
+    ctx context.Context,
+    customerID string,
+) ([]models.FoodOrder, error) {
+
+    var orders []models.FoodOrder
+
+    err := r.db.Debug().WithContext(ctx).
+        Preload("Items.Options"). // <-- ปรับชื่อ Preload ให้ตรงกับ model คุณ
+        Where("customer_id = ?", customerID).
+        Where("status = ?", "served").
+        Order("order_date DESC").
+        Find(&orders).Error
+
+    if err != nil {
+        return nil, err
+    }
+
+    return orders, nil
 }

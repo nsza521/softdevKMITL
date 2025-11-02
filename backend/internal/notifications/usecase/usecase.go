@@ -176,6 +176,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
 	
 	var title, content, actionURL string
 	var attributes map[string]interface{}
+	// var reserveId string
 
 	switch req.Event {
 	case "reserve_with":
@@ -191,6 +192,10 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "members":    toStrings(d["members"]),
             "inviter":    firstString(d["members"]),
         }
+		if rid, ok := d["reserveId"]; ok && rid != nil {
+			attributes["reserveId"] = rid
+			// reserveId = fmt.Sprint(rid)
+		}
 
     case "order_finished":
         d := req.Data.(map[string]interface{})
@@ -201,6 +206,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "tableNo":    d["tableNo"],
             "when":       d["when"],
             "restaurant": d["restaurant"],
+			"menu": 	  d["menu"],
             "queueNo":    d["queueNo"],
         }
 
@@ -226,6 +232,8 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "when":       d["when"],
             "restaurant": d["restaurant"],
             "seat":       d["seat"],
+			"queueNo":    d["queueNo"],
+			"members":    toStrings(d["members"]),
         }
 
     case "reserve_failed":
@@ -237,6 +245,7 @@ func (u *notificationUsecase) CreateFromEvent(ctx context.Context, req dto.Creat
             "tableNo":    d["tableNo"],
             "when":       d["when"],
             "restaurant": d["restaurant"],
+			"members":    toStrings(d["members"]),
         }
 
 	default:

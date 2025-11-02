@@ -50,7 +50,7 @@ func getReservationID(c *gin.Context) (uuid.UUID, error) {
 	return reservationID, nil
 }
 
-func (h *TableReservationHandler) CreateTableReservation() gin.HandlerFunc {
+func (h *TableReservationHandler) CreateNotRandomTableReservation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		customerID, ok := getCustomerIDAndValidateRole(c)
 		if !ok {
@@ -61,12 +61,32 @@ func (h *TableReservationHandler) CreateTableReservation() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		reservation, err := h.tableReservationUsecase.CreateTableReservation(&request, customerID)
+		reservation, err := h.tableReservationUsecase.CreateNotRandomTableReservation(&request, customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(201, gin.H{"reservation": reservation, "message": "Table reservation created successfully"})
+	}
+}
+
+func (h *TableReservationHandler) CreateRandomTableReservation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		var request dto.CreateRandomTableReservationRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		reservation, err := h.tableReservationUsecase.CreateRandomTableReservation(&request, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(201, gin.H{"reservation": reservation, "message": "Random table reservation created successfully"})
 	}
 }
 
@@ -106,6 +126,40 @@ func (h *TableReservationHandler) GetAllTableReservationHistory() gin.HandlerFun
 			return
 		}
 		c.JSON(200, gin.H{"reservations": reservations})
+	}
+}
+
+func (h *TableReservationHandler) GetAllTableReservationByCustomerID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservations, err := h.tableReservationUsecase.GetAllTableReservationByCustomerID(customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"reservations": reservations})
+	}
+}
+
+func (h *TableReservationHandler) GetTableReservationOwnerDetail() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		ownerDetails, err := h.tableReservationUsecase.GetTableReservationOwnerDetail(reservationID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"details": ownerDetails})
 	}
 }
 
@@ -172,5 +226,27 @@ func (h *TableReservationHandler) ConfirmTableReservation() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, gin.H{"message": "Reservation confirmed successfully"})
+	}
+}
+
+func (h *TableReservationHandler) ConfirmMemberInTableReservation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		customerID, ok := getCustomerIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+
+		reservationID, err := getReservationID(c)
+		if err != nil {
+			return
+		}
+
+		response, err := h.tableReservationUsecase.ConfirmMemberInTableReservation(reservationID, customerID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Member confirmed in reservation successfully", "details": response})
 	}
 }

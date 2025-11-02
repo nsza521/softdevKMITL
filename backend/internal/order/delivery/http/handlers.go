@@ -1,28 +1,32 @@
 package http
 
 import (
+	"backend/internal/order/dto"
+	"backend/internal/order/usecase"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-
-	"backend/internal/order/dto"
-	"backend/internal/order/usecase"
 )
 
 type OrderHandler struct {
-	orderUC usecase.OrderUsecase
-	queueUC usecase.QueueUsecase
+    orderUC        usecase.OrderUsecase
+    queueUC        usecase.QueueUsecase
+    historyUC      usecase.OrderHistoryUsecase
 }
 
-// สร้าง Handler โดยรองรับทั้ง order usecase และ queue usecase
-func NewOrderHandler(orderUC usecase.OrderUsecase, queueUC usecase.QueueUsecase) *OrderHandler {
-	return &OrderHandler{
-		orderUC: orderUC,
-		queueUC: queueUC,
-	}
+func NewOrderHandler(
+    orderUC usecase.OrderUsecase,
+    queueUC usecase.QueueUsecase,
+    historyUC usecase.OrderHistoryUsecase,
+) *OrderHandler {
+    return &OrderHandler{
+        orderUC:   orderUC,
+        queueUC:   queueUC,
+        historyUC: historyUC,
+    }
 }
-
 
 // POST /orders  (reservation_id เป็น optional ใน body)
 func (h *OrderHandler) Create(c *gin.Context) {
@@ -72,3 +76,75 @@ func (h *OrderHandler) GetQueue(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func (h *OrderHandler) GetHistoryForDay(c *gin.Context) {
+	// ดึง restaurant_id จาก context (middleware.AuthMiddleware + RequireRole ควรใส่ให้แล้วใน router)
+	userID := c.GetString("user_id")
+	role := c.GetString("role")
+	var restaurantID string
+	if role != "restaurant" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden1"})
+		return
+	}else {
+		restaurantID = userID
+	}
+	if restaurantID == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "missing restaurant scope"})
+		return
+	}
+
+	restaurantUUID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid restaurant_id"})
+		return
+	}
+
+	// parse query date=YYYY-MM-DD
+	dayStr := c.Query("date")
+
+	var day time.Time
+	if dayStr == "" {
+		day = time.Now()
+	} else {
+		parsed, parseErr := time.Parse("2006-01-02", dayStr)
+		if parseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date, use YYYY-MM-DD"})
+			return
+		}
+		day = parsed
+	}
+
+	resp, err := h.historyUC.GetServedHistoryForDay(
+		c.Request.Context(),
+		restaurantUUID,
+		day,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+
+// PATCH /restaurant/orders/:orderID/status
+func (h *OrderHandler) UpdateStatus(c *gin.Context) {
+	orderID := c.Param("orderID")
+
+	var req dto.UpdateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	res, err := h.orderUC.UpdateStatus(c.Request.Context(), orderID, req.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.UpdateStatusResponse{
+		ID:     res.ID,
+		Status: res.Status,
+	})
+}

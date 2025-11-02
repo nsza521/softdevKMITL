@@ -16,11 +16,11 @@ import (
 
 // ใช้ guard แบบ scoped โดยผูก reservation กับ restaurant_id เสมอเวลา query
 type Reservation struct {
-	ReservationID           uuid.UUID `gorm:"type:char(36);primaryKey"`
-	RestaurantID uuid.UUID `gorm:"type:char(36);index;not null"`
-	CustomerID   uuid.UUID `gorm:"type:char(36);index;not null"`
-	Status       string    `gorm:"type:varchar(32);not null"`
-	ReserveDate  time.Time
+	ReservationID uuid.UUID `gorm:"type:char(36);primaryKey"`
+	RestaurantID  uuid.UUID `gorm:"type:char(36);index;not null"`
+	CustomerID    uuid.UUID `gorm:"type:char(36);index;not null"`
+	Status        string    `gorm:"type:varchar(32);not null"`
+	ReserveDate   time.Time
 }
 
 func (Reservation) TableName() string { return "table_reservations" }
@@ -29,6 +29,8 @@ type OrderRepository interface {
 	LoadReservationForCustomer(ctx context.Context, reservationID, customerID uuid.UUID) (*Reservation, error)
 	CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error
 	GetOrderDetailForRestaurant(ctx context.Context, orderID, restaurantID uuid.UUID) (*OrderDetailForRestaurant, error)
+	UpdateStatus(ctx context.Context, orderID string, newStatus string) error
+
 }
 
 type orderRepository struct{ db *gorm.DB }
@@ -43,15 +45,20 @@ func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reserv
 
 	fmt.Printf("Loading reservation ID: %s for customer ID: %s\n", reservationID, customerID)
 
+	// if err := r.db.Debug().WithContext(ctx).
+	// 	First(&res, "id = ?", reservationID).Error; err != nil {
+	// 	return nil, err
+	// }
+
 	if err := r.db.Debug().WithContext(ctx).
-		First(&res, "id = ?", reservationID).Error; err != nil {
+		Take(&res, "id = ?", reservationID).Error; err != nil {
 		return nil, err
 	}
 
-	// ถ้าเป็นเจ้าของ → ผ่าน
-	if res.CustomerID == customerID {
-		return &res, nil
-	}
+	// // ถ้าเป็นเจ้าของ → ผ่าน
+	// if res.CustomerID == customerID {
+	// 	return &res, nil
+	// }
 
 	// ไม่ใช่เจ้าของ → ตรวจในตารางสมาชิก
 	var cnt int64
@@ -67,12 +74,10 @@ func (r *orderRepository) LoadReservationForCustomer(ctx context.Context, reserv
 	return &res, nil
 }
 
-
 // สร้างออเดอร์แบบ transactional และผูก guard ตาม restaurant_id ของ reservation
 func (r *orderRepository) CreateOrderTx(ctx context.Context, order *models.FoodOrder, items []models.FoodOrderItem, opts []models.FoodOrderItemOption) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// double-check reservation ยังอยู่และเป็นร้านเดียวกัน
-
 
 		if err := tx.Create(order).Error; err != nil {
 			return err
@@ -94,3 +99,11 @@ func (r *orderRepository) CreateOrderTx(ctx context.Context, order *models.FoodO
 		return nil
 	})
 }
+
+func (r *orderRepository) UpdateStatus(ctx context.Context, orderID string, newStatus string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.FoodOrder{}).
+		Where("id = ?", orderID).
+		Update("status", newStatus).Error
+}
+
