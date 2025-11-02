@@ -9,7 +9,7 @@ export default function WaitOthers() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reservation_id = searchParams.get("reservationId")  || "";
-  const [mode, setMode] = useState<1 | 2>(1); 
+  const [mode, setMode] = useState<1 | 2>(2); 
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -55,7 +55,7 @@ function Mode1() {
   return (
     <div className={styles.modeCon}>
       <h2>ระบบกำลังรอสมาชิกท่านอื่นสั่งอาหาร</h2>
-      <p>ระบบกำลังตรวจสอบสถานะ...</p>
+      <h2>{}/{}</h2>
     </div>
   );
 }
