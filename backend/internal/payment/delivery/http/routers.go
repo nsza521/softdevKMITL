@@ -12,4 +12,7 @@ func MapPaymentRoutes(paymentGroup *gin.RouterGroup, paymentHandler interfaces.P
 	paymentGroup.GET("/topup/method/all", paymentHandler.GetTopupPaymentMethods())
 	paymentGroup.POST("/topup/wallet", paymentHandler.TopupToWallet())
 	paymentGroup.GET("/transaction/all", paymentHandler.GetAllTransactions())
+	paymentGroup.POST("/paid/:food_order_id", paymentHandler.PaidForFoodOrder())
+	paymentGroup.GET("/withdraw/method/all", paymentHandler.GetWithdrawPaymentMethods())
+	paymentGroup.POST("/withdraw/wallet", paymentHandler.WithdrawFromWallet())
 }
