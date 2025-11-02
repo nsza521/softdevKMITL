@@ -193,6 +193,8 @@ export default function ReserveFillUsrPage() {
                 }
 
                 console.log("Notification sent to", member.username);
+                const notires = await notificationRes.json();
+                console.log(notires)
             }
 
                 router.push(`/orderMenuChooseRes?reservationId=${encodeURIComponent(result.reservation.reservation_id)}`);
