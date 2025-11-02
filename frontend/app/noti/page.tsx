@@ -49,6 +49,7 @@ export default function NotificationPage() {
 
         const data = await res.json();
         setNoti(data.items);
+        console.log(data)
       }
       catch(err){
         console.error(err);

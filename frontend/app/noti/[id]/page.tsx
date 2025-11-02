@@ -26,7 +26,7 @@ interface NotiAttributes {
 
 export default function NotificationDetailPage (){
   const params = useParams();
-   const id = params.id as string;
+  const id = params.id as string;
   const [notiContent, setNotiContent] = useState<NotiCon | null>(null);
   const router = useRouter();
  
@@ -116,7 +116,9 @@ export default function NotificationDetailPage (){
                   >
         ยืนยัน
       </button>
-                  <button className={styles.cancleBtn}>ยกเลิก</button>
+                  <button className={styles.cancleBtn}
+                    // onClick={}
+                  >ยกเลิก</button>
                 </div>
               </div>
             )}
