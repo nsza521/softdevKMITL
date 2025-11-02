@@ -542,7 +542,8 @@ function QueuePage() {
  function TotalSales({ username }: any) {
   const [showMoney, setShowMoney] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
-
+  const [balance, setBalance] = useState<number | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   // ✅ popup state
   const [showPopupoftiHisButtonIsAmazaing, setShowPopupoftiHisButtonIsAmazaing] = useState(false);
   const [withdrawData, setWithdrawData] = useState({
@@ -558,6 +559,52 @@ function QueuePage() {
     const { name, value } = e.target;
     setWithdrawData((prev) => ({ ...prev, [name]: value }));
   };
+
+    useEffect(() => {
+    if (!token) return;
+
+    const fetchBalance = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/restaurant/balance", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดยอดเงินได้");
+        const data = await res.json();
+        setBalance(data.balance); // สมมติ API คืน { balance: 12540.75 }
+      } catch (err) {
+        console.error("❌ Fetch balance error:", err);
+      }
+    };
+
+    fetchBalance();
+  }, [token]);
+
+
+    useEffect(() => {
+    if (!token) return;
+
+    const fetchTransactions = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/payment/transaction/all", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดรายการธุรกรรมได้");
+        const data = await res.json();
+        setTransactions(data.transactions || []);
+      } catch (err) {
+        console.error("❌ Fetch transactions error:", err);
+      }
+    };
+
+    fetchTransactions();
+  }, [token]);  
+
 
   const handleWithdraw = async () => {
     if (!withdrawData.full_name || !withdrawData.bank_account_number || !withdrawData.withdraw_amount) {
@@ -607,7 +654,11 @@ function QueuePage() {
         <div className={styles.moneyCircle}>
           <p className={styles.subText}>ยอดเงินคงเหลือ</p>
           <h1 className={styles.totalAmount}>
-            {showMoney ? "12,540.75 ฿" : "********"}
+             {showMoney
+            ? balance !== null
+              ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿`
+              : "กำลังโหลด..."
+            : "********"} 
           </h1>
 
           <button
@@ -736,14 +787,43 @@ function QueuePage() {
 
         <div className={styles.tabContent}>
           {activeTab === "history" && <p>📜 รายการย้อนหลังของร้านทั้งหมด</p>}
-          {activeTab === "withdraw" && (
-            <div className={styles.historywithdrawflex}>
-              <div>สิงหาคม 2568 ▾</div>
-              <div>
-                <p>dd mm yy hh:mm -xxx,xxx,xxx กำลังดำเนินการ</p>
-              </div>
+{activeTab === "withdraw" && (
+  <div className={styles.withdrawHistoryWrapper}>
+    {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
+      <p>📭 ยังไม่มีรายการถอนเงิน</p>
+    ) : (
+      transactions
+        .filter(tx => tx.type === "withdraw")
+        .map((tx) => (
+          <div key={tx.transaction_id} className={styles.withdrawItem}>
+            <div className={styles.withdrawDate}>
+              {new Date(tx.created_at).toLocaleDateString("th-TH", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
             </div>
-          )}
+            <div className={styles.withdrawInfo}>
+              <span className={styles.withdrawTime}>
+                {new Date(tx.created_at).toLocaleTimeString("th-TH", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              <span className={styles.withdrawAmount}>
+                -{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
+              </span>
+              <span className={styles.withdrawBank}>
+                ({tx.payment_method})
+              </span>
+              <span className={styles.withdrawStatus}>กำลังดำเนินการ</span>
+            </div>
+          </div>
+        ))
+    )}
+  </div>
+)}
+
         </div>
       </div>
     </section>
