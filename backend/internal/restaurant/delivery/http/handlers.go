@@ -282,3 +282,18 @@ func (h *RestaurantHandler) UpdateName() gin.HandlerFunc {
         c.JSON(200, updated)
     }
 }
+
+func (h *RestaurantHandler) GetBalance() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restaurantID, ok := getRestaurantIDAndValidateRole(c)
+		if !ok {
+			return
+		}
+		balance, err := h.restaurantUsecase.GetBalance(restaurantID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"balance": balance})
+	}
+}

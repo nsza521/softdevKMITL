@@ -20,6 +20,8 @@ type TableReservationHandler interface {
 	DeleteTableReservation() gin.HandlerFunc
 	ConfirmTableReservation() gin.HandlerFunc
 	ConfirmMemberInTableReservation() gin.HandlerFunc
+	GetTableReservationStatus() gin.HandlerFunc
+	GetTableReservationTimeRemaining() gin.HandlerFunc
 }
 
 type TableReservationRepository interface {
@@ -56,6 +58,8 @@ type TableReservationUsecase interface {
 	GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error)
 	GetTableReservationOwnerDetail(reservationID uuid.UUID) (*dto.OwnerDetail, error)
 	DeleteTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	GetTableReservationStatus(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationStatusDetail, error)
+	GetTableReservationTimeRemaining(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationTime, error)
 	// UpdateTableReservation(reservation *models.TableReservation) error
 	// GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 }
