@@ -67,7 +67,7 @@ export default function RestaurantPage() {
         return <AddmenuPage />;
       case "menuDetail":
         return (
-          <MenuDetailPage menu={selectedMenu} onBack={() => setActivePage("order")}/>
+          <MenuDetailPage menu={selectedMenu} onBack={() => setActivePage("manage")}/>
         );
       default:
         return <OrderMenu username={username} isOnline={isOnline} onToggleStatus={handleToggleStatus} />;
@@ -201,7 +201,7 @@ const handleLogout = async () => {
     if (!res.ok) throw new Error("Logout failed");
     localStorage.removeItem("token");
     alert("ออกจากระบบเรียบร้อย");
-    window.location.href = "/loginrestaurant";
+    window.location.href = "/login";
   } catch (err) {
     console.error("❌ Error:", err);
     alert("เกิดข้อผิดพลาดตอนออกจากระบบ");
@@ -920,6 +920,7 @@ function TotalSales({ username }: any) {
   const [activeTab, setActiveTab] = useState("history");
   const [balance, setBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
   // ✅ popup state
   const [showPopupoftiHisButtonIsAmazaing, setShowPopupoftiHisButtonIsAmazaing] = useState(false);
   const [withdrawData, setWithdrawData] = useState({
@@ -976,10 +977,9 @@ function TotalSales({ username }: any) {
       } catch (err) {
         console.error("❌ Fetch transactions error:", err);
       }
-    };
-
-    fetchTransactions();
-  }, [token]);  
+      };
+      fetchTransactions();
+    }, [token]);  
 
 
   const handleWithdraw = async () => {
@@ -1022,6 +1022,27 @@ function TotalSales({ username }: any) {
     }
   };
 
+
+   useEffect(() => {
+    if (!token) return;
+
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/restaurant/order/history?date=2025-11-03`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถโหลดรายการสั่งอาหารได้");
+        const data = await res.json();
+        setOrders(data.orders || []);
+      } catch (err) {
+        console.error("❌ Fetch orders error:", err);
+      }
+    };
+    fetchOrders();
+  }, [token]);
   return (
     <section className={styles.shopcontent}>
       <div className={styles.sectionofcirclemoney}>
@@ -1161,46 +1182,72 @@ function TotalSales({ username }: any) {
           </button>
         </div>
 
-        <div className={styles.tabContent}>
-          {activeTab === "history" && <p>📜 รายการย้อนหลังของร้านทั้งหมด</p>}
-{activeTab === "withdraw" && (
-  <div className={styles.withdrawHistoryWrapper}>
-    {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
-      <p>📭 ยังไม่มีรายการถอนเงิน</p>
-    ) : (
-      transactions
-        .filter(tx => tx.type === "withdraw")
-        .map((tx) => (
-          <div key={tx.transaction_id} className={styles.withdrawItem}>
-            <div className={styles.withdrawDate}>
-              {new Date(tx.created_at).toLocaleDateString("th-TH", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-            </div>
-            <div className={styles.withdrawInfo}>
-              <span className={styles.withdrawTime}>
-                {new Date(tx.created_at).toLocaleTimeString("th-TH", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-              <span className={styles.withdrawAmount}>
-                -{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
-              </span>
-              <span className={styles.withdrawBank}>
-                ({tx.payment_method})
-              </span>
-              <span className={styles.withdrawStatus}>กำลังดำเนินการ</span>
-            </div>
-          </div>
-        ))
-    )}
-  </div>
-)}
+          <div className={styles.tabContent}>
 
-        </div>
+            {activeTab === "history" && (
+              <div className={styles.orderHistory}>
+                {orders.length === 0 ? (
+                  <p>ยังไม่มีรายการสั่งซื้อ</p>
+                ) : (
+                  orders.map((order) => (
+                    <div key={order.order_id} className={styles.orderCardSSSS}>
+                      {/* <h4>Order #{order.order_id.slice(0, 8)}</h4> */}
+                        {order.items.map((item: any, idx: number) => (
+                          <span key={idx} className={styles.data1ofwhatvevrearasd}>
+                            {item.menu_name} x{item.quantity} ({item.options.map((o: any) => o.option_name).join(", ")})
+                          </span>
+                        ))}
+                      <p className={styles.adasdsadsssssssssssssssa}>{new Date(order.order_time).toLocaleString("th-TH")}</p>
+                      <p  className={styles.asdasdsadsasassssqqq}>รวม {order.total_amount.toLocaleString()} ฿</p>
+                      <ul>
+
+                      </ul>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === "withdraw" && (
+              <div className={styles.withdrawHistoryWrapper}>
+                {transactions.filter(tx => tx.type === "withdraw").length === 0 ? (
+                  <p>ยังไม่มีรายการถอนเงิน</p>
+                ) : (
+                  
+                  transactions
+                    .filter(tx => tx.type === "withdraw")
+                    .map((tx) => (
+                      <div key={tx.transaction_id} className={styles.withdrawItem}>
+                        <div className={styles.withdrawDate}>
+                          {new Date(tx.created_at).toLocaleDateString("th-TH", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <div className={styles.withdrawInfo}>
+                          <span className={styles.withdrawBank}>
+                            ({tx.payment_method})
+                          </span>
+                          <span className={styles.withdrawTime}>
+                            {new Date(tx.created_at).toLocaleTimeString("th-TH", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <span className={styles.withdrawAmount}>
+                            {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ฿
+                          </span>
+
+                          <span className={styles.withdrawStatus}>เสร็จสิ้น</span>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+         </div>
+        
       </div>
     </section>
   );
@@ -1592,27 +1639,27 @@ function ManagePage({ username, isOnline, onToggleStatus ,setActivePage, setSele
           <div className={styles.menuList}>
             {filteredItems.length === 0 ? <p>ไม่มีเมนู</p> : filteredItems.map(item => (
               <div key={item.id} className={styles.menu22}
-                //   onClick={async () => {
-                //   console.log("👉 Clicked item id:", item.id);
+                  onClick={async () => {
+                  console.log("👉 Clicked item id:", item.id);
 
-                //   try {
-                //     const token = localStorage.getItem("token");
-                //     const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
-                //       headers: { 
-                //         'Authorization': `Bearer ${token}` 
-                //       }
-                //     });
-                //     if (!res.ok) throw new Error("Failed to fetch menu detail");
-                //     const data = await res.json();
-                //     console.log("📦 menu detail:", data);
+                  try {
+                    const token = localStorage.getItem("token");
+                    const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
+                      headers: { 
+                        'Authorization': `Bearer ${token}` 
+                      }
+                    });
+                    if (!res.ok) throw new Error("Failed to fetch menu detail");
+                    const data = await res.json();
+                    console.log("📦 menu detail:", data);
 
-                //     setSelectedMenu(data); 
-                //     setActivePage("menuDetail");
-                //   } catch (err) {
-                //     console.error(err);
-                //     alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
-                //   }
-                // }}
+                    setSelectedMenu(data); 
+                    setActivePage("menuDetail");
+                  } catch (err) {
+                    console.error(err);
+                    alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
+                  }
+                }}
               >
                 <div className={styles.menuimg}>
                   {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
