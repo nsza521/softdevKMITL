@@ -85,7 +85,7 @@ func (r *CustomerRepository) ListServedOrdersByCustomer(
     err := r.db.Debug().WithContext(ctx).
         Preload("Items.Options"). // <-- ปรับชื่อ Preload ให้ตรงกับ model คุณ
         Where("customer_id = ?", customerID).
-        Where("status = ?", "served").
+        Where("status = ?", "paid").
         Order("order_date DESC").
         Find(&orders).Error
 
