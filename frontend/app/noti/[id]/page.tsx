@@ -107,7 +107,7 @@ export default function NotificationDetailPage (){
                         }
 
                         alert("ยืนยันการจองโต๊ะสำเร็จ!");
-                        // router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
+                        router.push(`/orderMenuChooseRes?reservationId=${reserveId}`);
                       } catch (error) {
                         console.error(error);
                         alert("เกิดข้อผิดพลาดในการยืนยันการจองโต๊ะ");

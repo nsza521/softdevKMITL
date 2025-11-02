@@ -22,7 +22,6 @@ interface allNoti {
   type : string;
   isRead : boolean;
   createdAt : string;
-  reserveId : string;
 }
 
 function getType(type:string) {
@@ -50,7 +49,6 @@ export default function NotificationPage() {
 
         const data = await res.json();
         setNoti(data.items);
-        console.log(data.items);
       }
       catch(err){
         console.error(err);

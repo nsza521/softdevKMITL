@@ -1,0 +1,32 @@
+.container{
+    background-color: var(--color5);
+    color: var(--color1);
+    width: 100%;
+    min-height: 100vh;
+    /* padding: 5vh 0; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modeCon {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 5vw;
+    text-align: center;
+}
+
+.histBt {
+    background-color: var(--color1);
+    color: var(--color5);
+    font-size: 16px;
+    /* width: 100%; */
+    padding: 10px 85px;
+    display: flex;
+    align-items: center;
+    border-radius: 20px;
+}
