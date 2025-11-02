@@ -14,6 +14,7 @@
 }
 :global(button) {
   border: none;
+  cursor: pointer;
 }
 /* ถ้าอยากให้ footer อยู่ด้านล่าง viewport ตลอด */
 .footer-fixed {

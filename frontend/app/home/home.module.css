@@ -25,6 +25,7 @@
 }
 .headernameedit button{
     background-color: #6d6d6d00;
+    cursor: pointer;
 }
 .logoutbtn{
     background-color: #6d6d6d00;
@@ -37,6 +38,7 @@
 }
 .logoutbtn:hover{
     text-decoration: underline;
+    cursor: pointer;
 }
 .boxs{
     font-size: 16px;
@@ -65,6 +67,7 @@
   height: 50%;
   border-radius: 5px;
   gap:10px;
+  cursor: pointer;
 }
 .table{
     width: 80%;
@@ -80,7 +83,27 @@
     flex-direction: column;
     background-color: var(--color2);
     box-shadow: 0px  2px 4px 0px #00000040;
+    cursor: pointer;
+    color:#fff;
 }
+
+.tablebtn:hover {
+    background: linear-gradient(135deg, #ff8c00, #ff6600, #ff4500);
+    background-size: 200% 200%;
+    animation: orangeGlow 2.5s ease infinite alternate;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 18px rgba(255, 102, 0, 0.4);
+}
+
+@keyframes orangeGlow {
+    0% {
+        background-position: left top;
+    }
+    100% {
+        background-position: right bottom;
+    }
+}
+
 .popupbg {
   position: fixed;
   top: 0;
