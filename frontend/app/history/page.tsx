@@ -125,8 +125,10 @@ export default function HistoryPage(){
                         <TransacDetail
                             key={item.menu_name}
                             head={item.menu_name}
+                            detail={item.quantity}
                             date={orderItem.order_time}
-                            imgsrc={icon.success}
+                            price={item.subtotal}
+                            imgsrc={icon.food}
                         />
                         ))
                     )

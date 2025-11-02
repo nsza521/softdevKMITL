@@ -115,7 +115,9 @@ export default function NotificationDetailPage (){
                   >
         ยืนยัน
       </button>
-                  <button className={styles.cancleBtn}>ยกเลิก</button>
+                  <button className={styles.cancleBtn}
+                    // onClick={}
+                  >ยกเลิก</button>
                 </div>
               </div>
             )}
