@@ -359,13 +359,13 @@ function QueuePage() {
   const visibleQueues = 7;
   const half = Math.floor(visibleQueues / 2);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("❌ ไม่มี token กรุณา login ก่อน");
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setError("❌ ไม่มี token กรุณา login ก่อน");
+    setLoading(false);
+    return;
+  }
 
     async function fetchQueue() {
       try {
@@ -374,6 +374,7 @@ function QueuePage() {
         });
         if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูลได้");
         const data = await res.json();
+        console.log("somethingwhateveridontknowfuckmaybethisisqueue",data);
         setOrders(data.orders || []);
       } catch (err: any) {
         setError(err.message);
@@ -385,6 +386,47 @@ function QueuePage() {
     fetchQueue();
   }, []);
 
+
+
+
+
+const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) return alert("❌ ไม่มี token");
+
+  console.log("🛰️ updateOrderStatus ->", `${baseUrl}/restaurant/order/orders/${orderId}/status`, "status:", newStatus);
+
+  try {
+    const res = await fetch(`${baseUrl}/restaurant/order/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ Backend response:", text);
+      throw new Error("ไม่สามารถอัปเดตสถานะได้");
+    }
+
+    setOrders(prev =>
+      prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+
+  } catch (err) {
+    console.error("🔥 updateOrderStatus error:", err);
+    alert("❌ ไม่สามารถอัปเดตสถานะได้");
+  }
+};
+
+
+
+
+
+  
   useEffect(() => {
     const filtered = orders.filter(o => o.channel === activeChannel);
     setFilteredOrders(filtered);
@@ -396,11 +438,11 @@ function QueuePage() {
 
   const totalQueues = filteredOrders.length;
 
-  const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
+const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
     const index = current - half + i;
     if (index < 0 || index >= totalQueues) return null;
-    return index + 1;
-  });
+    return index; // <-- เก็บ index แทน
+});
 
   return (
     <div className={styles.queuepagemanagement}>
@@ -437,25 +479,34 @@ function QueuePage() {
         /* 🔹 ถ้ามีคิวค่อยแสดงส่วนนี้ */
         <div className={styles.queueall}>
           <div className={styles.queueno}>
-            {displayQueues.map((q, i) =>
-              q ? (
-                <button
-                  key={q}
-                  className={q === current + 1 ? styles.activeQueue : ""}
-                  onClick={() => setCurrent(q - 1)}
-                >
-                  คิวที่ {String(q).padStart(3, "0")}
-                  <p>{filteredOrders[current].status}</p>
-                </button>
+            {displayQueues.map((idx, i) =>
+              idx !== null ? (
+                  <button
+                      key={filteredOrders[idx].id}
+                      className={idx === current ? styles.activeQueue : styles.activeQueue2}
+                      onClick={() => setCurrent(idx)}
+                  >
+                      คิวที่ {String(idx + 1).padStart(3, "0")}
+                      <p></p>
+                          <select className={styles.selectofstauts}
+                                value={filteredOrders[idx].status}
+                           onChange={(e) => updateOrderStatus(filteredOrders[idx].id, e.target.value)}>
+                            <option value="paid">Paid</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="served">Served</option>
+                      </select>
+                  </button>
+                  
               ) : (
-                <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
+                  <button key={`empty-${i}`} className={styles.emptyBtn} disabled />
               )
-            )}
+          )}
           </div>
 
           <div className={styles.Notesofthisreseve}>
             <p className={styles.description}>
               NOTE : {filteredOrders[current].note}
+              
             </p>
           </div>
 
@@ -466,63 +517,65 @@ function QueuePage() {
             >
               <span className="material-symbols-outlined">arrow_back_ios</span>
             </div>
+<div className={styles.therealmenudetailed}>
+  {filteredOrders[current] && 
+    filteredOrders[current].items.map((item: any, i: number) => (
+      <div key={i} className={styles.order_n}>
+        {/* รูป */}
+        <div className={styles.imageorderholder}>
+          <img
+            src={item.menu_pic}
+            alt="order"
+          />
+        </div>
 
-            <div className={styles.therealmenudetailed}>
-              {filteredOrders[current] && (
-                <div key={filteredOrders[current].id} className={styles.order_n}>
-                  <div className={styles.imageorderholder}>
-                    <img
-                      src="https://www.jmthaifood.com/wp-content/uploads/2020/01/%E0%B8%95%E0%B9%89%E0%B8%A1%E0%B8%A2%E0%B8%B3%E0%B8%81%E0%B8%B8%E0%B9%89%E0%B8%87-1.jpg"
-                      alt="order"
-                    />
-                  </div>
+        {/* รายละเอียดเมนู */}
+        <div className={styles.detailoforder}>
+          <div className={styles.price2}>
+            <p>฿ {filteredOrders[current].total_amount}</p>
+          </div>
 
-                  <div className={styles.detailoforder}>
-                    <div className={styles.price2}>
-                      <p>฿ {filteredOrders[current].total_amount}</p>
-                    </div>
-
-                    {/* 🔹 วนลูปแสดงทุกเมนูในคิวนี้ */}
-                    {filteredOrders[current].items.map((item: any, i: number) => (
-                      <div key={i} className={styles.menuItem}>
-                        <p className={styles.mmmmmenu}>
-                          {item.menu_name}
-                          {item.time_taken_min && (
-                            <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
-                          )}
-                        </p>
-
-                        {item.note && (
-                          <p className={styles.description}>Note: {item.note}</p>
-                        )}
-
-                        <div className={styles.handlerwhateveristhisshit}>
-                          {item.options?.map((opt: any, j: number) => (
-                            <button key={j}>{opt.option_name}</button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={styles.statusofsomethingidontknow}>
-                    <button>
-                      {filteredOrders[current].status === "pending"
-                        ? "กำลังทำ"
-                        : filteredOrders[current].status}
-                      <span className="material-symbols-outlined">
-                        arrow_drop_down
-                      </span>
-                    </button>
-                    <button>
-                      ยกเลิก{" "}
-                      <span className="material-symbols-outlined">close_small</span>
-                    </button>
-                  </div>
-                </div>
+          <div className={styles.menuItem}>
+            <p className={styles.mmmmmenu}>
+              {item.menu_name}
+              {item.time_taken_min && (
+                <span>&nbsp;(&nbsp;{item.time_taken_min} นาที&nbsp;)</span>
               )}
-            </div>
+            </p>
 
+            {item.note && (
+              <p className={styles.description}>Note: {item.note}</p>
+            )}
+
+            <div className={styles.handlerwhateveristhisshit}>
+              {item.options?.map((opt: any, j: number) => (
+                <button key={j}>{opt.option_name}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* สถานะรวม */}
+        <div className={styles.statusofsomethingidontknow}>
+          <button>
+            {filteredOrders[current].status === "pending"
+              ? "กำลังทำ"
+              : filteredOrders[current].status}
+            <span className="material-symbols-outlined">
+              arrow_drop_down
+            </span>
+          </button>
+          <button>
+            ยกเลิก{" "}
+            <span className="material-symbols-outlined">close_small</span>
+          </button>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+                      {/* dfjdshisaodpsadlpadposa */}
             <div
               className={styles.sliderclickright}
               onClick={() =>
@@ -1376,7 +1429,7 @@ function AddmenuPage() {
     <section className={styles.shopcontent2}>
       {/* <h2>เพิ่มเมนูใหม่</h2> */}
       <div className={styles.addform}>
-<section>
+<div className={styles.asdasdsadsadsadsaaaaaaaa}>
   <div className={styles.imageUploadBox}>
     <label htmlFor="menuPic" className={styles.uploadLabel}>
       {menuPic ? (
@@ -1418,7 +1471,7 @@ function AddmenuPage() {
       </label>
     ))}
   </div>
-</section>
+</div>
 
         <section className={styles.sectiongapaddmenu}>
           <div className={styles.Contenthandler}>
