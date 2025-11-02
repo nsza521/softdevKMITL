@@ -37,7 +37,7 @@ func (r *orderRepository) GetOrderDetailForRestaurant(
 		Table("food_order_items AS i").
 		Select("i.*").
 		Joins("JOIN menu_items m ON m.id = i.menu_item_id").
-		Where("i.food_order_id = ? AND m.restaurant_id = ?", orderID, restaurantID).
+		Where("i.food_order_id = ?", orderID).
 		Scan(&items).Error; err != nil {
 		return nil, err
 	}

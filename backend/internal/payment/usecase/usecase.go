@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"github.com/google/uuid"
 
 	"backend/internal/payment/dto"
@@ -53,7 +54,7 @@ func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, request *dto.TopupReque
 	if err != nil {
 		return err
 	}
-	if paymentMethod.Type != "topup" && paymentMethod.Type != "all" {
+	if paymentMethod.Type != "topup" && paymentMethod.Type != "all" && paymentMethod.Type != "both"{
 		return fmt.Errorf("Invalid payment method for top-up")
 	}
 
@@ -82,10 +83,10 @@ func (u *PaymentUsecase) TopupToWallet(userID uuid.UUID, request *dto.TopupReque
 }
 
 func (u *PaymentUsecase) GetAllTransactions(userID uuid.UUID) ([]dto.TransactionDetail, error) {
-	_, err := u.customerRepository.GetByID(userID)
-	if err != nil {
-		return nil, err
-	}
+	// _, err := u.customerRepository.GetByID(userID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	transactions, err := u.paymentRepository.GetAllTransactionsByUserID(userID)
 	if err != nil {
@@ -108,4 +109,253 @@ func (u *PaymentUsecase) GetAllTransactions(userID uuid.UUID) ([]dto.Transaction
 	}
 
 	return transactionDetails, nil
+}
+
+func (u *PaymentUsecase) PaidForFoodOrder(userID uuid.UUID, foodOrderID uuid.UUID) (*dto.PaymentSummary, error) {
+
+    // Get the food order
+    order, err := u.paymentRepository.GetFoodOrderByID(foodOrderID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get food order: %w", err)
+    }
+
+    reservationID := order.ReservationID
+
+    var summary *dto.PaymentSummary
+
+    err = u.paymentRepository.RunInTransaction(func(tx *gorm.DB) error {
+        fmt.Printf("[START] PaidForFoodOrder - user: %s, foodOrder: %s\n", userID, foodOrderID)
+
+        // Check if user is a member of the reservation
+        member, err := u.paymentRepository.GetTableReservationMemberByCustomerID(reservationID, userID)
+        if err != nil {
+            return fmt.Errorf("failed to get reservation member: %w", err)
+        }
+        if member == nil {
+            return fmt.Errorf("user is not a member of this reservation")
+        }
+
+        // Prevent duplicate confirmation
+        if member.Status == "completed" {
+            return fmt.Errorf("user already confirmed payment")
+        }
+
+        // Mark member as paid_pending
+        if err := u.paymentRepository.UpdateTableReservationMemberStatus(member.ID, "paid_pending"); err != nil {
+            return fmt.Errorf("failed to mark member paid_pending: %w", err)
+        }
+        fmt.Println("Member marked as paid_pending")
+
+        // Check how many members have confirmed payment
+        members, err := u.paymentRepository.GetAllMembersByTableReservationID(reservationID)
+        if err != nil {
+            return fmt.Errorf("failed to get reservation members: %w", err)
+        }
+
+        totalMembers := len(members)
+        pendingMembers := 0
+        for _, m := range members {
+            if m.Status == "paid_pending" || m.Status == "paid" || m.Status == "completed" {
+                pendingMembers++
+            }
+        }
+        fmt.Printf("Payment confirmations: %d/%d\n", pendingMembers, totalMembers)
+
+        // If not all members have confirmed, just return the summary
+        if pendingMembers < totalMembers {
+            fmt.Println("Waiting for other members to confirm payment...")
+            summary = &dto.PaymentSummary{
+                ReservationID: reservationID,
+                FoodOrderID:   foodOrderID,
+                TotalMembers:  totalMembers,
+                PaidMembers:   pendingMembers,
+            }
+            return nil
+        }
+
+        // When all members have confirmed, proceed with actual deduction
+        fmt.Println("All members confirmed. Proceeding with actual deduction...")
+
+        order, err := u.paymentRepository.GetFoodOrderByReservationID(reservationID)
+        if err != nil {
+            return fmt.Errorf("failed to get food order: %w", err)
+        }
+        if order == nil {
+            return fmt.Errorf("no food order found for this reservation")
+        }
+
+        // Prepare payment information
+        paymentMethods, err := u.paymentRepository.GetPaymentMethodsByType("paid")
+        if err != nil || len(paymentMethods) == 0 {
+            return fmt.Errorf("no valid payment method found for restaurant")
+        }
+        paymentMethod := paymentMethods[0]
+
+        var totalPaid float64 = 0
+        for _, m := range members {
+            userTotal, err := u.paymentRepository.GetTotalAmountForCustomerInOrder(order.ID, m.CustomerID)
+            if err != nil {
+                return fmt.Errorf("failed to calculate total for member %v: %w", m.CustomerID, err)
+            }
+
+            customer, err := u.customerRepository.GetByID(m.CustomerID)
+            if err != nil {
+                return fmt.Errorf("failed to get customer: %w", err)
+            }
+
+            if float64(customer.WalletBalance) < userTotal {
+                return fmt.Errorf("insufficient balance for member %v: need %.2f, have %.2f",
+                    m.CustomerID, userTotal, customer.WalletBalance)
+            }
+
+            // Deduct amount from customer's wallet
+            newBalance := customer.WalletBalance - float32(userTotal)
+            customer.WalletBalance = newBalance
+            if err := u.customerRepository.Update(customer); err != nil {
+                return fmt.Errorf("failed to update wallet balance: %w", err)
+            }
+
+            // Create customer transaction
+            tx := &models.Transaction{
+                UserID:          m.CustomerID,
+                PaymentMethodID: paymentMethod.ID,
+                Amount:          float32(userTotal),
+                Type:            "paid",
+            }
+            if err := u.paymentRepository.CreateTransaction(tx); err != nil {
+                return fmt.Errorf("failed to create transaction for member: %w", err)
+            }
+
+            // Change member status to paid
+            if err := u.paymentRepository.UpdateTableReservationMemberStatus(m.ID, "paid"); err != nil {
+                return fmt.Errorf("failed to mark member paid: %w", err)
+            }
+
+            fmt.Printf("Deducted %.2f from member %v\n", userTotal, m.CustomerID)
+            totalPaid += userTotal
+        }
+
+        // Update reservation and order status to paid
+        if err := u.paymentRepository.UpdateTableReservationStatus(reservationID, "paid"); err != nil {
+            return fmt.Errorf("failed to update reservation status: %w", err)
+        }
+        if err := u.paymentRepository.UpdateFoodOrderStatus(order.ID, "paid"); err != nil {
+            return fmt.Errorf("failed to update food order: %w", err)
+        }
+
+        // Calculate total amount for the reservation
+        reservationTotal, err := u.paymentRepository.GetTotalAmountByReservationID(reservationID)
+        if err != nil {
+            return fmt.Errorf("failed to get total amount for reservation: %w", err)
+        }
+
+        // Credit the restaurant's wallet
+        restaurant, err := u.paymentRepository.GetRestaurantByFoodOrderID(order.ID)
+        if err != nil {
+            return fmt.Errorf("failed to get restaurant: %w", err)
+        }
+
+        newRestBalance := restaurant.WalletBalance + float32(reservationTotal)
+        restaurant.WalletBalance = newRestBalance
+        if err := u.restaurantRepository.Update(restaurant); err != nil {
+            return fmt.Errorf("failed to update restaurant wallet: %w", err)
+        }
+
+        restTx := &models.Transaction{
+            UserID:          restaurant.ID,
+            PaymentMethodID: paymentMethod.ID,
+            Amount:          float32(reservationTotal),
+            Type:            "received",
+        }
+        if err := u.paymentRepository.CreateTransaction(restTx); err != nil {
+            return fmt.Errorf("failed to create restaurant transaction: %w", err)
+        }
+        fmt.Printf("Restaurant wallet updated +%.2f (total: %.2f)\n", reservationTotal, newRestBalance)
+
+        summary = &dto.PaymentSummary{
+            ReservationID: reservationID,
+            FoodOrderID:   order.ID,
+            TotalMembers:  totalMembers,
+            PaidMembers:   totalMembers,
+        }
+
+        fmt.Println("[COMMIT] Transaction success")
+        return nil
+    })
+
+    if err != nil {
+        fmt.Printf("[ROLLBACK] Transaction failed: %v\n", err)
+        return nil, err
+    }
+
+    fmt.Println("[END] PaidForFoodOrder completed successfully")
+    return summary, nil
+}
+
+func (u *PaymentUsecase) GetWithdrawPaymentMethods(userID uuid.UUID) ([]dto.PaymentMethodDetail, error) {
+    
+    var paymentMethods []dto.PaymentMethodDetail
+    methods, err := u.paymentRepository.GetPaymentMethodsByType("withdraw")
+    if err != nil {
+        return nil, err
+    }
+
+    for _, method := range methods {
+        paymentMethods = append(paymentMethods, dto.PaymentMethodDetail{
+            PaymentMethodID: method.ID,
+            Name:            method.Name,
+            // ImageURL:        method.ImageURL,
+        })
+    }
+
+    return paymentMethods, nil
+}
+
+func (u *PaymentUsecase) WithdrawFromWallet(userID uuid.UUID, request *dto.WithdrawRequest) (*dto.WithdrawResponse, error) {
+    restaurant, err := u.restaurantRepository.GetByID(userID)
+    if err != nil {
+        return nil, err
+    }
+
+    withdrawMethods, err := u.paymentRepository.GetPaymentMethodsByType("withdraw")
+    if err != nil || len(withdrawMethods) == 0 {
+        return nil, fmt.Errorf("no valid payment method found for withdrawal")
+    }
+
+    var withdrawMethod *models.PaymentMethod
+    for _, method := range withdrawMethods {
+        if method.Name == request.BankName {
+            withdrawMethod = &method
+            break
+        }
+    }
+    if withdrawMethod == nil {
+        return nil, fmt.Errorf("invalid bank name")
+    }
+
+    var withdrawAmount float32 = request.WithdrawAmount
+    if restaurant.WalletBalance < withdrawAmount {
+        return nil, fmt.Errorf("insufficient wallet balance")
+    }
+
+    // Deduct the amount from the restaurant's wallet
+    restaurant.WalletBalance -= withdrawAmount
+    if err := u.restaurantRepository.Update(restaurant); err != nil {
+        return nil, err
+    }
+
+    // Create a withdrawal transaction
+    tx := &models.Transaction{
+        UserID:          restaurant.ID,
+        PaymentMethodID: withdrawMethod.ID,
+        Amount:          -withdrawAmount,
+        Type:            "withdraw",
+    }
+    if err := u.paymentRepository.CreateTransaction(tx); err != nil {
+        return nil, err
+    }
+
+    return &dto.WithdrawResponse{
+        RemainingBalance: restaurant.WalletBalance,
+    }, nil
 }

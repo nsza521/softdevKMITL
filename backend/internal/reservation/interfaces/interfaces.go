@@ -14,11 +14,14 @@ type TableReservationHandler interface {
 	CreateRandomTableReservation() gin.HandlerFunc
 	CancelTableReservationMember() gin.HandlerFunc
 	GetAllTableReservationHistory() gin.HandlerFunc
-	GetAlltableReservationByCustomerID() gin.HandlerFunc
+	GetAllTableReservationByCustomerID() gin.HandlerFunc
 	GetTableReservationDetail() gin.HandlerFunc
+	GetTableReservationOwnerDetail() gin.HandlerFunc
 	DeleteTableReservation() gin.HandlerFunc
 	ConfirmTableReservation() gin.HandlerFunc
 	ConfirmMemberInTableReservation() gin.HandlerFunc
+	GetTableReservationStatus() gin.HandlerFunc
+	GetTableReservationTimeRemaining() gin.HandlerFunc
 }
 
 type TableReservationRepository interface {
@@ -36,7 +39,7 @@ type TableReservationRepository interface {
 	IsCustomerInReservation(reservationID uuid.UUID, customerID uuid.UUID) (bool, error)
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	DeleteReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
-	GetAllReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error)
+	GetAllTableReservationsByCustomerID(customerID uuid.UUID) ([]models.TableReservationMembers, error)
 	GetTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) (*models.TableReservationMembers, error)
 	UpdateTableReservationMember(member *models.TableReservationMembers) error
 
@@ -48,12 +51,15 @@ type TableReservationUsecase interface {
 	CreateRandomTableReservation(request *dto.CreateRandomTableReservationRequest, customerID uuid.UUID) (*dto.RandomReservationDetail, error)
 	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
-	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ConfirmedStatusDetail, error)
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
-	GetAlltableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error)
+	GetAllTableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error)
 	GetTableReservationDetail(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationDetail, error)
+	GetTableReservationOwnerDetail(reservationID uuid.UUID) (*dto.OwnerDetail, error)
 	DeleteTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	GetTableReservationStatus(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationStatusDetail, error)
+	GetTableReservationTimeRemaining(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationTime, error)
 	// UpdateTableReservation(reservation *models.TableReservation) error
 	// GetTableReservationByID(id uuid.UUID) (*models.TableReservation, error)
 }

@@ -178,7 +178,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	// ✅ PATCH: Mark all as read
-
 	r.PATCH("/read-all", func(c *gin.Context) {
 		type RequestReadAll struct {
 			// ReceiverID   string `json:"receiverId" binding:"required"`
@@ -209,7 +208,6 @@ func MapNotiRoutes(r *gin.RouterGroup, h interfaces.NotiHandler) {
 	})
 
 	r.POST("/event", func(c *gin.Context) {
-
 		var req dto.CreateEventRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(stdhttp.StatusBadRequest, gin.H{"error": err.Error()})
