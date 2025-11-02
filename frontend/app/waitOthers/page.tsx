@@ -42,15 +42,16 @@ export default function WaitOthers() {
           const confirm_resp = await confirm.json();
           console.log(confirm_resp)
 
-          const myprofile = await fetch("http://localhost:8080/customer/profile", {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }});
-          if(!myprofile) throw new Error("ดึงข้อมูลของฉันไม่สำเร็จ")
+          // const myprofile = await fetch("http://localhost:8080/customer/profile", {
+          //   headers: {
+          //     "Authorization": `Bearer ${token}`,
+          //     "Content-Type": "application/json"
+          //   }});
+          // if(!myprofile) throw new Error("ดึงข้อมูลของฉันไม่สำเร็จ")
+          
 
-          const myprofile_resp = await myprofile.json();
-          const my_usrname = myprofile_resp.username
+          // const myprofile_resp = await myprofile.json();
+          // const my_usrname = myprofile_resp.username
         
           // noti part
           // const members = data.status_detail.members
