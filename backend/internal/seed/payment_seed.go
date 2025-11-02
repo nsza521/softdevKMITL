@@ -30,18 +30,18 @@ func seedPaymentMethods(db *gorm.DB) error {
 			Description: "Siam Commercial Bank (SCB) is a leading bank in Thailand, providing various banking services such as savings accounts, loans, credit cards, and investment options.",
 			ImageURL:    nil,
 		},
-		{
-			Name:        "Krungthai",
-			Type:        "both",
-			Description: "Krung Thai Bank (KTB) is a major bank in Thailand, offering a wide range of financial services including personal and business banking, loans, and investment products.",
-			ImageURL:    nil,
-		},
-		{
-			Name:        "Bangkok Bank",
-			Type:        "both",
-			Description: "Bangkok Bank is one of the largest banks in Thailand, providing a variety of financial services such as personal and business banking, loans, and investment options.",
-			ImageURL:    nil,
-		},
+		// {
+		// 	Name:        "Krungthai",
+		// 	Type:        "both",
+		// 	Description: "Krung Thai Bank (KTB) is a major bank in Thailand, offering a wide range of financial services including personal and business banking, loans, and investment products.",
+		// 	ImageURL:    nil,
+		// },
+		// {
+		// 	Name:        "Bangkok Bank",
+		// 	Type:        "both",
+		// 	Description: "Bangkok Bank is one of the largest banks in Thailand, providing a variety of financial services such as personal and business banking, loans, and investment options.",
+		// 	ImageURL:    nil,
+		// },
 		{
 			Name:        "Wallet",
 			Type:        "paid",
