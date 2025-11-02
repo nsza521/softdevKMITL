@@ -43,7 +43,7 @@ func seedCustomers(db *gorm.DB) error {
 }
 
 func seedRestaurants(db *gorm.DB) error {
-	for i := 1; i <= 10; i++ {
+	for i := 1; i <= 1; i++ {
 		username := fmt.Sprintf("restaurant%02d", i)
 		email := fmt.Sprintf("restaurant%02d@example.com", i)
 		name := fmt.Sprintf("ร้านข้าว%02d", i)
