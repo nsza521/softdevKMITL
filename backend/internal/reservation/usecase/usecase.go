@@ -609,16 +609,27 @@ func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.U
 	}
 
 	var paidMembersCount int = 0
+	var memberDetails []dto.Username
 	for _, member := range members {
-		if member.Status == "paid" || member.Status == "paid_pending" {
+		if member.Status == "paid" {
 			paidMembersCount++
 		}
+		customer, err := u.customerRepository.GetByID(member.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+
+		memberDetail := dto.Username{
+			Username: customer.Username,
+		}
+		memberDetails = append(memberDetails, memberDetail)
 	}
 
 	return &dto.ReservationStatusDetail{
 		ReservationStatus:   reservation.Status,
 		TotalPeople:         reservation.ReservePeople,
 		ConfirmedPaidPeople: paidMembersCount,
+		Members:             memberDetails,
 	}, nil
 }
 
