@@ -121,7 +121,7 @@ func (u *TableReservationUsecase) CreateNotRandomTableReservation(request *dto.C
 
 	// Add members
 	for _, member := range request.Members {
-		err := u.CreateTableReservationMember(createdReservation.ID, member.Username)
+		err := u.CreateTableReservationMember(createdReservation.ID, member.Username, "")
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +227,7 @@ func (u *TableReservationUsecase) CreateRandomTableReservation(request *dto.Crea
 			return nil, err
 		}
 
-		if err := u.CreateTableReservationMember(createdReservation.ID, customer.Username); err != nil {
+		if err := u.CreateTableReservationMember(createdReservation.ID, customer.Username, "confirmed"); err != nil {
 			return nil, err
 		}
 
@@ -358,8 +358,9 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 	}
 
 	reservations := []dto.ReservationDetail{}
+	status := "completed"
 	for _, reservationMember := range reservationMembers {
-		if reservationMember.Status != "confirmed" {
+		if reservationMember.Status != status {
 			continue
 		}
 		
@@ -368,7 +369,7 @@ func (u *TableReservationUsecase) GetAllTableReservationHistory(customerID uuid.
 			return nil, err
 		}
 
-		if reservation.Status == "confirmed" {
+		if reservation.Status == status {
 			reservations = append(reservations, *reservation)
 		}
 	}
@@ -485,13 +486,49 @@ func (u *TableReservationUsecase) isAllMembersConfirmed(reservationID uuid.UUID)
 	return true
 }
 
-func (u *TableReservationUsecase) ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
+func (u *TableReservationUsecase) ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ConfirmedStatusDetail, error) {
 	err := u.isCustomerInReservation(reservationID, customerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	
-	return nil
+
+	reservationMember, err := u.tableReservationRepository.GetTableReservationMember(reservationID, customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	status := "confirmed"
+	if reservationMember.Status == status {
+		return nil, fmt.Errorf("Customer has already confirmed the reservation")
+	}
+
+	reservationMember.Status = status
+	err = u.tableReservationRepository.UpdateTableReservationMember(reservationMember)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	memberDetails := []dto.MemberStatus{}
+	for _, member := range members {
+		customer, err := u.customerRepository.GetByID(member.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+		memberDetails = append(memberDetails, dto.MemberStatus{
+			Username: customer.Username,
+			Status:   member.Status,
+		})
+	}
+
+	return &dto.ConfirmedStatusDetail{
+		ReservationID:  reservationID,
+		Members:       memberDetails,
+	}, nil
 }
 
 func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error {
@@ -505,7 +542,7 @@ func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUI
 		return err
 	}
 
-	status := "confirmed"
+	status := "completed"
 	if reservationMember.Status == status {
 		return fmt.Errorf("Customer has already confirmed the reservation")
 	}
@@ -531,15 +568,19 @@ func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUI
 	return nil
 }
 
-func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uuid.UUID, username string) error {
+func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uuid.UUID, username string, status string) error {
 	customer , err := u.customerRepository.GetByUsername(username)
 	if err != nil {
 		return err
 	}
+
+	if status == "" {
+		status = "pending"
+	}
 	member := &models.TableReservationMembers{
 		ReservationID: reservationID,
 		CustomerID:    customer.ID,
-		Status:        "pending", // Default status is "pending"
+		Status:        status,
 	}
 	return u.tableReservationRepository.CreateTableReservationMember(member)
 }

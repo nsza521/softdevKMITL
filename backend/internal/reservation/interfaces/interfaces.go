@@ -49,7 +49,7 @@ type TableReservationUsecase interface {
 	CreateRandomTableReservation(request *dto.CreateRandomTableReservationRequest, customerID uuid.UUID) (*dto.RandomReservationDetail, error)
 	CancelTableReservationMember(reservationID uuid.UUID, customerID uuid.UUID) error
 	ConfirmTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
-	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) error
+	ConfirmMemberInTableReservation(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ConfirmedStatusDetail, error)
 	GetAllMembersByReservationID(reservationID uuid.UUID) ([]models.TableReservationMembers, error)
 	GetAllTableReservationHistory(customerID uuid.UUID) ([]dto.ReservationDetail, error)
 	GetAllTableReservationByCustomerID(customerID uuid.UUID) ([]dto.ReservationDetail, error)

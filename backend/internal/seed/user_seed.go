@@ -67,6 +67,7 @@ func seedRestaurants(db *gorm.DB) error {
 			Name:     name,
 			Email:    email,
 			Password: hashedPassword,
+			WalletBalance: 200, // default wallet balance
 		}
 		if err := db.Create(&restaurant).Error; err != nil {
 			return err

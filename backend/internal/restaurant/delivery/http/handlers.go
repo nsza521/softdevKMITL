@@ -101,10 +101,23 @@ func (h *RestaurantHandler) GetAll() gin.HandlerFunc {
 
 func (h *RestaurantHandler) GetByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		restaurantID, ok := getRestaurantIDAndValidateRole(c)
-		if !ok {
+		_, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(401, gin.H{"error": "user unauthorized"})
 			return
 		}
+		role, exist := c.Get("role")
+		if !exist || (role.(string) != "customer") {
+			c.JSON(401, gin.H{"error": "user unauthorized"})
+			return
+		}
+		
+		restaurantIDParam := c.Param("restaurant_id")
+		restaurantID, err := uuid.Parse(restaurantIDParam)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid restaurant id"})
+			return
+		}	
 		detail, err := h.restaurantUsecase.GetByID(restaurantID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})

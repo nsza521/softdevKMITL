@@ -242,11 +242,11 @@ func (h *TableReservationHandler) ConfirmMemberInTableReservation() gin.HandlerF
 			return
 		}
 
-		err = h.tableReservationUsecase.ConfirmMemberInTableReservation(reservationID, customerID)
+		response, err := h.tableReservationUsecase.ConfirmMemberInTableReservation(reservationID, customerID)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{"message": "Member confirmed in reservation successfully"})
+		c.JSON(200, gin.H{"message": "Member confirmed in reservation successfully", "details": response})
 	}
 }
