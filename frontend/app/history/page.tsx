@@ -29,13 +29,32 @@ interface Topup {
     transaction_id : string;
     payment_method : string;
     amount : number;
+    type : string;
     created_at :string;
+}
+
+interface OrderHistory {
+    orders : Order[];
+}
+
+interface Order {
+    order_id :string;
+    channel : string;
+    order_time : string;
+    items : Item[];
+}
+
+interface Item {
+    menu_name :string;
+    quantity : number;
+    subtotal : number;
 }
 
 export default function HistoryPage(){
     const [active, setActive] = useState("จองโต๊ะ");
     const [history, setHistroy] = useState<Histroy[]>([]);
     const [topup, setTopup] = useState<Topup[]>([]);
+    const [order, setOrder] = useState<OrderHistory[]>([]);
 
     const [error, setError] = useState("");
 
@@ -43,17 +62,26 @@ export default function HistoryPage(){
         const fetchHistory = async () =>{
             try {
                 const token = localStorage.getItem("token");
+                // fetch Table reservation
                 const resHistory = await fetch("http://localhost:8080/table/reservation/history",{
                     headers:{"Authorization": `Bearer ${token}`,},
                 })
                 const dataHistory = await resHistory.json();
                 setHistroy(dataHistory.reservations);
 
+                // fetch Top up 
                 const resTopup = await fetch("http://localhost:8080/payment/transaction/all",{
                     headers:{"Authorization": `Bearer ${token}`,},
                 })
                 const dataTopup = await resTopup.json();
                 setTopup(dataTopup.transactions ?? []);
+
+                // fetch Order
+                const resOrder = await fetch("http://localhost:8080/customer/orders/history",{
+                    headers:{"Authorization": `Bearer ${token}`,},
+                })
+                const dataOrder = await resOrder.json();
+                setOrder(dataOrder.history);
             }catch (err) {
                 console.error(err);
                 setError("โหลดข้อมูลไม่สำเร็จ");
@@ -90,24 +118,28 @@ export default function HistoryPage(){
                 </div>
             )}
 
-            {active === "อาหาร" &&(
+            {active === "อาหาร" && (
                 <div className={styles.detail_container}>
-                    {Array.from({ length: 10 }).map((_, index) => (
+                    {[...order].reverse().map((n) =>
+                    n.orders.map((orderItem) =>
+                        orderItem.items.map((item) => (
                         <TransacDetail
-                            key={index} // key ต้องไม่ซ้ำ
-                            head="กะเพราหมูกรอบ"
-                            detail="จำนวน 1"
-                            date="19 ส.ค. 2025"
-                            price="100 บาท"
+                            key={item.menu_name}
+                            head={item.menu_name}
+                            detail= {`จำนวน ${item.quantity}`}
+                            date={orderItem.order_time}
+                            price={`${item.subtotal} บาท`}
                             imgsrc={icon.food}
                         />
-                        ))}
+                        ))
+                    )
+                    )}
                 </div>
             )}
 
             {active === "การเติมเงิน" &&(
                 <div className={styles.detail_container}>
-                    {[...topup].reverse().map((n) => (
+                    {[...topup].filter((n) => n.type === "topup").reverse().map((n) => (
                         <TransacDetail
                             key={n.transaction_id}  
                             head="เติมเงิน"
