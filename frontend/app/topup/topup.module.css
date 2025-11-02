@@ -27,7 +27,7 @@
     justify-content: center;
     align-items: center;
     gap: 10px;
-    background-color: #E6E6E6;
+    background-color: var(--color4);
     border-radius: 10px;
 }
 
@@ -38,7 +38,7 @@
     flex-direction: column;
     gap: 15px;
     padding: 15px;
-    background-color: #ffffff;
+    background-color: var(--color6);
     border-radius: 10px;
 
     .options{
@@ -53,6 +53,7 @@
         font-size: 16px;
         padding: 5px;
         border-radius: 10px;
+        background-color: var(--color4);
     }
 
     
@@ -62,6 +63,7 @@
     display: flex;
     gap: 20px;
     align-items: center;
+
 
     div {
         display: flex;
@@ -98,14 +100,14 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    background-color: #ffffff;
+    background-color: var(--color6);
     padding: 20px 15px;
     border-radius: 10px;
     
     .optionMethod{
         display: flex;
         gap: 12px;
-        
+
         .payment{
             border-radius: 5px;
             width: 120px;
@@ -116,7 +118,13 @@
             padding: 10px;
             gap: 7px;
             font-size: 14px;
+            background-color: var(--color4);
         }
+    }
+
+    img {
+        width: 50px;
+        height: 50px;
     }
 }
 
@@ -127,7 +135,7 @@
     width: 169px;
     height: 51px;
     padding: 10px;
-    background-color: #D9D9D9;
+    background-color: var(--color2);
     border-radius: 20px;
     font-size: 16px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
