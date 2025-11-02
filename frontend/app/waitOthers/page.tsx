@@ -67,7 +67,7 @@ export default function WaitOthers() {
 
 function Mode1( { confirmed_paid_people, total_people }: { confirmed_paid_people: number, total_people: number } ) {
   return (
-    <div className={styles.modeCon}>
+    <div className={styles.modeCon1}>
       <h2>ระบบกำลังรอสมาชิกท่านอื่นสั่งอาหาร</h2>
       <h2>{confirmed_paid_people}/{total_people}</h2>
     </div>
@@ -76,10 +76,12 @@ function Mode1( { confirmed_paid_people, total_people }: { confirmed_paid_people
 
 function Mode2() {
   return (
-    <div className={styles.modeCon}>
-      <h2>จองโต๊ะและสั่งอาหารสำเร็จ!</h2>
-      <h2>ระบบจะทำการหักเงินในกระเป๋าอัตโนมัติ</h2>
+    <div className={styles.modeCon2}>
       <div>
+        <h2>จองโต๊ะและสั่งอาหารสำเร็จ!</h2>
+        <h2>ระบบจะทำการหักเงินในกระเป๋าอัตโนมัติ</h2>
+      </div>
+      <div className={styles.buttonCon}>
         <button className={styles.histBt}>
           ดูประวัติการจอง <img src="/Arrow_Right_MD.svg"/>
         </button>
