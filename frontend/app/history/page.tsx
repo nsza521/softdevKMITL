@@ -29,6 +29,7 @@ interface Topup {
     transaction_id : string;
     payment_method : string;
     amount : number;
+    type : string;
     created_at :string;
 }
 
@@ -125,8 +126,10 @@ export default function HistoryPage(){
                         <TransacDetail
                             key={item.menu_name}
                             head={item.menu_name}
+                            detail= {`จำนวน ${item.quantity}`}
                             date={orderItem.order_time}
-                            imgsrc={icon.success}
+                            price={`${item.subtotal} บาท`}
+                            imgsrc={icon.food}
                         />
                         ))
                     )
@@ -136,7 +139,7 @@ export default function HistoryPage(){
 
             {active === "การเติมเงิน" &&(
                 <div className={styles.detail_container}>
-                    {[...topup].reverse().map((n) => (
+                    {[...topup].filter((n) => n.type === "topup").reverse().map((n) => (
                         <TransacDetail
                             key={n.transaction_id}  
                             head="เติมเงิน"

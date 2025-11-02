@@ -3,10 +3,10 @@ import styles from "../styles/TransacDetail.module.css"
 
 type TransacDetailProps = {
   head: string;
-  detail?: string;
+  detail?: string | number;
   date: string;
   viewdetail?: string;
-  price?: string;
+  price?: string | number;
   imgsrc: string;
   imgalt?: string;
 };
