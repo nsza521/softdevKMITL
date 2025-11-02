@@ -1618,3 +1618,8 @@ input[type="number"]
    border: none;
    display: flex;
 }
+
+.addBtn {
+  background-color: transparent;
+  
+}

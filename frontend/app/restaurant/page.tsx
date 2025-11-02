@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import styles from "./restaurant.module.css";
 import { Noto_Sans_Thai } from "next/font/google";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+
 
 const notoThai = Noto_Sans_Thai({
   subsets: ["thai"],
@@ -139,6 +142,8 @@ interface MenuItem {
   description: string;
   menu_pic?: string;
   types: MenuType[]; // เพิ่มตรงนี้
+  addons: Addon[]
+  onAdd?: () => void
 }
 interface MenuData {
   items: MenuItem[];
@@ -148,6 +153,41 @@ interface MenuType {
   restaurant_id: string;
   type: string;
 }
+
+type UUID = string;
+
+interface CartItem {
+  item: MenuItem
+  quantity: number
+  selectedAddons: Addon[]
+}
+
+interface Addon {
+  id: UUID
+  name: string
+  required: boolean
+  options: Option[]
+}
+
+interface Option {
+  id: UUID
+  name: string
+  price_delta: string
+  is_default?: boolean
+}
+
+interface CartProps {
+  cart: CartItem[]
+}
+
+interface MenuPopupProps {
+  isOpen: boolean
+  onClose: () => void
+  item: MenuItem
+  cartItem?: CartItem | null
+  onAddToCart: (item: MenuItem, quantity: number, selectedAddons: Addon[]) => void
+}
+
 const handleLogout = async () => {
   try {
     const token = localStorage.getItem("token");
@@ -174,8 +214,20 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
   const [username, setUsername] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("All"); // เพิ่ม state กรอง type
   const [restaurantID, setRestaurantID] = useState<string | null>(null);
-  
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+
+
   const [restaurantPic, setRestaurantPic] = useState<string>("");
+  
+  const handleAddItem = (menuItem: MenuItem) => {
+    setSelectedItem(menuItem);
+    setIsPopupOpen(true);
+  };
+
+
+
   useEffect(() => {
 
     const token = localStorage.getItem("token");
@@ -245,6 +297,23 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
     }
   }, []);
 
+  const handleAddToCart = (item: MenuItem, quantity: number, selectedAddons: Addon[]) => {
+    setCart((prev) => {
+      if (quantity === 0) {
+        return prev.filter(ci => ci.item.id !== item.id);
+      }
+
+      const index = prev.findIndex(ci => ci.item.id === item.id);
+
+      if (index >= 0) {
+        const updated = [...prev];
+        updated[index] = { item, quantity, selectedAddons };
+        return updated;
+      }
+
+      return [...prev, { item, quantity, selectedAddons }];
+    });
+  };
 
   const filteredItems = data?.items.filter(item => {
     if (selectedType === "All") return true;
@@ -303,49 +372,303 @@ function OrderMenu({ isOnline, onToggleStatus, setActivePage, setSelectedMenu }:
         {error && <p style={{ color: "red" }}>{error}</p>}
         {!data && !error && <p>⌛ กำลังโหลดเมนู...</p>}
         {filteredItems && filteredItems.map(item => {
+            const cartItem = cart.find(ci => ci.item.id === item.id);
+            const quantity = cartItem?.quantity ?? 0;
             return (
-              <div 
-                key={item.id} 
-                className={styles.menu}
-                onClick={async () => {
-                  console.log("👉 Clicked item id:", item.id);
+              <div key={item.id} className={styles.menu}>
+                <div>
+                  <div className={styles.menuimg}>
+                    {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
+                  </div>
 
-                  try {
-                    const token = localStorage.getItem("token");
-                    const res = await fetch(`http://localhost:8080/restaurant/menu/${restaurantID}/${item.id}/detail`, {
-                      headers: { 
-                        'Authorization': `Bearer ${token}` 
-                      }
-                    });
-                    if (!res.ok) throw new Error("Failed to fetch menu detail");
-                    const data = await res.json();
-                    console.log("📦 menu detail:", data);
-
-                    setSelectedMenu(data); // ส่งข้อมูลเต็มไป MenuDetailPage
-                    setActivePage("menuDetail");
-                  } catch (err) {
-                    console.error(err);
-                    alert("เกิดข้อผิดพลาดในการโหลดข้อมูลเมนู");
-                  }
-                }}
-              >
-                <div className={styles.menuimg}>
-                  {item.menu_pic && <img src={item.menu_pic} alt={item.name} />}
-                  <button className={styles.editBtn}>
-                    <span className="material-symbols-outlined">info</span>
-                  </button>
+                  <div className={styles.menudetail}>
+                    <p className={styles.price}>฿{item.price}</p>
+                    <p>{item.name}</p>
+                    <p className={styles.description}>{item.description}</p>
+                  </div>
                 </div>
-                <div className={styles.menudetail}>
-                  <p className={styles.price}>฿{item.price}</p>
-                  <p>{item.name}</p>
-                  <p className={styles.description}>{item.description}</p>
-                </div>
+              
+                <button
+                  className={styles.addBtn}
+                  onClick={() => handleAddItem(item)}
+                >
+                  {quantity === 0 ? (
+                    <img src="/Add_Plus_Circle.svg" />
+                  ) : (
+                    <span className={styles.cartQtyCircle}>{quantity}</span>
+                  )}
+                </button>
               </div>
             );
           })}
+          {selectedItem && (
+            <MenuPopup
+              isOpen={isPopupOpen}
+              onClose={() => setIsPopupOpen(false)}
+              item={selectedItem}
+              cartItem={cart.find(ci => ci.item.id === selectedItem.id) ?? null}
+              onAddToCart={handleAddToCart}
+            />
+          )}
       </div>
+      <Cart cart={cart} />
+
     </section>
   );
+}
+function Cart({ cart }: CartProps) {
+  const router = useRouter();
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+  // const reservation_id = searchParam.get("reservationId") || "";
+
+  if (cart.length === 0) return null;
+
+  const itemNum = cart.reduce((sum, ci) => sum + ci.quantity, 0);
+  const itemCost = cart.reduce((sum, ci) => {
+    // ✅ รองรับทั้ง number และ string
+    const basePrice = typeof ci.item.price === "number"
+      ? ci.item.price
+      : parseFloat(ci.item.price);
+
+    const addonTotal =
+      ci.selectedAddons?.reduce((addonSum, addon) => {
+        const optionTotal = addon.options.reduce((optSum, opt) => {
+          const delta = typeof opt.price_delta === "number"
+            ? opt.price_delta
+            : parseFloat(opt.price_delta);
+          return optSum + delta;
+        }, 0);
+
+        return addonSum + optionTotal;
+      }, 0) ?? 0;
+
+    return sum + (basePrice + addonTotal) * ci.quantity;
+  }, 0);
+
+
+  const handleCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Token not found");
+      return;
+    }
+
+    const items = cart.map(ci => ({
+      menu_item_id: ci.item.id,
+      quantity: ci.quantity,
+      selections: ci.selectedAddons.flatMap(addon =>
+        addon.options.map(opt => {
+          if (addon.required === false) {
+            return {
+              group_id: addon.id,
+              option_id: opt.id,
+              qty: 1
+            };
+          }
+
+          return {
+            group_id: addon.id,
+            option_id: opt.id
+          };
+        })
+      )
+    }));
+
+    const body = {
+      items
+    };
+    // console.log("Cart", cart);
+    // console.log("Order request items:", items);
+
+    try {
+      const res = await fetch("http://localhost:8080/restaurant/order", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        alert("ส่งคำสั่งซื้อไม่สำเร็จ");
+        return;
+      }
+      const resp = await res.json();
+      console.log("Order response:", resp);
+
+      // router.push(`/orderMenuSummary?order_id=${resp.order_id}&reservationId=${encodeURIComponent(reservation_id)}`);
+
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
+
+  return (
+    <button className={styles.cartCon} onClick={handleCheckout}>
+      <div className={styles.cartItemCon}>
+        <img src="/Shopping_Cart_Black.svg" />
+        <span>{itemNum}</span>
+      </div>
+      <span>ตะกร้าของฉัน</span>
+      <span>฿ {itemCost}</span>
+    </button>
+  );
+}
+function MenuPopup({ isOpen, onClose, item, cartItem, onAddToCart }: MenuPopupProps) {
+  const searchParam = useSearchParams();
+  const restaurant_id = searchParam.get("id") || "";
+
+  const [quantity, setQuantity] = useState(1);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<MenuItem | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken || !isOpen) return;
+
+    async function fetchDetail() {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/restaurant/menu/${restaurant_id}/${item.id}/detail`,
+          { headers: { Authorization: `Bearer ${storedToken}` } }
+        )
+        if (!res.ok) throw new Error("Failed to fetch detail");
+
+        const data: MenuItem = await res.json();
+        setDetail(data);
+
+        // ถ้ามี cartItem ให้ใช้ cartItem.selectedAddons ไม่ใช้ default
+        if (!cartItem) {
+          const init = data.addons?.map(addon => ({
+            ...addon,
+            options: addon.options.filter(opt => !!opt.is_default)
+          })) ?? []
+          setSelectedAddons(init)
+        }
+        // ถ้ามี cartItem จะใช้ useEffect ตัวที่ handle cartItem อยู่แล้ว
+      } catch (err) {
+        console.error(err)
+        setError("โหลดรายละเอียดเมนูไม่สำเร็จ");
+      }
+    }
+
+    fetchDetail()
+  }, [isOpen, item.id, cartItem])
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (cartItem) {
+      setQuantity(cartItem.quantity)
+      setSelectedAddons(cartItem.selectedAddons.map(a => ({
+        ...a,
+        options: [...a.options]
+      })))
+    } else {
+      setQuantity(1)
+      setSelectedAddons([])
+    }
+  }, [isOpen, cartItem])
+
+  const isInCart = !!cartItem
+  const isRemove = isInCart && quantity === 0
+  const buttonLabel = !isInCart
+    ? "เพิ่มลงตะกร้า"
+    : isRemove
+      ? "นำออก"
+      : "อัปเดตตะกร้า"
+
+  const handleAdd = () => {
+    onAddToCart(item, isRemove ? 0 : quantity, selectedAddons)
+    onClose()
+    // console.log("Added to cart:", item, quantity, selectedAddons);
+  }
+
+  if (error) return <p style={{ color: "red" }}>{error}</p>
+  if (!isOpen || !detail) return null
+
+  return (
+    <div className={styles.popupOverlay}>
+      <div className={styles.popupCon}>
+        <button className={styles.closeBt} onClick={onClose}>
+          <img src="/Close_LG.svg" />
+        </button>
+
+        <img src={detail.menu_pic ?? "/placeholder.png"} className={styles.menuImg} />
+
+        <div className={styles.popupOptionsCon}>
+          <h3>
+            {detail.addons?.length > 0
+              ? `ตัวเลือกเพิ่มเติมสำหรับ ${detail.name}`
+              : detail.name}
+          </h3>
+          <div className={styles.optionsList}>
+            {detail.addons?.map((addon) => (
+              <div key={addon.id} className={styles.addonGroup}>
+                <p className={styles.addonTitle}>{addon.name}{addon.required ? "" : " [optional]"}</p>
+
+                {addon.options.map(opt => {
+                  const isSelected = selectedAddons
+                    .find(a => a.id === addon.id)
+                    ?.options.some(o => o.id === opt.id)
+
+                  return (
+                    <label key={opt.id}>
+                      <input
+                        type={addon.required ? "radio" : "checkbox"}
+                        name={addon.required ? addon.id : opt.id}
+                        checked={!!isSelected}
+                        onChange={() => {
+                          setSelectedAddons(prev => prev.map(a => {
+                            if (a.id !== addon.id) return a
+                            if (addon.required) {
+                              return { ...a, options: [opt] } // radio
+                            } else {
+                              const exists = a.options.find(o => o.id === opt.id)
+                              const newOptions = exists
+                                ? a.options.filter(o => o.id !== opt.id)
+                                : [...a.options, opt]
+                              return { ...a, options: newOptions }
+                            }
+                          }))
+                        }}
+                      />
+                      <div style={{ display: "flex", justifyContent: "space-between", width: "150px" }}>
+                        <span>{opt.name}</span>
+                        <span>{opt.price_delta} ฿</span>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.popupBottomCon}>
+          <div className={styles.quantityCon}>
+            <button className={styles.bt} onClick={() => setQuantity(q => Math.max(0, q - 1))}>
+              <img src="/Remove_Minus.svg" />
+            </button>
+            <span>{quantity}</span>
+            <button className={styles.bt} onClick={() => setQuantity(q => q + 1)}>
+              <img src="/Add_Plus.svg" />
+            </button>
+          </div>
+
+          <button className={styles.addCartBt} onClick={handleAdd}>
+            <img src="/Shopping_Cart_White.svg" />
+            {buttonLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 function QueuePage() {
   const baseUrl = "http://localhost:8080";
@@ -592,7 +915,7 @@ const displayQueues = Array.from({ length: visibleQueues }, (_, i) => {
     </div>
   );
 }
- function TotalSales({ username }: any) {
+function TotalSales({ username }: any) {
   const [showMoney, setShowMoney] = useState(true);
   const [activeTab, setActiveTab] = useState("history");
   const [balance, setBalance] = useState<number | null>(null);
