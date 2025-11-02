@@ -15,6 +15,7 @@ func MapTableReservationRoutes(tableReservationGroup *gin.RouterGroup, tableRese
 	tableReservationGroup.GET("/history/all", tableReservationHandler.GetAllTableReservationByCustomerID())
 	tableReservationGroup.GET("/:reservation_id/detail", tableReservationHandler.GetTableReservationDetail())
 	tableReservationGroup.GET("/:reservation_id/detail/owner", tableReservationHandler.GetTableReservationOwnerDetail())
+	tableReservationGroup.GET("/:reservation_id/status", tableReservationHandler.GetTableReservationStatus())
 	tableReservationGroup.DELETE("/:reservation_id/cancel", tableReservationHandler.CancelTableReservationMember())
 	tableReservationGroup.POST("/:reservation_id/confirm", tableReservationHandler.ConfirmTableReservation())
 	tableReservationGroup.POST("/:reservation_id/confirm_member", tableReservationHandler.ConfirmMemberInTableReservation())

@@ -568,6 +568,36 @@ func (u *TableReservationUsecase) ConfirmTableReservation(reservationID uuid.UUI
 	return nil
 }
 
+func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.UUID, customerID uuid.UUID) (*dto.ReservationStatusDetail, error) {
+	err := u.isCustomerInReservation(reservationID, customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	reservation, err := u.tableReservationRepository.GetTableReservationByID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.tableReservationRepository.GetAllMembersByReservationID(reservationID)
+	if err != nil {
+		return nil, err
+	}
+
+	var paidMembersCount int = 0
+	for _, member := range members {
+		if member.Status == "paid" {
+			paidMembersCount++
+		}
+	}
+
+	return &dto.ReservationStatusDetail{
+		ReservationStatus:   reservation.Status,
+		TotalPeople:         reservation.ReservePeople,
+		ConfirmedPaidPeople: paidMembersCount,
+	}, nil
+}
+
 func (u *TableReservationUsecase) CreateTableReservationMember(reservationID uuid.UUID, username string, status string) error {
 	customer , err := u.customerRepository.GetByUsername(username)
 	if err != nil {
