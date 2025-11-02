@@ -135,8 +135,9 @@ export default function OrderMenuSummaryPage() {
             }
 
             const confirm_res = await confirm.json();
+            console.log(confirm_res)
 
-            // router.push(``)
+            router.push(`/waitOthers?reservationId=${reservation_id}`)
 
         } catch (err) {
             console.log(err)

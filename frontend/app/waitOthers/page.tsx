@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import styles from "./waitOthers.module.css";
 
 export default function WaitOthers() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reservation_id = searchParams.get("reservationId")  || "";
   const [mode, setMode] = useState<1 | 2>(1); 
 
   useEffect(() => {
     //polling ทุก 2 วินาที
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://localhost:8080/check/status");
+        const res = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/detail`);
         const data = await res.json();
 
         if (data.status === true) {
