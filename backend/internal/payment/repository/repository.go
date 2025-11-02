@@ -83,7 +83,7 @@ func (r *PaymentRepository) GetFoodOrderByID(orderID uuid.UUID) (*models.FoodOrd
 func (r *PaymentRepository) GetFoodOrderByReservationID(reservationID uuid.UUID) (*models.FoodOrder, error) {
 	var order models.FoodOrder
 	err := r.db.Where("reservation_id = ?", reservationID).
-		Order("created_at DESC").
+		Order("order_date DESC").
 		First(&order).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -93,6 +93,7 @@ func (r *PaymentRepository) GetFoodOrderByReservationID(reservationID uuid.UUID)
 	}
 	return &order, nil
 }
+
 
 func (r *PaymentRepository) UpdateFoodOrderStatus(orderID uuid.UUID, status string) error {
 	return r.db.Model(&models.FoodOrder{}).
@@ -108,6 +109,16 @@ func (r *PaymentRepository) GetTotalAmountForCustomerInOrder(orderID uuid.UUID, 
 		Scan(&total).Error
 	return total, err
 }
+
+func (r *PaymentRepository) GetTotalAmountByReservationID(reservationID uuid.UUID) (float64, error) {
+    var total float64
+    err := r.db.Model(&models.FoodOrder{}).
+        Where("reservation_id = ?", reservationID).
+        Select("COALESCE(SUM(total_amount), 0)").
+        Scan(&total).Error
+    return total, err
+}
+
 
 // ดึงร้านจาก FoodOrder
 func (r *PaymentRepository) GetRestaurantByFoodOrderID(orderID uuid.UUID) (*models.Restaurant, error) {
