@@ -1,13 +1,12 @@
 package interfaces
 
 import (
-	"gorm.io/gorm"
-	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 
+	models "backend/internal/db_model"
 	"backend/internal/payment/dto"
-	"backend/internal/db_model"
-
 )
 
 type PaymentHandler interface {
@@ -38,6 +37,7 @@ type PaymentRepository interface {
 	UpdateTableReservationStatus(reservationID uuid.UUID, status string) error
 	UpdateFoodOrderStatus(orderID uuid.UUID, status string) error
 	RunInTransaction(fn func(tx *gorm.DB) error) error
+	GetAllFoodOrdersByReservationID(reservationID uuid.UUID) ([]models.FoodOrder, error)
 }
 
 type PaymentUsecase interface {

@@ -624,11 +624,24 @@ func (u *TableReservationUsecase) GetTableReservationStatus(reservationID uuid.U
 		memberDetails = append(memberDetails, memberDetail)
 	}
 
+	tabliTimeslot, err := u.tableRepository.GetTableTimeslotByID(reservation.TableTimeslotID)
+	if err != nil {
+		return nil, err
+	}
+
+	table, err := u.tableRepository.GetTableByID(tabliTimeslot.TableID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dto.ReservationStatusDetail{
 		ReservationStatus:   reservation.Status,
 		TotalPeople:         reservation.ReservePeople,
 		ConfirmedPaidPeople: paidMembersCount,
 		Members:             memberDetails,
+		TableRow:            table.TableRow,
+		TableCol:            table.TableCol,
+		CreateAt:            reservation.CreatedAt.Format("02-01-2006 15:04"),
 	}, nil
 }
 

@@ -32,7 +32,7 @@ func seedTableTimeslots(db *gorm.DB) error {
 	now := time.Now().In(loc)
 	baseDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 
-	start := baseDate.Add(10 * time.Hour)
+	start := baseDate.Add(8 * time.Hour)
 	end := baseDate.Add(15 * time.Hour)
 	duration := 15 * time.Minute
 

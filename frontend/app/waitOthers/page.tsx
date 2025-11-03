@@ -86,7 +86,7 @@ export default function WaitOthers() {
         if (!res.ok) throw new Error("โหลดข้อมูลการจองไม่สำเร็จ")
         const data = await res.json();
 
-        console.log(data)
+        console.log("statussssssssssss",data)
         const reserve_status = data.status_detail.reservation_status
         setConfirmed_paid_people(data.status_detail.confirmed_paid_people)
         setTotal_people(data.status_detail.total_people)
@@ -117,38 +117,36 @@ export default function WaitOthers() {
           // noti part
           const members = data.status_detail.members
           // const targetMembers = members.slice(1); 
-          if(my_usrname == members[0]) {
-            for (const member of members) {
-              const noti = {
-                  event: "reserve_success",
-                  receiverUsername: member.username,
-                  receiverType: "customer",
-                  data: {
-                      // tableNo: table.row + table.col,
-                      // when: result.reservation.create_at,
-                      members: members.map((m: { username: string }) => m.username),
-                      reserveId: reservation_id,
-                  },
-              };
+          // if(my_usrname == members[0]) {
+          for (const member of members) {
+            const noti = {
+                event: "reserve_success",
+                receiverUsername: member.username,
+                receiverType: "customer",
+                data: {
+                    tableNo: data.status_detail.table_row + data.status_detail.table_col,
+                    when: data.status_detail.create_at,
+                    members: members.map((m: { username: string }) => m.username),
+                    reserveId: reservation_id,
+                },
+            };
 
-              const notificationRes = await fetch("http://localhost:8080/notification/event", {
-                  method: "POST",
-                  headers: {  
-                      "Content-Type": "application/json",
-                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                  },
-                  body: JSON.stringify(noti),
-              });
+            const notificationRes = await fetch("http://localhost:8080/notification/event", {
+                method: "POST",
+                headers: {  
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(noti),
+            });
 
-              if (!notificationRes.ok) {
-                  console.error("Failed to send notification to", member.username);
-              }
+            if (!notificationRes.ok) throw new Error("ส่งโนติไม่สำเร็จ")
 
-              console.log("Notification sent to", member.username);
-              const notires = await notificationRes.json();
-              console.log(notires)
-            }
+            console.log("Notification sent to", member.username);
+            const notires = await notificationRes.json();
+            console.log(notires)
           }
+          // }
 
 
         }else if(reserve_status === "completed") {
@@ -202,7 +200,7 @@ function Mode2() {
 
     const timer = setTimeout(() => {
       setCountdown(prev => prev - 1);
-    }, 1000);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [countdown, router]);

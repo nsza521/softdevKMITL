@@ -336,9 +336,7 @@
   font-size: 24px;
   font-weight: bold;
   color: #3d3d3d;
-  margin: 0;
-  position: absolute;
-  top: 53%;
+  margin-top: 15px;
   transform: translateY(-50%);
 }
 

@@ -5,22 +5,22 @@ import (
 )
 
 type ReservationDetail struct {
-	CreateAt 	  		string      `json:"create_at"`
-	ReservationID       uuid.UUID 	`json:"reservation_id"`
-	TableTimeslotID     uuid.UUID 	`json:"table_timeslot_id"`
-	ReservePeople       int       	`json:"reserve_people"`
+	CreateAt        string    `json:"create_at"`
+	ReservationID   uuid.UUID `json:"reservation_id"`
+	TableTimeslotID uuid.UUID `json:"table_timeslot_id"`
+	ReservePeople   int       `json:"reserve_people"`
 	// Random           	bool      	`json:"random"`
-	Status          	string      `json:"status"`
-	Members 	  		[]Username	`json:"members"`
-	TableRow 	   		string      `json:"table_row"`
-	TableCol 	   		string      `json:"table_col"`
-	StartTime   		string      `json:"start_time"`
-	EndTime     		string      `json:"end_time"`
+	Status    string     `json:"status"`
+	Members   []Username `json:"members"`
+	TableRow  string     `json:"table_row"`
+	TableCol  string     `json:"table_col"`
+	StartTime string     `json:"start_time"`
+	EndTime   string     `json:"end_time"`
 }
 
 type ReservationMemberDetail struct {
-	ReservationID uuid.UUID `json:"reservation_id"`
-	Members      []Username `json:"members"`
+	ReservationID uuid.UUID  `json:"reservation_id"`
+	Members       []Username `json:"members"`
 }
 
 type RandomReservationDetail struct {
@@ -35,10 +35,13 @@ type OwnerDetail struct {
 }
 
 type ReservationStatusDetail struct {
-	ReservationStatus   string   	`json:"reservation_status"`
-	TotalPeople         int      	`json:"total_people"`
-	ConfirmedPaidPeople int       	`json:"confirmed_paid_people"`
-	Members      		[]Username  `json:"members"`
+	ReservationStatus   string     `json:"reservation_status"`
+	TotalPeople         int        `json:"total_people"`
+	ConfirmedPaidPeople int        `json:"confirmed_paid_people"`
+	Members             []Username `json:"members"`
+	TableRow            string     `json:"table_row"`
+	TableCol            string     `json:"table_col"`
+	CreateAt            string     `json:"create_at"`
 }
 
 type ReservationTime struct {
