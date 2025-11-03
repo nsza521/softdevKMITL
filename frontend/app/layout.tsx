@@ -26,7 +26,7 @@ function getTitle(pathname: string): string {
   for (const [title, paths] of Object.entries(titleGroups)) {
     if (paths.includes(pathname)) return title;
   }
-  return "ลืมแมปหน้า";
+  return "รายการแจ้งเตือน";
 }
 
 export default function RootLayout({ children, metadata }: any) {
