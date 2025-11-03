@@ -308,9 +308,11 @@
   align-items: center;
 }
 .editBtn {
+  z-index: 10;
+    background: rgba(0, 0, 0, 0.4);  /* ให้เห็นปุ่มชัดขึ้นนิด */
   position: absolute;
-  top: 5px;             /* ชิดขอบบน */
-  right: 5px;           /* ชิดขอบขวา */
+  /* top: 5px;             ชิดขอบบน */
+  /* right: 5px;           ชิดขอบขวา */
   background: rgba(0, 0, 0, 0);
   color: rgb(255, 255, 255);
   border: none;
@@ -769,7 +771,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 1000;
   animation: fadeIn 0.03s ease-in-out;
 }
 
@@ -1646,17 +1648,77 @@ input[type="number"]
   align-items: center;
   font-weight: bold;
 }
-.orderHistory{
+.orderHistory {
   width: 100%;
   height: 100%;
   padding-top: 50px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  align-items: center;
 }
-.orderCardSSSS{
+
+/* กล่องหลักแต่ละรายการ */
+.orderCardSSSS {
+  width: 70%;
   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #fffae3;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
+
+.orderCardSSSS:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+/* ฝั่งซ้าย (ชื่ออาหาร) */
+.orderLeft {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orderItemRow {
+  font-size: 15px;
+  color: #333;
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+
+.orderOptions {
+  color: #666;
+  margin-left: 6px;
+  font-size: 14px;
+}
+
+/* ฝั่งขวา (เวลาและยอดรวม) */
+.orderRight {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.orderTime {
+  color: #777;
+  font-size: 14px;
+}
+
+.orderTotal {
+  color: #d77948;
+  font-weight: 600;
+  font-size: 16px;
 }
 .data1ofwhatvevrearasd{
+  flex-direction: column;
   display: flex;
   flex:3;
   justify-content: flex-end;
