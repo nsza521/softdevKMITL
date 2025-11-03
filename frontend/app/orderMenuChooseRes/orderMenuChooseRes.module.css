@@ -28,6 +28,13 @@
     overflow: hidden;
     /* align-items: center; */
     margin: 10px 20px;
+    
+    img {
+        max-width: 135px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 15px;
+    }
 }
 
 .blog_item:hover{
@@ -55,13 +62,13 @@
 .closedStatus{
     p {
         background-color: rgb(255, 69, 69);
-        color: #ffffff;
+        color: rgb(90, 20, 20);
     }
 }
 
 .openStatus {
     p{
         background-color: rgb(98, 255, 101);
-        color: #ffffff;
+        color: rgb(20, 70, 20);
     }
 }
