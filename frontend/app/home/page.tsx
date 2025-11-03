@@ -147,7 +147,7 @@ export default function HomePage() {
       </div>
       <TableLayout tables={tableTimeSlots} />
       {/* <div className={styles.table}></div> */}
-      <button className={styles.tablebtn}>จองโต๊ะ</button>
+      <button className={styles.tablebtn} onClick={() => router.push("/reserveSelectTime")}>จองโต๊ะ</button>
 
       {/* Popup */}
       {showPopup && (
