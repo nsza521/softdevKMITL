@@ -103,53 +103,55 @@ export default function WaitOthers() {
           const confirm_resp = await confirm.json();
           console.log(confirm_resp)
 
-          // const myprofile = await fetch("http://localhost:8080/customer/profile", {
-          //   headers: {
-          //     "Authorization": `Bearer ${token}`,
-          //     "Content-Type": "application/json"
-          //   }});
-          // if(!myprofile) throw new Error("ดึงข้อมูลของฉันไม่สำเร็จ")
+          const myprofile = await fetch("http://localhost:8080/customer/profile", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }});
+          if(!myprofile) throw new Error("ดึงข้อมูลของฉันไม่สำเร็จ")
           
 
-          // const myprofile_resp = await myprofile.json();
-          // const my_usrname = myprofile_resp.username
+          const myprofile_resp = await myprofile.json();
+          const my_usrname = myprofile_resp.username
         
           // noti part
-          // const members = data.status_detail.members
-          // // const targetMembers = members.slice(1); 
-          // if(my_usrname == members[0]) {
-          //   for (const member of members) {
-          //     const noti = {
-          //         event: "reserve_success",
-          //         receiverUsername: member.username,
-          //         receiverType: "customer",
-          //         data: {
-          //             // tableNo: table.row + table.col,
-          //             // when: result.reservation.create_at,
-          //             members: members.map((m: { username: string }) => m.username),
-          //             reserveId: reservation_id,
-          //         },
-          //     };
+          const members = data.status_detail.members
+          // const targetMembers = members.slice(1); 
+          if(my_usrname == members[0]) {
+            for (const member of members) {
+              const noti = {
+                  event: "reserve_success",
+                  receiverUsername: member.username,
+                  receiverType: "customer",
+                  data: {
+                      // tableNo: table.row + table.col,
+                      // when: result.reservation.create_at,
+                      members: members.map((m: { username: string }) => m.username),
+                      reserveId: reservation_id,
+                  },
+              };
 
-          //     const notificationRes = await fetch("http://localhost:8080/notification/event", {
-          //         method: "POST",
-          //         headers: {  
-          //             "Content-Type": "application/json",
-          //             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          //         },
-          //         body: JSON.stringify(noti),
-          //     });
+              const notificationRes = await fetch("http://localhost:8080/notification/event", {
+                  method: "POST",
+                  headers: {  
+                      "Content-Type": "application/json",
+                      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                  },
+                  body: JSON.stringify(noti),
+              });
 
-          //     if (!notificationRes.ok) {
-          //         console.error("Failed to send notification to", member.username);
-          //     }
+              if (!notificationRes.ok) {
+                  console.error("Failed to send notification to", member.username);
+              }
 
-          //     console.log("Notification sent to", member.username);
-          //     const notires = await notificationRes.json();
-          //     console.log(notires)
-          //   }
-          // }
+              console.log("Notification sent to", member.username);
+              const notires = await notificationRes.json();
+              console.log(notires)
+            }
+          }
 
+
+        }else if(reserve_status === "completed") {
           setMode(2);
           clearInterval(interval); //หยุด polling ไม่จำเป็นต้องเรียกแล้ว
         }
