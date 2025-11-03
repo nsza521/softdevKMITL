@@ -1,10 +1,14 @@
 "use client";
-import styles from "../styles/Home.module.css";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <div>
-      
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/login"); // root → login
+  }, [router]);
+
+  return null; // ไม่ต้อง render อะไร
 }

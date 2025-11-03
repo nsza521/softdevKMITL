@@ -35,8 +35,11 @@ func UploadSampleMenuImage(minioClient *minio.Client, filename string) (string, 
 	fileHeader.Header.Set("Content-Type", "image/png")
 
 	// upload to MinIO
-	objectName := fmt.Sprintf("restaurants/%s", fileHeader.Filename)
-	url, err := utils.UploadImage(file, fileHeader, "menu-items", objectName, minioClient)
+	objectName := fmt.Sprintf("menu-items/%s", fileHeader.Filename)
+	// restaurant-pictures/menu-items
+
+	// url, err := utils.UploadImage(file, fileHeader, "restaurant-pictures", objectName, minioClient)
+	url, err := utils.UploadImage(file, fileHeader, "restaurant-pictures", objectName, minioClient)
 	if err != nil {
 		return "", err
 	}
@@ -91,6 +94,7 @@ func seedFixedForNoodleShop(db *gorm.DB, minioClient *minio.Client) error {
 		"เมนูเส้น",
 		"ก๋วยเตี๋ยวหมูน้ำตก",
 		"ก๋วยเตี๋ยวต้มยำ",
+		"ของทานเล่น",
 	}
 	typeID := make(map[string]uuid.UUID, len(typeNames))
 	for _, n := range typeNames {
@@ -113,7 +117,7 @@ func seedFixedForNoodleShop(db *gorm.DB, minioClient *minio.Client) error {
 		{"ก๋วยเตี๋ยวน้ำตกหมู", 50, 5, "เส้นเล็ก น้ำซุปรสเข้ม", []string{"เมนูเส้น", "ก๋วยเตี๋ยวหมูน้ำตก"}},
 		{"ก๋วยเตี๋ยวต้มยำกุ้ง", 70, 6, "เผ็ดเปรี้ยวกลมกล่อม", []string{"เมนูเส้น", "ก๋วยเตี๋ยวต้มยำ"}},
 		{"ก๋วยเตี๋ยวเนื้อตุ๋น", 80, 7, "เนื้อตุ๋นเปื่อยนุ่ม", []string{"เมนูเส้น"}},
-		{"เกี๊ยวทอด", 35, 3, "กรอบอร่อย", []string{}},
+		{"เกี๊ยวทอด", 35, 3, "กรอบอร่อย", []string{"ของทานเล่น"}},
 	}
 
 	// filename := fmt.Sprintf("MenuNoodle_%d.png", i)
