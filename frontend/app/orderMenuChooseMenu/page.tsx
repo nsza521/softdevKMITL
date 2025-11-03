@@ -9,6 +9,8 @@ type UUID = string;
 export default function MenuPage() {
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
+  const reservation_id = searchParam.get("reservationId") || "";
+  const router = useRouter();
 
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<string>("All");
@@ -17,6 +19,9 @@ export default function MenuPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [time, setTime] = useState("00:00");
+  const [timeout, setTimeoutStatus] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -66,6 +71,18 @@ export default function MenuPage() {
         const resData = await restaurant_name.json();
         setRestaurantName(resData.restaurant_detail.name);
 
+        
+        const resTimer = await fetch(`http://localhost:8080/table/reservation/${reservation_id}/time`,{
+          headers: { Authorization: `Bearer ${storedToken}` },
+        })
+
+        const dataTime = await resTimer.json();
+        const timeRemaining = dataTime?.time_detail?.time_remaining ?? "00:00";
+        const isTimeout = dataTime?.time_detail?.timeout ?? false;
+        console.log(isTimeout)
+        setTime(timeRemaining);
+        setTimeoutStatus(isTimeout);
+
       } catch (err) {
         console.error(err);
         setError("เกิดข้อผิดพลาดในการโหลดเมนู");
@@ -73,7 +90,60 @@ export default function MenuPage() {
     }
 
     fetchMenu();
-  }, []);
+
+    const interval = setInterval(fetchMenu, 1000);
+    return () => clearInterval(interval);
+  }, [reservation_id]);
+  useEffect(() => {
+      if (timeout) {
+        (async () => {
+          try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+  
+            const res = await fetch(
+              `http://localhost:8080/table/reservation/${reservation_id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+  
+            if (!res.ok) {
+              const err = await res.text();
+              throw new Error(err);
+            }
+
+
+            const resNoti = await fetch("http://localhost:8080/notification/event",{
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                event: "reserve_failed",
+                  receiverUsername: "customer01",
+                  receiverType: "customer",
+                  data: {
+                    // tableNo: "3",
+                    // when: "19 ส.ค. 2025, เวลา xx:xx น.",
+                    // restaurant: "ข้าวขาหมู" // ไม่มีก็ได้
+                  }
+              }),
+            })
+
+  
+            alert("หมดเวลา — ระบบได้ยกเลิกการจองแล้ว");
+            router.push("/home");
+          } catch (error) {
+            console.error("Error deleting reservation:", error);
+            alert("เกิดข้อผิดพลาดในการยกเลิกการจอง");
+            router.push("/");
+          }
+        })();
+      }
+    }, [timeout, router, reservation_id]);
 
   const handleAddItem = (menuItem: MenuItem) => {
     setSelectedItem(menuItem);
@@ -102,7 +172,10 @@ export default function MenuPage() {
 
   return (
     <div className={styles.container}>
-      
+      <div className={styles.timer}>
+        <img src="Clock.svg" alt="" />
+        <p>{time}</p>
+      </div>
       <header className={styles.header}>
         <h1>Welcome to {restaurantName}</h1>
       </header>
@@ -160,6 +233,7 @@ function FilterButton({ label, isActive = false, onClick }: FilterButtonProps) {
 function FilterGroup({ onFilterChange }: { onFilterChange: (type: string) => void }) {
   const searchParam = useSearchParams();
   const restaurant_id = searchParam.get("id") || "";
+  
 
   const defaultFilter = "All";
   const [activeIndex, setActiveIndex] = useState<number>(0);

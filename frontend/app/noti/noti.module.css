@@ -1,11 +1,12 @@
 .container {
     background-color: var(--color5);
-    height: 90vh;
+    min-height: 100vh;
+    padding: 6vh 0;
 }
 
 .content {
     /* height: 88vh; */
-    margin-top: 48px;
+    /* margin-top: 48px; */
     overflow: scroll;
 }
 

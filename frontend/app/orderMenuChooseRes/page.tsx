@@ -13,11 +13,22 @@ interface allRestaurant {
   picture_url: string;
 }
 
+interface Detail {
+  create_at : string;
+  table_row : string;
+  table_col : string;
+  members: { username: string }[];
+}
+
 export default function OrderMenuChooseRes() {
   const searchParams = useSearchParams();
   const reservationId = searchParams.get("reservationId");
   const router = useRouter();
   const [restaurant, setRestaurant] = useState<allRestaurant[]>([]);
+  const [detail, setDetail] = useState<Detail | null>(null);
+
+  const [time, setTime] = useState("00:00");
+  const [timeout, setTimeoutStatus] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -28,15 +39,75 @@ export default function OrderMenuChooseRes() {
         });
         const data = await res.json();
         setRestaurant(data.restaurants);
+
+        //fetch reserve detail
+        const resDetail = await fetch(`http://localhost:8080/table/reservation/${reservationId}/detail`,{
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const dataDetail = await resDetail.json();
+        setDetail(dataDetail.reservation);
+
+        const resTimer = await fetch(`http://localhost:8080/table/reservation/${reservationId}/time`,{
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const dataTime = await resTimer.json();
+        const timeRemaining = dataTime?.time_detail?.time_remaining ?? "00:00";
+        const isTimeout = dataTime?.time_detail?.timeout ?? false;
+        console.log(isTimeout)
+        setTime(timeRemaining);
+        setTimeoutStatus(isTimeout);
+        
       } catch (err) {
         console.error(err);
       }
     };
     fetchRestaurant();
-  }, []);
+    const interval = setInterval(fetchRestaurant, 1000);
+    return () => clearInterval(interval);
+  }, [reservationId]);
+
+  useEffect(() => {
+      if (timeout) {
+        (async () => {
+          try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+  
+            const res = await fetch(
+              `http://localhost:8080/table/reservation/${reservationId}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+  
+            if (!res.ok) {
+              const err = await res.text();
+              throw new Error(err);
+            }
+  
+            alert("หมดเวลา — ระบบได้ยกเลิกการจองแล้ว");
+            router.push("/home");
+          } catch (error) {
+            console.error("Error deleting reservation:", error);
+            alert("เกิดข้อผิดพลาดในการยกเลิกการจอง");
+            router.push("/");
+          }
+        })();
+      }
+    }, [timeout, router, reservationId]);
+
 
   return (
     <div className={styles.container}>
+      <div className={styles.timer}>
+        <img src="Clock.svg" alt="" />
+        <p>{time}</p>
+      </div>
       {restaurant.map((Rstr) => (
         <div
           key={Rstr.id}

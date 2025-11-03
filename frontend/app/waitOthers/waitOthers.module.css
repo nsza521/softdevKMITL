@@ -11,8 +11,19 @@
     gap: 20px;
 }
 
+.timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    top: 300px;
+    color: var(--color1);
+    
+}
+
 .modeCon1 {
     display: flex;
+    gap: 20px;
     flex-direction: column;
     justify-content: center;
     align-items: center;

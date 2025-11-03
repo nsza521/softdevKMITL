@@ -96,8 +96,9 @@ export default function LoginPage() {
                   }`}
                 onClick={() => setUserType("customer")}
               >
-                ลูกค้า
-                <span className={styles.roleSub}>Customer</span>
+                
+                <p className={styles.roleSub1}>ลูกค้า</p>
+                <p className={styles.roleSub}>Customer</p>
               </button>
 
               <button
@@ -106,9 +107,10 @@ export default function LoginPage() {
                   }`}
                 onClick={() => setUserType("restaurant")}
               >
-                ร้านอาหาร
-                <span className={styles.roleSub}>Restaurant</span>
+                <p className={styles.roleSub1}>ร้านอาหาร</p>
+                <p className={styles.roleSub}>Restaurant</p>
               </button>
+
             </div>
           </div>
 
@@ -129,7 +131,7 @@ export default function LoginPage() {
           <div className={styles.doyouhaveacc}>
             <div>
               <span>
-                <a href="">Forget Password ?</a>
+                <a href="/signup">No account? Sign up</a>
               </span>
             </div>
           </div>
