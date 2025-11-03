@@ -17,9 +17,9 @@ func InitAllSeedData(db *gorm.DB, minioClient *minio.Client) error {
 		return fmt.Errorf("error seeding restaurants: %v", err)
 	}
 
-	if err := seedMenuTypesAndItems(db); err != nil {
-		return fmt.Errorf("error seeding menu types & items: %v", err)
-	}
+	// if err := seedMenuTypesAndItems(db); err != nil {
+	// 	return fmt.Errorf("error seeding menu types & items: %v", err)
+	// }
 
 	if err := seedTableTimeslots(db); err != nil {
 		return fmt.Errorf("error seeding tables and time slots: %v", err)
@@ -31,6 +31,10 @@ func InitAllSeedData(db *gorm.DB, minioClient *minio.Client) error {
 
 	if err := seedFixedForNoodleShop(db, minioClient); err != nil {
 		return fmt.Errorf("error seeding noodle shop: %v", err)
+	}
+
+	if err := seedFixedForChickenRiceShop(db, minioClient); err != nil {
+		return fmt.Errorf("error seeding chicken rice shop: %v", err)
 	}
 
 	if err := RunSeedOrders(db); err != nil {
